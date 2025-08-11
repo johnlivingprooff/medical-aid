@@ -4,9 +4,45 @@
 
 :root {
   color-scheme: light;
+  --background: 210 20% 98%;
+  --foreground: 222.2 47.4% 11.2%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 16% 96%;
+  --muted-foreground: 215 16% 46%;
+  --accent: 219 100% 60%; /* #2E7DFF */
+  --accent-foreground: 0 0% 100%;
+  --border: 210 16% 86%;
+  --input: 210 16% 96%;
+  --ring: 219 100% 60%;
+  --destructive: 358 75% 60%;
+  --success: 154 64% 48%;
+  --warning: 35 92% 52%;
+  --info: 217 91% 60%;
+  --status-approved: 142 71% 45%;
+  --status-pending: 35 92% 52%;
+  --status-rejected: 0 84% 60%;
 }
 .dark {
   color-scheme: dark;
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 5.5%;
+  --card-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 219 100% 60%;
+  --accent-foreground: 0 0% 100%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 219 100% 60%;
+  --destructive: 0 62.8% 30.6%;
+  --success: 152 60% 40%;
+  --warning: 35 92% 50%;
+  --info: 217 91% 60%;
+  --status-approved: 142 70% 45%;
+  --status-pending: 35 92% 52%;
+  --status-rejected: 0 84% 60%;
 }
 
 @layer base {
@@ -22,6 +58,23 @@
   .card-header { @apply px-4 py-3 border-b border-border; }
   .card-content { @apply p-4; }
   .card-footer { @apply px-4 py-3 border-t border-border; }
+}
+
+/* Grainy overlay: subtle depth layer; 95% transparent overall */
+.grainy-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  /* Very subtle noise using gradients; blended via overlay */
+  background-image:
+    radial-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px, 7px 7px;
+  background-position: 0 0, 10px 5px, 5px 10px;
+  mix-blend-mode: overlay;
+  opacity: 0.05; /* 95% transparent */
 }
 
 /* 8px rhythm helpers */

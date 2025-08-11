@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
+      <div className="grainy-overlay" />
       <div className="flex">
         <Sidebar />
         <div className="flex min-h-screen flex-1 flex-col">

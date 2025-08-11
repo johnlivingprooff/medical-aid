@@ -10,32 +10,32 @@ export default {
     extend: {
       container: { center: true, padding: '1rem' },
       colors: {
-        accent: {
-          DEFAULT: '#2E7DFF',
-          foreground: '#ffffff'
-        },
-        border: 'hsl(210 16% 86%)',
-        input: 'hsl(210 16% 96%)',
-        ring: '#2E7DFF',
-        background: 'hsl(210 20% 98%)',
-        foreground: 'hsl(222.2 47.4% 11.2%)',
-        muted: {
-          DEFAULT: 'hsl(210 16% 96%)',
-          foreground: 'hsl(215 16% 46%)'
-        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
         card: {
-          DEFAULT: 'hsl(0 0% 100%)',
-          foreground: 'hsl(222.2 47.4% 11.2%)'
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
         },
-        destructive: '#E5484D',
-        success: '#2EB67D',
-        warning: '#F59E0B',
-        info: '#3B82F6',
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        destructive: 'hsl(var(--destructive))',
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
+        info: 'hsl(var(--info))',
         // Status palette
         status: {
-          approved: '#16A34A',
-          pending: '#F59E0B',
-          rejected: '#EF4444',
+          approved: 'hsl(var(--status-approved))',
+          pending: 'hsl(var(--status-pending))',
+          rejected: 'hsl(var(--status-rejected))',
         },
       },
       borderRadius: {
