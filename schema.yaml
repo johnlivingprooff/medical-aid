@@ -1,0 +1,1856 @@
+openapi: 3.0.3
+info:
+  title: MAGUMEDS API
+  version: 1.0.0
+  description: Medical Aid Management System
+paths:
+  /api/accounts/me/:
+    get:
+      operationId: api_accounts_me_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/register/:
+    post:
+      operationId: api_accounts_register_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Register'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Register'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'
+          description: ''
+  /api/alerts/:
+    get:
+      operationId: api_alerts_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: List alerts
+  /api/auth/login/:
+    post:
+      operationId: api_auth_login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomTokenObtainPair'
+          description: ''
+  /api/auth/refresh/:
+    post:
+      operationId: api_auth_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/claims/:
+    get:
+      operationId: api_claims_list
+      parameters:
+      - in: query
+        name: coverage_checked
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - APPROVED
+          - PENDING
+          - REJECTED
+        description: |-
+          * `PENDING` - Pending
+          * `APPROVED` - Approved
+          * `REJECTED` - Rejected
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Claim'
+          description: ''
+    post:
+      operationId: api_claims_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Claim'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Claim'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Claim'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+          description: ''
+  /api/claims/{id}/:
+    get:
+      operationId: api_claims_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this claim.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+          description: ''
+    put:
+      operationId: api_claims_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this claim.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Claim'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Claim'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Claim'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+          description: ''
+    patch:
+      operationId: api_claims_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this claim.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedClaim'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedClaim'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedClaim'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+          description: ''
+    delete:
+      operationId: api_claims_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this claim.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/claims/invoices/:
+    get:
+      operationId: api_claims_invoices_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: payment_status
+        schema:
+          type: string
+          enum:
+          - PAID
+          - PENDING
+        description: |-
+          * `PENDING` - Pending
+          * `PAID` - Paid
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invoice'
+          description: ''
+    post:
+      operationId: api_claims_invoices_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/claims/invoices/{id}/:
+    get:
+      operationId: api_claims_invoices_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    put:
+      operationId: api_claims_invoices_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    patch:
+      operationId: api_claims_invoices_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    delete:
+      operationId: api_claims_invoices_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/claims/patients/:
+    get:
+      operationId: api_claims_patients_list
+      parameters:
+      - in: query
+        name: gender
+        schema:
+          type: string
+          enum:
+          - F
+          - M
+          - O
+        description: |-
+          * `M` - Male
+          * `F` - Female
+          * `O` - Other
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: scheme
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Patient'
+          description: ''
+    post:
+      operationId: api_claims_patients_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Patient'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+  /api/claims/patients/{id}/:
+    get:
+      operationId: api_claims_patients_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+    put:
+      operationId: api_claims_patients_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Patient'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+    patch:
+      operationId: api_claims_patients_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+    delete:
+      operationId: api_claims_patients_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/claims/patients/{id}/coverage-balance/:
+    get:
+      operationId: api_claims_patients_coverage_balance_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+  /api/claims/validate/:
+    post:
+      operationId: api_claims_validate_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Claim'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Claim'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Claim'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+          description: ''
+  /api/core/alerts/:
+    get:
+      operationId: api_core_alerts_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: List alerts
+  /api/core/health/:
+    get:
+      operationId: api_core_health_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: Service health status
+  /api/core/reports/disease-stats/:
+    get:
+      operationId: api_core_reports_disease_stats_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Disease stats report
+  /api/core/reports/scheme-usage/:
+    get:
+      operationId: api_core_reports_scheme_usage_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Scheme usage report or CSV
+  /api/invoices/:
+    get:
+      operationId: api_invoices_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: payment_status
+        schema:
+          type: string
+          enum:
+          - PAID
+          - PENDING
+        description: |-
+          * `PENDING` - Pending
+          * `PAID` - Paid
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invoice'
+          description: ''
+    post:
+      operationId: api_invoices_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/invoices/{id}/:
+    get:
+      operationId: api_invoices_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    put:
+      operationId: api_invoices_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    patch:
+      operationId: api_invoices_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    delete:
+      operationId: api_invoices_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this invoice.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/patients/:
+    get:
+      operationId: api_patients_list
+      parameters:
+      - in: query
+        name: gender
+        schema:
+          type: string
+          enum:
+          - F
+          - M
+          - O
+        description: |-
+          * `M` - Male
+          * `F` - Female
+          * `O` - Other
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: scheme
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Patient'
+          description: ''
+    post:
+      operationId: api_patients_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Patient'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+  /api/patients/{id}/:
+    get:
+      operationId: api_patients_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+    put:
+      operationId: api_patients_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Patient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Patient'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+    patch:
+      operationId: api_patients_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPatient'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+    delete:
+      operationId: api_patients_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/patients/{id}/coverage-balance/:
+    get:
+      operationId: api_patients_coverage_balance_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this patient.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+          description: ''
+  /api/reports/disease-stats/:
+    get:
+      operationId: api_reports_disease_stats_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Disease stats report
+  /api/reports/scheme-usage/:
+    get:
+      operationId: api_reports_scheme_usage_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Scheme usage report or CSV
+  /api/schemes/benefits/:
+    get:
+      operationId: api_schemes_benefits_list
+      parameters:
+      - in: query
+        name: benefit_type
+        schema:
+          type: string
+          enum:
+          - CONSULTATION
+          - IMAGING
+          - INPATIENT
+          - LAB
+          - PHARMACY
+        description: |-
+          * `CONSULTATION` - Consultation
+          * `LAB` - Laboratory
+          * `PHARMACY` - Pharmacy
+          * `INPATIENT` - Inpatient
+          * `IMAGING` - Imaging
+      - in: query
+        name: coverage_period
+        schema:
+          type: string
+          enum:
+          - MONTHLY
+          - PER_VISIT
+          - YEARLY
+        description: |-
+          * `PER_VISIT` - Per Visit
+          * `MONTHLY` - Monthly
+          * `YEARLY` - Yearly
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: scheme
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SchemeBenefit'
+          description: ''
+    post:
+      operationId: api_schemes_benefits_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemeBenefit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemeBenefit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemeBenefit'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeBenefit'
+          description: ''
+  /api/schemes/benefits/{id}/:
+    get:
+      operationId: api_schemes_benefits_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme benefit.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeBenefit'
+          description: ''
+    put:
+      operationId: api_schemes_benefits_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme benefit.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemeBenefit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemeBenefit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemeBenefit'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeBenefit'
+          description: ''
+    patch:
+      operationId: api_schemes_benefits_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme benefit.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemeBenefit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemeBenefit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemeBenefit'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeBenefit'
+          description: ''
+    delete:
+      operationId: api_schemes_benefits_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme benefit.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/schemes/categories/:
+    get:
+      operationId: api_schemes_categories_list
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SchemeCategory'
+          description: ''
+    post:
+      operationId: api_schemes_categories_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemeCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemeCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemeCategory'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeCategory'
+          description: ''
+  /api/schemes/categories/{id}/:
+    get:
+      operationId: api_schemes_categories_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme category.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeCategory'
+          description: ''
+    put:
+      operationId: api_schemes_categories_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme category.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemeCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchemeCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchemeCategory'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeCategory'
+          description: ''
+    patch:
+      operationId: api_schemes_categories_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme category.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemeCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemeCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSchemeCategory'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemeCategory'
+          description: ''
+    delete:
+      operationId: api_schemes_categories_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this scheme category.
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    BenefitTypeEnum:
+      enum:
+      - CONSULTATION
+      - LAB
+      - PHARMACY
+      - INPATIENT
+      - IMAGING
+      type: string
+      description: |-
+        * `CONSULTATION` - Consultation
+        * `LAB` - Laboratory
+        * `PHARMACY` - Pharmacy
+        * `INPATIENT` - Inpatient
+        * `IMAGING` - Imaging
+    Claim:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        patient:
+          type: integer
+        patient_detail:
+          allOf:
+          - $ref: '#/components/schemas/Patient'
+          readOnly: true
+        provider:
+          type: integer
+          readOnly: true
+        service_type:
+          $ref: '#/components/schemas/ServiceTypeEnum'
+        cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date_submitted:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        coverage_checked:
+          type: boolean
+          readOnly: true
+        notes:
+          type: string
+      required:
+      - cost
+      - coverage_checked
+      - date_submitted
+      - id
+      - patient
+      - patient_detail
+      - provider
+      - service_type
+      - status
+    CoveragePeriodEnum:
+      enum:
+      - PER_VISIT
+      - MONTHLY
+      - YEARLY
+      type: string
+      description: |-
+        * `PER_VISIT` - Per Visit
+        * `MONTHLY` - Monthly
+        * `YEARLY` - Yearly
+    CustomTokenObtainPair:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - username
+    GenderEnum:
+      enum:
+      - M
+      - F
+      - O
+      type: string
+      description: |-
+        * `M` - Male
+        * `F` - Female
+        * `O` - Other
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        claim:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        payment_status:
+          $ref: '#/components/schemas/PaymentStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - claim
+      - created_at
+      - id
+    PatchedClaim:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        patient:
+          type: integer
+        patient_detail:
+          allOf:
+          - $ref: '#/components/schemas/Patient'
+          readOnly: true
+        provider:
+          type: integer
+          readOnly: true
+        service_type:
+          $ref: '#/components/schemas/ServiceTypeEnum'
+        cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date_submitted:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        coverage_checked:
+          type: boolean
+          readOnly: true
+        notes:
+          type: string
+    PatchedInvoice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        claim:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        payment_status:
+          $ref: '#/components/schemas/PaymentStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedPatient:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+        user_username:
+          type: string
+          readOnly: true
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        scheme:
+          type: integer
+        diagnoses:
+          type: string
+        investigations:
+          type: string
+        treatments:
+          type: string
+    PatchedSchemeBenefit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        benefit_type:
+          $ref: '#/components/schemas/BenefitTypeEnum'
+        coverage_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        coverage_limit_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: Max number of uses in period
+        coverage_period:
+          $ref: '#/components/schemas/CoveragePeriodEnum'
+    PatchedSchemeCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        benefits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemeBenefit'
+          readOnly: true
+    Patient:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+        user_username:
+          type: string
+          readOnly: true
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        scheme:
+          type: integer
+        diagnoses:
+          type: string
+        investigations:
+          type: string
+        treatments:
+          type: string
+      required:
+      - date_of_birth
+      - gender
+      - id
+      - scheme
+      - user
+      - user_username
+    PaymentStatusEnum:
+      enum:
+      - PENDING
+      - PAID
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `PAID` - Paid
+    Register:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          description: |-
+            Role determines access level in the system.
+
+            * `ADMIN` - Admin
+            * `PROVIDER` - Provider
+            * `PATIENT` - Patient
+      required:
+      - password
+      - username
+    RoleEnum:
+      enum:
+      - ADMIN
+      - PROVIDER
+      - PATIENT
+      type: string
+      description: |-
+        * `ADMIN` - Admin
+        * `PROVIDER` - Provider
+        * `PATIENT` - Patient
+    SchemeBenefit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        benefit_type:
+          $ref: '#/components/schemas/BenefitTypeEnum'
+        coverage_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        coverage_limit_count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: Max number of uses in period
+        coverage_period:
+          $ref: '#/components/schemas/CoveragePeriodEnum'
+      required:
+      - benefit_type
+      - id
+    SchemeCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        benefits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemeBenefit'
+          readOnly: true
+      required:
+      - benefits
+      - id
+      - name
+    ServiceTypeEnum:
+      enum:
+      - CONSULTATION
+      - LAB
+      - PHARMACY
+      - INPATIENT
+      - IMAGING
+      type: string
+      description: |-
+        * `CONSULTATION` - Consultation
+        * `LAB` - Laboratory
+        * `PHARMACY` - Pharmacy
+        * `INPATIENT` - Inpatient
+        * `IMAGING` - Imaging
+    StatusEnum:
+      enum:
+      - PENDING
+      - APPROVED
+      - REJECTED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `APPROVED` - Approved
+        * `REJECTED` - Rejected
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+          description: |-
+            Role determines access level in the system.
+
+            * `ADMIN` - Admin
+            * `PROVIDER` - Provider
+            * `PATIENT` - Patient
+      required:
+      - id
+      - role
+      - username
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

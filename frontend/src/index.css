@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  html { @apply antialiased; }
+  body { @apply bg-background text-foreground; }
+  h1 { @apply text-3xl font-semibold; }
+  h2 { @apply text-2xl font-semibold; }
+  h3 { @apply text-xl font-semibold; }
+}
+
+@layer utilities {
+  .card { @apply bg-card text-card-foreground shadow-card rounded-lg border border-border; }
+  .card-header { @apply px-4 py-3 border-b border-border; }
+  .card-content { @apply p-4; }
+  .card-footer { @apply px-4 py-3 border-t border-border; }
+}
+
+/* 8px rhythm helpers */
+.space-8 { gap: 0.5rem; }
+.space-16 { gap: 1rem; }
+
+/* Print styles: high-contrast text, remove backgrounds/shadows */
+@media print {
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .card, .shadow, .bg-background, .bg-card { background: #fff !important; }
+  a[href]::after { content: ""; }
+}
