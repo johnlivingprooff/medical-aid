@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { login, me } from '@/lib/auth'
+import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/components/auth/auth-context'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -16,18 +17,22 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation() as any
   const from = location.state?.from?.pathname || '/'
+  const toast = useToast()
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
     try {
-      await login(username, password)
+      await login(username.trim(), password)
       const u = await me()
       setUser(u)
+      toast.success('Signed in', { description: `Welcome back, ${u.username}` })
       navigate(from, { replace: true })
     } catch (err: any) {
-      setError(err.message || 'Login failed')
+      const msg = err?.message || 'Login failed'
+      setError(msg)
+      toast.error('Login failed', { description: msg })
     } finally {
       setLoading(false)
     }
