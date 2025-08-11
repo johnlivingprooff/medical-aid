@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout } from '@/lib/auth'
+import logo from '@/assets/icon.ico'
 
 export function Header() {
   const [dark, setDark] = useState(false)
@@ -35,7 +36,9 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
         <div className="flex items-center gap-2 md:hidden">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div>
+          {true
+            ? <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div>
+            : <img src={logo} alt="Alo-Medical" style={{ width: 50 }} />}
           <span className="text-sm font-semibold">Alo‑Medical</span>
         </div>
         <div className="hidden items-center gap-3 md:flex">
