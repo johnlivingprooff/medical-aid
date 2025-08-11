@@ -7,7 +7,7 @@ export type LoginResponse = {
 };
 
 export async function login(username: string, password: string) {
-  const data = await api.post<LoginResponse>('/api/auth/login/', { username, password })
+  const data = await api.post<LoginResponse>('/api/auth/login/', { username, password }, { noAuth: true, credentials: 'omit' })
   localStorage.setItem('token', data.access)
   localStorage.setItem('refresh', data.refresh)
   return data

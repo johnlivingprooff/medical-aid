@@ -7,11 +7,13 @@ function authHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {} as Record<string, string>;
 }
 
-async function request<T>(method: HttpMethod, path: string, body?: any, init?: RequestInit): Promise<T> {
+type RequestInitExtended = RequestInit & { noAuth?: boolean };
+
+async function request<T>(method: HttpMethod, path: string, body?: any, init?: RequestInitExtended): Promise<T> {
   const url = path.startsWith('http') ? path : `${API_URL.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...authHeader(),
+    ...(init?.noAuth ? {} : authHeader()),
   };
   if (init?.headers) {
     const h = init.headers as HeadersInit;
@@ -23,12 +25,13 @@ async function request<T>(method: HttpMethod, path: string, body?: any, init?: R
       Object.assign(headers, h as Record<string, string>);
     }
   }
+  const { noAuth, ...rest } = init ?? {};
   const res = await fetch(url, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
-    credentials: 'include',
-    ...init,
+    credentials: rest.credentials ?? 'include',
+    ...rest,
   });
   if (!res.ok) {
     let errText = await res.text().catch(() => '');
@@ -44,11 +47,11 @@ async function request<T>(method: HttpMethod, path: string, body?: any, init?: R
 }
 
 export const api = {
-  get: <T>(path: string, init?: RequestInit) => request<T>('GET', path, undefined, init),
-  post: <T>(path: string, body?: any, init?: RequestInit) => request<T>('POST', path, body, init),
-  put: <T>(path: string, body?: any, init?: RequestInit) => request<T>('PUT', path, body, init),
-  patch: <T>(path: string, body?: any, init?: RequestInit) => request<T>('PATCH', path, body, init),
-  delete: <T>(path: string, init?: RequestInit) => request<T>('DELETE', path, undefined, init),
+  get: <T>(path: string, init?: RequestInitExtended) => request<T>('GET', path, undefined, init),
+  post: <T>(path: string, body?: any, init?: RequestInitExtended) => request<T>('POST', path, body, init),
+  put: <T>(path: string, body?: any, init?: RequestInitExtended) => request<T>('PUT', path, body, init),
+  patch: <T>(path: string, body?: any, init?: RequestInitExtended) => request<T>('PATCH', path, body, init),
+  delete: <T>(path: string, init?: RequestInitExtended) => request<T>('DELETE', path, undefined, init),
 };
 
 // Convenience typed calls for core endpoints
