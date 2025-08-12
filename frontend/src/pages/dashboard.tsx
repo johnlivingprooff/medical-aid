@@ -8,6 +8,7 @@ import { getActivityFeed, getDashboardStats } from '@/lib/api'
 import type { ActivityFeed, DashboardStats } from '@/types/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/currency'
+import { useAuth } from '@/components/auth/auth-context'
 
 function Kpi({ icon: Icon, label, value, delta, subtext, loading }: { icon: any; label: string; value: string | number; delta?: string; subtext?: string; loading?: boolean }) {
   return (
@@ -31,6 +32,7 @@ function Kpi({ icon: Icon, label, value, delta, subtext, loading }: { icon: any;
 }
 
 export default function Dashboard() {
+  const { user } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [activity, setActivity] = useState<ActivityFeed | null>(null)
   const [loading, setLoading] = useState(true)
@@ -55,7 +57,8 @@ export default function Dashboard() {
         <QuickActions />
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  {user?.role !== 'PATIENT' && (
+  <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Kpi icon={Users2} label="Active Members" value={stats?.kpis.active_members ?? ''} delta="" subtext="vs last 30 days" loading={loading} />
         <Kpi icon={BarChart3} label="Total Claims (Period)" value={stats?.kpis.total_claims_period ?? ''} delta="" subtext="vs last 30 days" loading={loading} />
   <Kpi icon={DollarSign} label="Claim Value (Approved)" value={formatCurrency(stats?.kpis.claim_value_approved ?? 0)} delta="" subtext="vs last 30 days" loading={loading} />
@@ -63,6 +66,7 @@ export default function Dashboard() {
         <Kpi icon={TrendingUp} label="Utilization Rate" value={`${Math.round((stats?.kpis.utilization_rate ?? 0) * 100)}%`} delta="" subtext="of allocated benefits" loading={loading} />
         <Kpi icon={Clock3} label="Avg. Processing Time" value={`${stats?.kpis.avg_processing_days?.toFixed?.(2) ?? '0.00'} days`} delta="" subtext="goal ≤ 3 days" loading={loading} />
       </section>
+  )}
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

@@ -2,6 +2,8 @@ from django.urls import path
 from .views import HealthCheckView
 from .views_dashboard import DashboardStatsView, ActivityFeedView
 from .views_providers import ProvidersAnalyticsView, ProviderDetailAnalyticsView
+from .views_schemes import SchemesOverviewView
+from .views_members import MembersAnalyticsView
 from .views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView
 
 urlpatterns = [
@@ -15,4 +17,8 @@ urlpatterns = [
     # Provider analytics
     path('analytics/providers/', ProvidersAnalyticsView.as_view(), name='providers-analytics'),
     path('analytics/providers/<int:provider_id>/', ProviderDetailAnalyticsView.as_view(), name='provider-analytics-detail'),
+    # Schemes overview
+    path('analytics/schemes/overview/', SchemesOverviewView.as_view(), name='schemes-overview'),
+    # Members analytics
+    path('analytics/members/', MembersAnalyticsView.as_view(), name='members-analytics'),
 ]

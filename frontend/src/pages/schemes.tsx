@@ -2,12 +2,41 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Settings2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ManageSchemesModal } from '@/components/modals/manage-schemes-modal'
 import { formatCurrency } from '@/lib/currency'
+import { api } from '@/lib/api'
+
+type SchemeOverview = {
+  id: number
+  name: string
+  description: string
+  members_count: number
+  total_amount_30d: number
+  total_claims_30d: number
+  utilization_percent: number
+  breakdown: Array<{ name: string; percent: number }>
+}
 
 export default function Schemes() {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [schemes, setSchemes] = useState<SchemeOverview[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    setError(null)
+    api.get<SchemeOverview[]>('/api/core/analytics/schemes/overview/')
+      .then((data) => { if (mounted) setSchemes(data) })
+      .catch((e: any) => { if (mounted) setError(e.message || 'Failed to load schemes') })
+      .finally(() => { if (mounted) setLoading(false) })
+    return () => { mounted = false }
+  }, [])
+
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-3">
@@ -19,29 +48,43 @@ export default function Schemes() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {['VIP', 'VVIP', 'Standard'].map((s, i) => (
-          <Card key={s}>
+        {loading && [0,1,2].map((i) => (
+          <Card key={`shimmer-${i}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>{s}</CardTitle>
-                <Badge variant="info">Utilization {60 + i * 10}%</Badge>
+                <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                <Badge variant="info">Loading…</Badge>
               </div>
-              <CardDescription>{(4000 + i * 800).toLocaleString()} members • Claim value {formatCurrency((1.2 + i * 0.3) * 1_000_000)}</CardDescription>
+              <CardDescription><span className="inline-block h-3 w-48 animate-pulse rounded bg-muted" /></CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div>
-                <div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Outpatient</span><span>75%</span></div>
-                <div className="h-2 rounded bg-muted"><div className="h-2 rounded bg-accent" style={{ width: '75%' }} /></div>
+              <div className="h-2 rounded bg-muted" />
+              <div className="h-2 rounded bg-muted" />
+              <div className="h-2 rounded bg-muted" />
+              <div className="text-xs text-muted-foreground">&nbsp;</div>
+            </CardContent>
+          </Card>
+        ))}
+        {!loading && error && (
+          <div className="col-span-full text-sm text-destructive">{error}</div>
+        )}
+        {!loading && !error && schemes.map((s, i) => (
+          <Card key={s.id}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{s.name}</CardTitle>
+                <Badge variant="info">Utilization {Math.round(s.utilization_percent)}%</Badge>
               </div>
-              <div>
-                <div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Inpatient</span><span>62%</span></div>
-                <div className="h-2 rounded bg-muted"><div className="h-2 rounded bg-success" style={{ width: '62%' }} /></div>
-              </div>
-              <div>
-                <div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Pharmacy</span><span>54%</span></div>
-                <div className="h-2 rounded bg-muted"><div className="h-2 rounded bg-warning" style={{ width: '54%' }} /></div>
-              </div>
-              <div className="text-xs text-accent underline">Open details</div>
+              <CardDescription>{s.members_count.toLocaleString()} members • Claim value {formatCurrency(s.total_amount_30d || 0)}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {s.breakdown.slice(0,3).map((b, idx) => (
+                <div key={b.name + idx}>
+                  <div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>{b.name}</span><span>{Math.round(b.percent)}%</span></div>
+                  <div className="h-2 rounded bg-muted"><div className={`h-2 rounded ${idx===0?'bg-accent':idx===1?'bg-success':'bg-warning'}`} style={{ width: `${Math.min(100, Math.max(0, b.percent))}%` }} /></div>
+                </div>
+              ))}
+              <div className="text-xs text-accent underline cursor-pointer" onClick={() => navigate(`/schemes/${s.id}`)}>Open details</div>
             </CardContent>
           </Card>
         ))}

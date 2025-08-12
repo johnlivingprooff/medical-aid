@@ -77,7 +77,7 @@ export default function Providers() {
               </Tbody>
             </Table>
           </div>
-          <div className="mt-3 text-xs text-muted-foreground">Click a provider for details: KPIs, recent claims, anomaly flags.</div>
+          {/* <div className="mt-3 text-xs text-muted-foreground">Click a provider for details: KPIs, recent claims, anomaly flags.</div> */}
         </CardContent>
   </Card>
   <AddProviderModal open={showAdd} onOpenChange={setShowAdd} onSuccess={load} />

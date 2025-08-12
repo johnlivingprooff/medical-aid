@@ -8,10 +8,16 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout } from '@/lib/auth'
 import logo from '@/assets/icon.ico'
+import { api } from '@/lib/api'
+import { useAuth } from '@/components/auth/auth-context'
 
 export function Header() {
   const [dark, setDark] = useState(false)
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+  const [alerts, setAlerts] = useState<Array<{ id: number; message: string; severity: string; created_at: string }>>([])
+  const [alertsOpen, setAlertsOpen] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('theme')
@@ -20,6 +26,13 @@ export function Header() {
     setDark(isDark)
     document.documentElement.classList.toggle('dark', isDark)
   }, [])
+
+  useEffect(() => {
+    if (!isAdmin || !alertsOpen) return
+    api.get<any>('/api/core/alerts/')
+      .then((resp) => setAlerts(resp.results ?? resp ?? []))
+      .catch(() => setAlerts([]))
+  }, [isAdmin, alertsOpen])
 
   function toggleTheme() {
     const next = !dark
@@ -32,6 +45,14 @@ export function Header() {
     logout()
     navigate('/login', { replace: true })
   }
+  const initials = (user?.username || '')
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join('') || 'U'
+  const displayName = user?.username || 'User'
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
@@ -42,7 +63,7 @@ export function Header() {
           <span className="text-sm font-semibold">Alo‑Medical</span>
         </div>
         <div className="hidden items-center gap-3 md:flex">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div>
+          {/* <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div> */}
           <div className="text-sm font-semibold">Med‑Aid Management Tool</div>
         </div>
         <div className="flex-1" />
@@ -64,17 +85,46 @@ export function Header() {
               <TooltipContent>Toggle theme</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">3</span>
-          </Button>
+          {isAdmin && (
+            <DropdownMenu open={alertsOpen} onOpenChange={setAlertsOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {alerts.length > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">{Math.min(9, alerts.length)}</span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Alerts</div>
+                <div className="my-1 h-px bg-border" />
+                {alerts.length === 0 ? (
+                  <div className="px-2 py-6 text-center text-sm text-muted-foreground">No alerts</div>
+                ) : (
+                  alerts.slice(0, 6).map((a) => (
+                    <DropdownMenuItem key={a.id} className="whitespace-normal leading-5">
+                      <div className="flex items-start gap-2">
+                        <span className={`mt-1 h-2.5 w-2.5 rounded-full ${a.severity === 'HIGH' ? 'bg-destructive' : a.severity === 'MEDIUM' ? 'bg-warning' : 'bg-info'}`} />
+                        <div>
+                          <div className="text-sm">{a.message}</div>
+                          <div className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                )}
+                <div className="my-1 h-px bg-border" />
+                <DropdownMenuItem onClick={() => navigate('/alerts')}>View all alerts</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-2">
                 <Avatar>
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
-                <span className="hidden text-sm md:inline">Admin</span>
+                <span className="hidden text-sm md:inline">{displayName}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>

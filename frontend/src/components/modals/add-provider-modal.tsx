@@ -15,6 +15,12 @@ export function AddProviderModal({ open, onOpenChange, onSuccess }: Props) {
   const [lastName, setLastName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Facility fields
+  const [facilityName, setFacilityName] = useState('')
+  const [facilityType, setFacilityType] = useState<'HOSPITAL'|'CLINIC'|'PHARMACY'|'LAB'|'IMAGING'|''>('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -28,10 +34,16 @@ export function AddProviderModal({ open, onOpenChange, onSuccess }: Props) {
         first_name: firstName,
         last_name: lastName,
         role: 'PROVIDER',
+        facility_name: facilityName,
+        facility_type: facilityType || undefined,
+        phone,
+        address,
+        city,
       })
   onOpenChange(false)
   onSuccess?.()
-      setUsername(''); setEmail(''); setPassword(''); setFirstName(''); setLastName('')
+      setUsername(''); setEmail(''); setPassword(''); setFirstName(''); setLastName('');
+      setFacilityName(''); setFacilityType(''); setPhone(''); setAddress(''); setCity('')
     } catch (e: any) {
       setError(e.message || 'Failed to add provider')
     } finally { setSaving(false) }
@@ -50,6 +62,24 @@ export function AddProviderModal({ open, onOpenChange, onSuccess }: Props) {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2"><Label>First name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} /></div>
               <div className="space-y-2"><Label>Last name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} /></div>
+            </div>
+            <div className="pt-2 text-sm font-medium">Facility details</div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2"><Label>Facility name</Label><Input value={facilityName} onChange={(e) => setFacilityName(e.target.value)} placeholder="e.g. CityCare Clinic" /></div>
+              <div className="space-y-2">
+                <Label>Facility type</Label>
+                <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={facilityType} onChange={(e) => setFacilityType(e.target.value as any)}>
+                  <option value="">Select type…</option>
+                  <option value="HOSPITAL">Hospital</option>
+                  <option value="CLINIC">Clinic</option>
+                  <option value="PHARMACY">Pharmacy</option>
+                  <option value="LAB">Laboratory</option>
+                  <option value="IMAGING">Imaging Center</option>
+                </select>
+              </div>
+              <div className="space-y-2"><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. +265…" /></div>
+              <div className="space-y-2"><Label>Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area" /></div>
+              <div className="space-y-2"><Label>City</Label><Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City/town" /></div>
             </div>
             {error && <div className="text-sm text-destructive">{error}</div>}
             <div className="flex justify-end gap-2">

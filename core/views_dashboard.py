@@ -15,12 +15,20 @@ class IsAdminOnly(IsAuthenticated):
 
 
 class DashboardStatsView(APIView):
-    permission_classes = [IsAdminOnly]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: OpenApiResponse(description='Dashboard KPIs and snapshots')})
     def get(self, request):
         since = datetime.utcnow() - timedelta(days=30)
-        claims_period = Claim.objects.filter(date_submitted__gte=since)
+        role = getattr(request.user, 'role', None)
+        # Scope queryset based on role
+        if role == 'PATIENT':
+            claims_period = Claim.objects.filter(date_submitted__gte=since, patient__user=request.user)
+        elif role == 'PROVIDER':
+            claims_period = Claim.objects.filter(date_submitted__gte=since, provider=request.user)
+        else:
+            # ADMIN and others default to all
+            claims_period = Claim.objects.filter(date_submitted__gte=since)
 
         total_claims = claims_period.count()
         approved_amount = claims_period.filter(status=Claim.Status.APPROVED).aggregate(a=Sum('cost'))['a'] or 0
@@ -45,7 +53,11 @@ class DashboardStatsView(APIView):
         )
         status_map = {row['status']: {'count': row['count'], 'amount': float(row['amount'] or 0)} for row in status_counts}
 
-        active_members = Patient.objects.filter(user__is_active=True).count()
+        # Active members depends on role
+        if role == 'PATIENT':
+            active_members = 1
+        else:
+            active_members = Patient.objects.filter(user__is_active=True).count()
 
         scheme_utilization = list(
             claims_period.filter(status=Claim.Status.APPROVED)
@@ -69,13 +81,18 @@ class DashboardStatsView(APIView):
 
 
 class ActivityFeedView(APIView):
-    permission_classes = [IsAdminOnly]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: OpenApiResponse(description='Recent activity feed')})
     def get(self, request):
+        role = getattr(request.user, 'role', None)
+        qs = Claim.objects.order_by('-date_submitted')
+        if role == 'PATIENT':
+            qs = qs.filter(patient__user=request.user)
+        elif role == 'PROVIDER':
+            qs = qs.filter(provider=request.user)
         recent_claims = list(
-            Claim.objects.order_by('-date_submitted')[:20]
-            .values('id', 'patient__user__username', 'provider__username', 'status', 'cost', 'date_submitted')
+            qs[:20].values('id', 'patient__user__username', 'provider__username', 'status', 'cost', 'date_submitted')
         )
         claim_events = [
             {
@@ -91,9 +108,13 @@ class ActivityFeedView(APIView):
             for rc in recent_claims
         ]
 
+        inv_qs = Invoice.objects.order_by('-created_at')
+        if role == 'PATIENT':
+            inv_qs = inv_qs.filter(claim__patient__user=request.user)
+        elif role == 'PROVIDER':
+            inv_qs = inv_qs.filter(claim__provider=request.user)
         recent_invoices = list(
-            Invoice.objects.order_by('-created_at')[:20]
-            .values('claim_id', 'created_at', 'amount', 'claim__patient__user__username', 'claim__provider__username')
+            inv_qs[:20].values('claim_id', 'created_at', 'amount', 'claim__patient__user__username', 'claim__provider__username')
         )
         approval_events = [
             {

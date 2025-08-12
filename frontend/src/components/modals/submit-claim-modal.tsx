@@ -7,10 +7,11 @@ import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void }
+type BenefitType = { id: number; name: string }
 
 export function SubmitClaimModal({ open, onOpenChange }: Props) {
   const [patient, setPatient] = useState<number | ''>('')
-  const [serviceType, setServiceType] = useState('CONSULTATION')
+  const [serviceType, setServiceType] = useState<number | ''>('')
   const [cost, setCost] = useState('')
   const [patients, setPatients] = useState<Array<{ id: number; user_username: string }>>([])
   const [checking, setChecking] = useState(false)
@@ -19,12 +20,24 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
   const [reason, setReason] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [benefitTypes, setBenefitTypes] = useState<BenefitType[]>([])
 
   useEffect(() => {
     if (!open) return
     api.get<any>('/api/patients/')
       .then((resp) => setPatients(resp.results ?? resp))
       .catch(() => setPatients([]))
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    api.get<BenefitType[]>('/api/schemes/benefit-types/')
+      .then((resp: any) => {
+        const list = resp.results ?? resp
+        setBenefitTypes(list)
+        if (!serviceType && list.length) setServiceType(list[0].id)
+      })
+      .catch(() => setBenefitTypes([]))
   }, [open])
 
   async function validateClaim() {
@@ -57,7 +70,7 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
         cost: Number(cost),
       })
       onOpenChange(false)
-      setPatient(''); setServiceType('CONSULTATION'); setCost(''); setApproved(null); setPayable(null); setReason(null)
+      setPatient(''); setServiceType(''); setCost(''); setApproved(null); setPayable(null); setReason(null)
     } catch (e: any) {
       setError(e.message || 'Failed to submit claim')
     } finally {
@@ -82,12 +95,14 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="serviceType">Service Type</Label>
-                <select id="serviceType" className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={serviceType} onChange={(e) => setServiceType(e.target.value)}>
-                  <option value="CONSULTATION">Consultation</option>
-                  <option value="LAB">Laboratory</option>
-                  <option value="PHARMACY">Pharmacy</option>
-                  <option value="INPATIENT">Inpatient</option>
-                  <option value="IMAGING">Imaging</option>
+          <select id="serviceType" className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={serviceType} onChange={(e) => setServiceType(Number(e.target.value))}>
+                  {benefitTypes
+                    .filter((bt) => bt.name.toLowerCase() !== 'add new')
+                    .map((bt) => (
+            <option key={bt.id} value={bt.id}>
+                        {bt.name}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div className="space-y-2">
@@ -96,7 +111,7 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="secondary" onClick={validateClaim} disabled={checking || !patient || !cost}>Check Coverage</Button>
+              <Button type="button" variant="secondary" onClick={validateClaim} disabled={checking || !patient || !cost || !serviceType}>Check Coverage</Button>
               {approved !== null && (
                 <span className="text-sm">{approved ? `Approved • Payable ${formatCurrency(payable || 0)}` : `Rejected • ${reason}`}</span>
               )}
@@ -104,7 +119,7 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
             {error && <div className="text-sm text-destructive">{error}</div>}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving || !patient || !cost}>{saving ? 'Submitting…' : 'Submit Claim'}</Button>
+              <Button type="submit" disabled={saving || !patient || !cost || !serviceType}>{saving ? 'Submitting…' : 'Submit Claim'}</Button>
             </div>
           </form>
         </CardContent>

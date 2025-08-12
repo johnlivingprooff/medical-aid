@@ -4,40 +4,109 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
+import type { SchemeCategory, BenefitType, SchemeBenefit } from '@/types/models'
 
-type Props = { open: boolean; onOpenChange: (v: boolean) => void }
+type Props = { open: boolean; onOpenChange: (v: boolean) => void; schemeId?: number }
 
-type Scheme = { id: number; name: string; description?: string }
-
-export function ManageSchemesModal({ open, onOpenChange }: Props) {
-  const [schemes, setSchemes] = useState<Scheme[]>([])
+export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function load() {
-    const resp = await api.get<any>('/api/schemes/categories/')
-    setSchemes(resp.results ?? resp)
-  }
+  const [currentScheme, setCurrentScheme] = useState<SchemeCategory | null>(null)
+  const [benefits, setBenefits] = useState<SchemeBenefit[]>([])
 
-  useEffect(() => { if (open) { load().catch(() => {}) } }, [open])
+  const [benefitTypes, setBenefitTypes] = useState<BenefitType[]>([])
+  const [benefitType, setBenefitType] = useState<number | ''>('')
+  const [newTypeName, setNewTypeName] = useState('')
+  const [coverageAmount, setCoverageAmount] = useState('')
+  const [coverageLimitCount, setCoverageLimitCount] = useState('')
+  const [coveragePeriod, setCoveragePeriod] = useState('YEARLY')
+  const [savingBenefit, setSavingBenefit] = useState(false)
+  const [benefitError, setBenefitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    // reset state when opened
+    setName('')
+    setDescription('')
+    setCurrentScheme(null)
+    setBenefits([])
+    setBenefitType('')
+    setNewTypeName('')
+    setCoverageAmount('')
+    setCoverageLimitCount('')
+    setCoveragePeriod('YEARLY')
+    setError(null)
+    setBenefitError(null)
+    // load benefit types
+    api.get<BenefitType[]>('/api/schemes/benefit-types/')
+      .then((resp: any) => setBenefitTypes(resp.results ?? resp))
+      .catch(() => setBenefitTypes([]))
+
+    // if a schemeId is provided, pre-load that scheme and its benefits
+    if (schemeId) {
+      api.get<any>(`/api/schemes/categories/${schemeId}/`)
+        .then((data) => {
+          setCurrentScheme(data as SchemeCategory)
+          setName(data.name ?? '')
+          setDescription(data.description ?? '')
+          setBenefits((data.benefits ?? []) as SchemeBenefit[])
+        })
+        .catch((e: any) => setError(e.message || 'Failed to load scheme'))
+    }
+  }, [open, schemeId])
 
   async function addScheme(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
+    if (currentScheme) return
+    setCreating(true)
     setError(null)
     try {
-      const created = await api.post<Scheme>('/api/schemes/categories/', { name, description })
-      setSchemes([created, ...schemes])
-      setName(''); setDescription('')
+      const created = await api.post<SchemeCategory>('/api/schemes/categories/', { name, description })
+      setCurrentScheme(created)
     } catch (e: any) {
       setError(e.message || 'Failed to add scheme')
-    } finally { setLoading(false) }
+    } finally { setCreating(false) }
   }
 
-  async function addBenefit(schemeId: number, payload: any) {
-    await api.post('/api/schemes/benefits/', { ...payload, scheme: schemeId })
+  async function ensureBenefitType(): Promise<number> {
+    if (benefitType) return benefitType as number
+    if (!newTypeName.trim()) throw new Error('Select a benefit type or enter a new one')
+    const created = await api.post<BenefitType>('/api/schemes/benefit-types/', { name: newTypeName.trim() })
+    // update list and select it
+    setBenefitTypes([created, ...benefitTypes])
+    setNewTypeName('')
+    setBenefitType(created.id)
+    return created.id
+  }
+
+  async function addBenefit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!currentScheme) return
+    setSavingBenefit(true)
+    setBenefitError(null)
+    try {
+      const btId = await ensureBenefitType()
+      await api.post('/api/schemes/benefits/', {
+        scheme: currentScheme.id,
+        benefit_type: btId,
+        coverage_amount: coverageAmount ? Number(coverageAmount) : null,
+        coverage_limit_count: coverageLimitCount ? Number(coverageLimitCount) : null,
+        coverage_period: coveragePeriod,
+      })
+      // refresh scheme to get benefits list
+      const fresh = await api.get<any>(`/api/schemes/categories/${currentScheme.id}/`)
+      setBenefits((fresh.benefits ?? []) as SchemeBenefit[])
+      // reset fields for next add
+      setBenefitType('')
+      setCoverageAmount('')
+      setCoverageLimitCount('')
+      setCoveragePeriod('YEARLY')
+    } catch (e: any) {
+      setBenefitError(e.message || 'Failed to add benefit')
+    } finally { setSavingBenefit(false) }
   }
 
   if (!open) return null
@@ -49,90 +118,137 @@ export function ManageSchemesModal({ open, onOpenChange }: Props) {
           <form onSubmit={addScheme} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-2 sm:col-span-1">
               <Label htmlFor="name">Scheme Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!!currentScheme} />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="desc">Description</Label>
-              <Input id="desc" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <Input id="desc" value={description} onChange={(e) => setDescription(e.target.value)} disabled={!!currentScheme} />
             </div>
             <div className="sm:col-span-3 flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
-              <Button type="submit" disabled={loading}>{loading ? 'Adding…' : 'Add Scheme'}</Button>
+              {!currentScheme && (
+                <Button type="submit" disabled={creating}>{creating ? 'Creating…' : 'Create Scheme'}</Button>
+              )}
             </div>
             {error && <div className="sm:col-span-3 text-sm text-destructive">{error}</div>}
           </form>
 
-          <div className="space-y-4">
-            {schemes.map((s) => (
-              <SchemeRow key={s.id} scheme={s} onAddBenefit={(payload) => addBenefit(s.id, payload)} />
-            ))}
-          </div>
+          {currentScheme && (
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">Adding benefits to <span className="font-medium text-foreground">{currentScheme.name}</span></div>
+
+              <form onSubmit={addBenefit} className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+                <div className="space-y-1">
+                  <Label>Benefit</Label>
+                    
+                  <select
+                    className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                    value={benefitType === '' ? (newTypeName ? 'new' : '') : benefitType}
+                    onChange={(e) => {
+                      if (e.target.value === 'new') {
+                        setBenefitType('');
+                      } else {
+                        setBenefitType(e.target.value ? Number(e.target.value) : '');
+                        setNewTypeName('');
+                      }
+                    }}
+                  >
+                    <option value="">Select benefit type…</option>
+                    {benefitTypes.map((bt) => (
+                      <option key={bt.id} value={bt.id}>
+                        {bt.name}
+                      </option>
+                    ))}
+                    <option value="new">+ Add new benefit type…</option>
+                  </select>
+                  {benefitType === '' && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <div className="relative">
+                        <Input
+                          placeholder="Enter new type name"
+                          value={newTypeName}
+                          onChange={(e) => setNewTypeName(e.target.value)}
+                          style={{
+                            width: `${Math.max(12, newTypeName.length * 0.75 + 2)}ch`,
+                            minWidth: '12ch',
+                            maxWidth: '100%',
+                            transition: 'width 0.2s',
+                          }}
+                        />
+                        {/* Hidden span for accurate width calculation */}
+                        <span
+                          style={{
+                            position: 'absolute',
+                            visibility: 'hidden',
+                            whiteSpace: 'pre',
+                            fontSize: 'inherit',
+                            fontFamily: 'inherit',
+                            padding: 0,
+                            margin: 0,
+                          }}
+                          aria-hidden="true"
+                        >
+                          {newTypeName || 'Enter new type name'}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={async () => {
+                          try {
+                            await ensureBenefitType();
+                          } catch (e) {}
+                        }}
+                        disabled={!newTypeName.trim()}
+                      >
+                        Add Benefit Type
+                      </Button>
+                    </div>
+                  )}
+
+
+                </div>
+                <div className="space-y-1">
+                  <Label>Amount (MWK)</Label>
+                  <Input value={coverageAmount} onChange={(e) => setCoverageAmount(e.target.value)} placeholder="e.g. 500000" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Limit count</Label>
+                  <Input value={coverageLimitCount} onChange={(e) => setCoverageLimitCount(e.target.value)} placeholder="e.g. 12" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Period</Label>
+                  <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={coveragePeriod} onChange={(e) => setCoveragePeriod(e.target.value)}>
+                    <option value="PER_VISIT">Per Visit</option>
+                    <option value="MONTHLY">Monthly</option>
+                    <option value="YEARLY">Yearly</option>
+                  </select>
+                </div>
+                <div className="flex items-end justify-end gap-2">
+                  <Button type="submit" disabled={savingBenefit}>{savingBenefit ? 'Adding…' : 'Add Benefit'}</Button>
+                </div>
+                {benefitError && <div className="sm:col-span-5 text-sm text-destructive">{benefitError}</div>}
+              </form>
+
+              {benefits.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Benefits added</div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {benefits.map(b => (
+                      <div key={b.id} className="rounded border p-2 text-sm flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{b.benefit_type_detail?.name}</div>
+                          <div className="text-xs text-muted-foreground">{b.coverage_period} • {b.coverage_limit_count ?? 'No count limit'} • {b.coverage_amount != null ? `${b.coverage_amount} MWK` : 'No amount limit'}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
-    </div>
-  )
-}
-
-function SchemeRow({ scheme, onAddBenefit }: { scheme: Scheme; onAddBenefit: (payload: any) => Promise<void> }) {
-  const [benefitType, setBenefitType] = useState('CONSULTATION')
-  const [coverageAmount, setCoverageAmount] = useState('')
-  const [coverageLimitCount, setCoverageLimitCount] = useState('')
-  const [coveragePeriod, setCoveragePeriod] = useState('YEARLY')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    setError(null)
-    try {
-      await onAddBenefit({
-        benefit_type: benefitType,
-        coverage_amount: coverageAmount ? Number(coverageAmount) : null,
-        coverage_limit_count: coverageLimitCount ? Number(coverageLimitCount) : null,
-        coverage_period: coveragePeriod,
-      })
-      setBenefitType('CONSULTATION'); setCoverageAmount(''); setCoverageLimitCount(''); setCoveragePeriod('YEARLY')
-    } catch (e: any) {
-      setError(e.message || 'Failed to add benefit')
-    } finally { setSaving(false) }
-  }
-
-  return (
-    <div className="rounded-md border p-4">
-      <div className="mb-3 text-sm font-medium">{scheme.name}</div>
-      <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-        <div className="space-y-1">
-          <Label>Benefit</Label>
-          <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={benefitType} onChange={(e) => setBenefitType(e.target.value)}>
-            <option value="CONSULTATION">Consultation</option>
-            <option value="LAB">Laboratory</option>
-            <option value="PHARMACY">Pharmacy</option>
-            <option value="INPATIENT">Inpatient</option>
-            <option value="IMAGING">Imaging</option>
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label>Amount (MWK)</Label>
-          <Input value={coverageAmount} onChange={(e) => setCoverageAmount(e.target.value)} placeholder="e.g. 500000" />
-        </div>
-        <div className="space-y-1">
-          <Label>Limit count</Label>
-          <Input value={coverageLimitCount} onChange={(e) => setCoverageLimitCount(e.target.value)} placeholder="e.g. 12" />
-        </div>
-        <div className="space-y-1">
-          <Label>Period</Label>
-          <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={coveragePeriod} onChange={(e) => setCoveragePeriod(e.target.value)}>
-            <option value="PER_VISIT">Per Visit</option>
-            <option value="MONTHLY">Monthly</option>
-            <option value="YEARLY">Yearly</option>
-          </select>
-        </div>
-        <div className="flex items-end justify-end gap-2">
-          <Button type="submit" disabled={saving}>{saving ? 'Adding…' : 'Add Benefit'}</Button>
-        </div>
-        {error && <div className="sm:col-span-5 text-sm text-destructive">{error}</div>}
-      </form>
     </div>
   )
 }

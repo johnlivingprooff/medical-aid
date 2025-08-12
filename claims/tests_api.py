@@ -1,7 +1,7 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
-from schemes.models import SchemeCategory, SchemeBenefit
+from schemes.models import SchemeCategory, SchemeBenefit, BenefitType
 from claims.models import Patient, Claim, Invoice
 
 
@@ -16,9 +16,10 @@ class ClaimsWorkflowTests(APITestCase):
         self.patient_user = User.objects.create_user(username='pat', password='pat', role='PATIENT')
         # scheme + benefits
         self.scheme = SchemeCategory.objects.create(name='Basic', description='')
+        self.bt_consult, _ = BenefitType.objects.get_or_create(name='CONSULTATION')
         SchemeBenefit.objects.create(
             scheme=self.scheme,
-            benefit_type=SchemeBenefit.BenefitType.CONSULTATION,
+            benefit_type=self.bt_consult,
             coverage_amount=100.0,
             coverage_limit_count=5,
             coverage_period=SchemeBenefit.CoveragePeriod.YEARLY,
@@ -41,7 +42,7 @@ class ClaimsWorkflowTests(APITestCase):
         self.auth(self.provider)
         payload = {
             'patient': self.patient.id,
-            'service_type': SchemeBenefit.BenefitType.CONSULTATION,
+            'service_type': self.bt_consult.id,
             'cost': '30.00',
             'notes': 'checkup',
         }
@@ -58,7 +59,7 @@ class ClaimsWorkflowTests(APITestCase):
         self.auth(self.provider)
         self.client.post('/api/claims/', {
             'patient': self.patient.id,
-            'service_type': SchemeBenefit.BenefitType.CONSULTATION,
+            'service_type': self.bt_consult.id,
             'cost': '20.00'
         }, format='json')
         # list as patient
@@ -79,7 +80,7 @@ class ClaimsWorkflowTests(APITestCase):
         self.auth(self.provider)
         r = self.client.post('/api/claims/', {
             'patient': self.patient.id,
-            'service_type': SchemeBenefit.BenefitType.CONSULTATION,
+            'service_type': self.bt_consult.id,
             'cost': '15.00'
         }, format='json')
         invoice_id = Invoice.objects.first().id
@@ -97,7 +98,7 @@ class ClaimsWorkflowTests(APITestCase):
         self.auth(self.provider)
         self.client.post('/api/claims/', {
             'patient': self.patient.id,
-            'service_type': SchemeBenefit.BenefitType.CONSULTATION,
+            'service_type': self.bt_consult.id,
             'cost': '40.00'
         }, format='json')
         # check coverage balance

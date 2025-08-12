@@ -4,7 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 
-from schemes.models import SchemeCategory, SchemeBenefit
+from schemes.models import SchemeCategory, SchemeBenefit, BenefitType
 from claims.models import Patient, Claim, Invoice
 
 
@@ -38,20 +38,25 @@ class Command(BaseCommand):
         vip, _ = SchemeCategory.objects.get_or_create(name='VIP', defaults={'description': 'VIP scheme'})
         std, _ = SchemeCategory.objects.get_or_create(name='Standard', defaults={'description': 'Standard scheme'})
 
+        consult, _ = BenefitType.objects.get_or_create(name='CONSULTATION')
+        lab, _ = BenefitType.objects.get_or_create(name='LAB')
+        pharmacy, _ = BenefitType.objects.get_or_create(name='PHARMACY')
+        imaging, _ = BenefitType.objects.get_or_create(name='IMAGING')
+
         SchemeBenefit.objects.get_or_create(
             scheme=vip,
-            benefit_type=SchemeBenefit.BenefitType.CONSULTATION,
-            defaults={'coverage_amount': Decimal('500.00'), 'coverage_period': SchemeBenefit.CoveragePeriod.YEARLY},
+            benefit_type=consult,
+            defaults={'coverage_amount': Decimal('500.00'), 'coverage_limit_count': 1, 'coverage_period': SchemeBenefit.CoveragePeriod.YEARLY},
         )
         SchemeBenefit.objects.get_or_create(
             scheme=vip,
-            benefit_type=SchemeBenefit.BenefitType.PHARMACY,
-            defaults={'coverage_amount': Decimal('300.00'), 'coverage_period': SchemeBenefit.CoveragePeriod.MONTHLY},
+            benefit_type=pharmacy,
+            defaults={'coverage_amount': Decimal('300.00'), 'coverage_limit_count': 12, 'coverage_period': SchemeBenefit.CoveragePeriod.MONTHLY},
         )
         SchemeBenefit.objects.get_or_create(
             scheme=std,
-            benefit_type=SchemeBenefit.BenefitType.CONSULTATION,
-            defaults={'coverage_amount': Decimal('200.00'), 'coverage_period': SchemeBenefit.CoveragePeriod.YEARLY},
+            benefit_type=consult,
+            defaults={'coverage_amount': Decimal('200.00'), 'coverage_limit_count': 1, 'coverage_period': SchemeBenefit.CoveragePeriod.YEARLY},
         )
 
         patient, _ = Patient.objects.get_or_create(
@@ -66,7 +71,7 @@ class Command(BaseCommand):
             c1 = Claim.objects.create(
                 patient=patient,
                 provider=provider,
-                service_type=SchemeBenefit.BenefitType.CONSULTATION,
+                service_type=consult,
                 cost=Decimal('150.00'),
                 date_submitted=now - timedelta(days=5),
                 status=Claim.Status.APPROVED,
@@ -80,7 +85,7 @@ class Command(BaseCommand):
             Claim.objects.create(
                 patient=patient,
                 provider=provider,
-                service_type=SchemeBenefit.BenefitType.PHARMACY,
+                service_type=pharmacy,
                 cost=Decimal('75.00'),
                 date_submitted=now - timedelta(days=1),
                 status=Claim.Status.PENDING,
@@ -91,7 +96,7 @@ class Command(BaseCommand):
             Claim.objects.create(
                 patient=patient,
                 provider=provider,
-                service_type=SchemeBenefit.BenefitType.LAB,
+                service_type=lab,
                 cost=Decimal('300.00'),
                 date_submitted=now - timedelta(days=2),
                 status=Claim.Status.REJECTED,
@@ -102,7 +107,7 @@ class Command(BaseCommand):
             c4 = Claim.objects.create(
                 patient=patient,
                 provider=provider,
-                service_type=SchemeBenefit.BenefitType.IMAGING,
+                service_type=imaging,
                 cost=Decimal('1200.00'),
                 date_submitted=now - timedelta(days=10),
                 status=Claim.Status.APPROVED,
@@ -111,3 +116,14 @@ class Command(BaseCommand):
             Invoice.objects.create(claim=c4, amount=c4.cost)  # defaults to PENDING
 
         self.stdout.write(self.style.SUCCESS('Seed data created/verified.'))
+        # Recompute scheme prices after seeding benefits
+        from django.db.models import F, Sum
+        for scheme in SchemeCategory.objects.all():
+            total = (
+                SchemeBenefit.objects.filter(scheme=scheme)
+                .annotate(final=F('coverage_amount') * F('coverage_limit_count'))
+                .aggregate(total=Sum('final'))['total'] or 0
+            )
+            if scheme.price != total:
+                scheme.price = total
+                scheme.save(update_fields=['price'])

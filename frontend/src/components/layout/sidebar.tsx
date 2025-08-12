@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { 
   LayoutDashboard, FileCheck2, BadgePercent, Users2, Building2, BarChart3, FileText, Bell, Settings, ShieldCheck 
 } from 'lucide-react'
+import logo from '@/assets/icon.ico'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,18 +18,29 @@ const nav = [
   { to: '/admin', label: 'Admin', icon: ShieldCheck },
 ]
 
+import { useAuth } from '@/components/auth/auth-context'
+
 export function Sidebar() {
+  const { user } = useAuth()
+  const role = user?.role || 'GUEST'
+  const allowed = new Set<string>(
+    role === 'ADMIN' ? nav.map(n => n.to) :
+  role === 'PROVIDER' ? ['/', '/claims', '/providers', '/alerts'] :
+  role === 'PATIENT' ? ['/', '/claims'] :
+    []
+  )
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-card/50 shadow-sm md:block">
       <div className="flex h-14 items-center gap-2 px-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div>
+        {/* <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div> */}
+        <img src={logo} alt="Alo-Medical" style={{ width: 40 }} />
         <div>
           <div className="text-sm font-semibold leading-5">Alo‑Medical</div>
           <div className="text-xs text-muted-foreground leading-4">Med‑Aid Admin</div>
         </div>
       </div>
       <nav className="mt-2 flex flex-col gap-1 px-2">
-        {nav.map((item) => (
+  {nav.filter(item => allowed.has(item.to)).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

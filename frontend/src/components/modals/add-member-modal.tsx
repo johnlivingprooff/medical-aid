@@ -9,6 +9,10 @@ type Props = { open: boolean; onOpenChange: (v: boolean) => void }
 
 export function AddMemberModal({ open, onOpenChange }: Props) {
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [password, setPassword] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [gender, setGender] = useState<'M' | 'F' | 'O' | ''>('')
   const [scheme, setScheme] = useState<number | ''>('')
@@ -28,10 +32,16 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
     setError(null)
     setLoading(true)
     try {
-      // Find user by username
-      const userResp = await api.get<any>(`/api/accounts/?search=${encodeURIComponent(username)}` as any)
-      const user = (userResp.results ?? []).find((u: any) => u.username === username)
-      if (!user) throw new Error('User not found. Create user first.')
+      // Create the user account directly via register endpoint with PATIENT role
+      const user = await api.post<any>('/api/accounts/register/', {
+        username,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        role: 'PATIENT',
+        password: password || Math.random().toString(36).slice(2, 10) + '!aA1',
+      }, { noAuth: true })
+      // Create patient profile
       await api.post('/api/patients/', {
         user: user.id,
         date_of_birth: dateOfBirth,
@@ -40,7 +50,7 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
         diagnoses: '', investigations: '', treatments: '',
       })
       onOpenChange(false)
-      setUsername(''); setDateOfBirth(''); setGender(''); setScheme('')
+      setUsername(''); setEmail(''); setFirstName(''); setLastName(''); setPassword(''); setDateOfBirth(''); setGender(''); setScheme('')
     } catch (err: any) {
       setError(err.message || 'Failed to add member')
     } finally {
@@ -55,9 +65,29 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
         <CardHeader><CardTitle>Add Member</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={submit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="first">First name</Label>
+                <Input id="first" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last">Last name</Label>
+                <Input id="last" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="username">Existing Username</Label>
-              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <Label htmlFor="password">Password (optional)</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Auto-generated if empty" />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">

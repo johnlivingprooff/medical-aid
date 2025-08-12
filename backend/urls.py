@@ -33,7 +33,7 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     path('api/schemes/', include('schemes.urls')),
     path('api/claims/', include('claims.urls')),
-    path('api/patients/', include('claims.urls_patients')),
+    path('api/patients/', include('claims.urls_patients')),  # Main patient endpoints
     path('api/invoices/', include('claims.urls_invoices')),
     path('api/core/', include('core.urls')),
     # Root-level reports and alerts

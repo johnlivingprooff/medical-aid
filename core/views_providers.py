@@ -23,11 +23,11 @@ class ProvidersAnalyticsView(APIView):
 
     @extend_schema(responses={200: OpenApiResponse(description='Providers ranking and KPIs')})
     def get(self, request):
-        # Aggregate per provider
+        # Aggregate per provider, including providers with zero claims
         claims = Claim.objects.select_related('provider')
 
         totals = (
-            claims.values('provider_id', 'provider__username')
+            claims.values('provider_id')
             .annotate(
                 total_claims=Count('id'),
                 approved_claims=Count('id', filter=Q(status=Claim.Status.APPROVED)),
@@ -38,6 +38,10 @@ class ProvidersAnalyticsView(APIView):
                 pending_amount=Sum('cost', filter=Q(status=Claim.Status.PENDING)),
             )
         )
+        totals_map = {row['provider_id']: row for row in totals}
+
+        # All providers
+        providers = list(User.objects.filter(role='PROVIDER').values('id', 'username'))
 
         inv = (
             Invoice.objects.annotate(
@@ -51,23 +55,24 @@ class ProvidersAnalyticsView(APIView):
         avg_proc_map = {row['claim__provider_id']: row['avg_proc'] for row in inv}
 
         results = []
-        for row in totals:
-            prov_id = row['provider_id']
-            total = row['total_claims'] or 0
-            approved = row['approved_claims'] or 0
+        for p in providers:
+            prov_id = p['id']
+            stats = totals_map.get(prov_id, {})
+            total = stats.get('total_claims') or 0
+            approved = stats.get('approved_claims') or 0
             approval_rate = (approved / total) if total else 0.0
             avg_proc = avg_proc_map.get(prov_id)
             avg_days = (avg_proc.total_seconds() / 86400.0) if avg_proc else 0.0
             results.append({
                 'provider_id': prov_id,
-                'provider': row['provider__username'],
+                'provider': p['username'],
                 'total_claims': total,
                 'approved_claims': approved,
-                'rejected_claims': row['rejected_claims'] or 0,
-                'pending_claims': row['pending_claims'] or 0,
-                'total_amount': float(row['total_amount'] or 0),
-                'approved_amount': float(row['approved_amount'] or 0),
-                'pending_amount': float(row['pending_amount'] or 0),
+                'rejected_claims': stats.get('rejected_claims') or 0,
+                'pending_claims': stats.get('pending_claims') or 0,
+                'total_amount': float(stats.get('total_amount') or 0),
+                'approved_amount': float(stats.get('approved_amount') or 0),
+                'pending_amount': float(stats.get('pending_amount') or 0),
                 'approval_rate': approval_rate,
                 'avg_processing_days': round(avg_days, 2),
             })
