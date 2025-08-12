@@ -4,7 +4,7 @@ import { QuickActions } from '@/components/layout/quick-actions'
 import { BarChart3, Clock3, DollarSign, Users2, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useEffect, useState } from 'react'
-import { getActivityFeed, getDashboardStats } from '@/lib/api'
+import { getActivityFeed, getDashboardStats, api } from '@/lib/api'
 import type { ActivityFeed, DashboardStats } from '@/types/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/currency'
@@ -35,13 +35,24 @@ export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [activity, setActivity] = useState<ActivityFeed | null>(null)
+  const [alerts, setAlerts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
-    Promise.all([getDashboardStats(), getActivityFeed()])
-      .then(([s, a]) => { if (!mounted) return; setStats(s); setActivity(a); })
+    const fetchAlerts = async () => {
+      try {
+        const response = await api.get<{ results: any[] }>('/api/alerts/')
+        return response.results.slice(0, 5) // Show only 5 most recent
+      } catch (error) {
+        console.error('Error fetching alerts:', error)
+        return []
+      }
+    }
+
+    Promise.all([getDashboardStats(), getActivityFeed(), fetchAlerts()])
+      .then(([s, a, alerts]) => { if (!mounted) return; setStats(s); setActivity(a); setAlerts(alerts); })
       .catch((e) => { if (!mounted) return; setError(e.message || 'Failed to load'); })
       .finally(() => { if (!mounted) return; setLoading(false); })
     return () => { mounted = false }
@@ -145,48 +156,46 @@ export default function Dashboard() {
               <CardTitle>Real‑Time Alerts</CardTitle>
               <CardDescription>Live operational signals</CardDescription>
             </div>
-            <Badge variant="warning">3</Badge>
+            <Badge variant="warning">{alerts.length}</Badge>
           </CardHeader>
           <CardContent>
             <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 bg-card px-4 py-2 text-xs text-muted-foreground">Newest first</div>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3">
-                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-warning" />
-                <div>
-                  <div className="font-medium">Member used 95% outpatient benefits</div>
-                  <div className="text-xs text-muted-foreground">John Banda • 15m ago</div>
-                  <div className="mt-2 flex gap-2 text-xs">
-                    <button className="text-accent">View Member</button>
-                    <span className="text-muted-foreground">•</span>
-                    <button className="text-destructive">Flag Fraud</button>
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-status-rejected" />
-                <div>
-                  <div className="font-medium">Duplicate claims detected from CityCare Pharmacy</div>
-                  <div className="text-xs text-muted-foreground">32m ago</div>
-                  <div className="mt-2 flex gap-2 text-xs">
-                    <button className="text-accent">View Claim</button>
-                    <span className="text-muted-foreground">•</span>
-                    <button className="text-destructive">Flag Fraud</button>
-                  </div>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-info" />
-                <div>
-                  <div className="font-medium">5 VVIP members reached limits</div>
-                  <div className="text-xs text-muted-foreground">1h ago</div>
-                  <div className="mt-2 flex gap-2 text-xs">
-                    <button className="text-accent">Review</button>
-                    <span className="text-muted-foreground">•</span>
-                    <button className="text-accent">Notify</button>
-                  </div>
-                </div>
-              </li>
-            </ul>
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : alerts.length === 0 ? (
+              <div className="text-center text-muted-foreground py-4">No alerts to display</div>
+            ) : (
+              <ul className="space-y-3 text-sm">
+                {alerts.map((alert) => (
+                  <li key={alert.id} className="flex items-start gap-3">
+                    <span className={`mt-1 h-2.5 w-2.5 rounded-full ${
+                      alert.severity === 'HIGH' ? 'bg-destructive' :
+                      alert.severity === 'MEDIUM' ? 'bg-warning' : 'bg-info'
+                    }`} />
+                    <div>
+                      <div className="font-medium">{alert.message}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {alert.patient_id && `Patient ID: ${alert.patient_id} • `}
+                        {new Date(alert.created_at).toLocaleString()}
+                      </div>
+                      <div className="mt-2 flex gap-2 text-xs">
+                        <button className="text-accent">View Details</button>
+                        {!alert.is_read && (
+                          <>
+                            <span className="text-muted-foreground">•</span>
+                            <button className="text-accent">Mark Read</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </section>

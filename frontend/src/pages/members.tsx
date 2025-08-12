@@ -24,6 +24,7 @@ export default function Members() {
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [balances, setBalances] = useState<Record<number, number>>({})
   const [editing, setEditing] = useState<{ id: number; first_name?: string; last_name?: string } | null>(null)
+  const [selectedMember, setSelectedMember] = useState<any | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -107,7 +108,16 @@ export default function Members() {
                     <Tr key={i}><Td colSpan={8} className="text-xs text-muted-foreground">Loading…</Td></Tr>
                   ))}
                     {!loading && filtered.map((m) => (
-                    <Tr key={m.id} className="relative">
+                    <Tr 
+                      key={m.id} 
+                      className={`relative cursor-pointer hover:bg-muted/50 ${selectedMember?.id === m.id ? 'bg-muted' : ''}`}
+                      onClick={() => {
+                        setSelectedMember(m)
+                        if (balances[m.id] === undefined) {
+                          loadBalance(m.id)
+                        }
+                      }}
+                    >
                       <Td>{m.user_username}</Td>
                       <Td>{m.member_id}</Td>
                       <Td>{m.scheme_name}</Td>
@@ -149,17 +159,60 @@ export default function Members() {
             <CardTitle className="text-base">Member Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <div>
-              <div className="font-medium">John Banda</div>
-              <div className="text-muted-foreground">MBR-1001 • VIP • Active</div>
-            </div>
-            <div>
-              <div className="mb-1 text-xs text-muted-foreground">Benefit balances</div>
-              <div className="mb-2 h-2 rounded bg-muted"><div className="h-2 rounded bg-accent" style={{ width: '64%' }} /></div>
-              <div className="mb-2 h-2 rounded bg-muted"><div className="h-2 rounded bg-success" style={{ width: '42%' }} /></div>
-              <div className="mb-2 h-2 rounded bg-muted"><div className="h-2 rounded bg-warning" style={{ width: '28%' }} /></div>
-            </div>
-            <div className="text-xs text-accent underline">Open full profile</div>
+            {selectedMember ? (
+              <>
+                <div>
+                  <div className="font-medium">
+                    {selectedMember.user?.first_name || selectedMember.user?.last_name 
+                      ? `${selectedMember.user.first_name} ${selectedMember.user.last_name}`.trim()
+                      : selectedMember.user?.username || 'Unknown Member'
+                    }
+                  </div>
+                  <div className="text-muted-foreground">
+                    {selectedMember.member_id ? `${selectedMember.member_id} • ` : ''}
+                    {selectedMember.scheme?.name || 'No Scheme'} • 
+                    <span className={`ml-1 ${
+                      selectedMember.status === 'ACTIVE' ? 'text-success' :
+                      selectedMember.status === 'INACTIVE' ? 'text-muted-foreground' : 'text-warning'
+                    }`}>
+                      {selectedMember.status || 'Unknown'}
+                    </span>
+                  </div>
+                </div>
+                {selectedMember.user?.email && (
+                  <div>
+                    <div className="mb-1 text-xs text-muted-foreground">Contact</div>
+                    <div>{selectedMember.user.email}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="mb-1 text-xs text-muted-foreground">Benefit balance</div>
+                  {balances[selectedMember.id] !== undefined ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span>Available</span>
+                        <span>{formatCurrency(balances[selectedMember.id])}</span>
+                      </div>
+                      <div className="h-2 rounded bg-muted">
+                        <div 
+                          className="h-2 rounded bg-accent" 
+                          style={{ 
+                            width: `${Math.min(100, (balances[selectedMember.id] / 10000) * 100)}%` 
+                          }} 
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">Click to load balance</div>
+                  )}
+                </div>
+                <div className="text-xs text-accent underline cursor-pointer">View full profile</div>
+              </>
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                Click on a member in the table to view their profile
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -39,13 +39,22 @@ class PatientSerializer(serializers.ModelSerializer):
 
     def get_next_renewal(self, obj):
         # Calculate next benefit year start
-        benefit_start = obj.benefit_year_start_date
+        benefit_start = obj.benefit_year_start or obj.enrollment_date
+        if not benefit_start:
+            # If no benefit year start or enrollment date, return None
+            return None
+            
         from django.utils import timezone
         today = timezone.now().date()
-        next_renewal = benefit_start.replace(year=today.year + 1)
-        if benefit_start.replace(year=today.year) > today:
-            next_renewal = benefit_start.replace(year=today.year)
-        return next_renewal
+        
+        # Calculate next renewal date
+        current_year_renewal = benefit_start.replace(year=today.year)
+        if current_year_renewal > today:
+            # This year's renewal hasn't happened yet
+            return current_year_renewal
+        else:
+            # This year's renewal has passed, return next year's
+            return benefit_start.replace(year=today.year + 1)
 
     def update(self, instance: Patient, validated_data):
         # Pop nested user name updates if provided

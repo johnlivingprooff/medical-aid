@@ -49,7 +49,7 @@ class SchemeBenefit(models.Model):
 	network_only = models.BooleanField(default=False, help_text='Only cover in-network providers')
 	
 	is_active = models.BooleanField(default=True)
-	effective_date = models.DateField(auto_now_add=True)
+	effective_date = models.DateField(null=True, blank=True)
 	expiry_date = models.DateField(null=True, blank=True)
 
 	class Meta:

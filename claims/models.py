@@ -31,7 +31,7 @@ class Patient(models.Model):
 	scheme = models.ForeignKey(SchemeCategory, on_delete=models.PROTECT, related_name='patients')
 	
 	# Medical Aid specific fields
-	enrollment_date = models.DateField(auto_now_add=True, help_text="Date of enrollment in the scheme")
+	enrollment_date = models.DateField(null=True, blank=True, help_text="Date of enrollment in the scheme")
 	benefit_year_start = models.DateField(null=True, blank=True, help_text="Custom benefit year start (if different from enrollment)")
 	principal_member = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='dependents')
 	relationship = models.CharField(max_length=20, choices=Relationship.choices, default=Relationship.PRINCIPAL)
@@ -110,7 +110,7 @@ class Claim(models.Model):
 	# Claim details
 	cost = models.DecimalField(max_digits=12, decimal_places=2)
 	date_submitted = models.DateTimeField(default=timezone.now)
-	date_of_service = models.DateField(help_text='Date when the service was provided')
+	date_of_service = models.DateField(null=True, blank=True, help_text='Date when the service was provided')
 	status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
 	priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.NORMAL)
 	

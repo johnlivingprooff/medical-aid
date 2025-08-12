@@ -10,9 +10,12 @@ import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
 import { SubmitClaimModal } from '@/components/modals/submit-claim-modal'
 import { QuickActions } from '@/components/layout/quick-actions'
+import { ClaimActionsMenu } from '@/components/claims/claim-actions-menu'
+import { useAuth } from '@/components/auth/auth-context'
 import type { Claim } from '@/types/models'
 
 export default function Claims() {
+  const { user } = useAuth()
   const [claims, setClaims] = useState<Claim[]>([])
   const [next, setNext] = useState<string | null>(null)
   const [prev, setPrev] = useState<string | null>(null)
@@ -21,18 +24,43 @@ export default function Claims() {
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState({ search: '', status: '' })
   const [showClaim, setShowClaim] = useState(false)
-  // Providers tab data
+  
+  // Data for different tabs based on user role
   const [providersData, setProvidersData] = useState<any[] | null>(null)
   const [providersLoading, setProvidersLoading] = useState(false)
   const [providersError, setProvidersError] = useState<string | null>(null)
-  // Schemes tab data
   const [schemesData, setSchemesData] = useState<any[] | null>(null)
   const [schemesLoading, setSchemesLoading] = useState(false)
   const [schemesError, setSchemesError] = useState<string | null>(null)
-  // Members tab data
   const [membersData, setMembersData] = useState<any[] | null>(null)
   const [membersLoading, setMembersLoading] = useState(false)
   const [membersError, setMembersError] = useState<string | null>(null)
+
+  // Determine what tabs should be shown based on user role
+  const getAvailableTabs = () => {
+    const tabs = [{ value: 'claims', label: 'Claims' }]
+    
+    if (user?.role === 'ADMIN') {
+      tabs.push(
+        { value: 'providers', label: 'Providers' },
+        { value: 'schemes', label: 'Schemes' },
+        { value: 'members', label: 'Members' }
+      )
+    } else if (user?.role === 'PROVIDER') {
+      tabs.push({ value: 'providers', label: 'My Practice' })
+    }
+    // Patients only see claims tab
+    
+    return tabs
+  }
+
+  const handleClaimUpdate = (updatedClaim: Claim) => {
+    setClaims(prevClaims => 
+      prevClaims.map(claim => 
+        claim.id === updatedClaim.id ? updatedClaim : claim
+      )
+    )
+  }
 
 
   useEffect(() => {
@@ -51,7 +79,9 @@ export default function Claims() {
   }, [ordering, filters])
 
   useEffect(() => {
-    // Load providers analytics
+    // Load providers analytics - only for admins and providers
+    if (!user || !['ADMIN', 'PROVIDER'].includes(user.role)) return
+    
     let mounted = true
     setProvidersLoading(true)
     setProvidersError(null)
@@ -60,10 +90,12 @@ export default function Claims() {
       .catch(e => { if (!mounted) return; setProvidersError(e.message || 'Failed to load providers') })
       .finally(() => { if (!mounted) return; setProvidersLoading(false) })
     return () => { mounted = false }
-  }, [])
+  }, [user])
 
   useEffect(() => {
-    // Load schemes overview
+    // Load schemes overview - only for admins
+    if (!user || user.role !== 'ADMIN') return
+    
     let mounted = true
     setSchemesLoading(true)
     setSchemesError(null)
@@ -72,10 +104,12 @@ export default function Claims() {
       .catch(e => { if (!mounted) return; setSchemesError(e.message || 'Failed to load schemes') })
       .finally(() => { if (!mounted) return; setSchemesLoading(false) })
     return () => { mounted = false }
-  }, [])
+  }, [user])
 
   useEffect(() => {
-    // Load members analytics
+    // Load members analytics - only for admins
+    if (!user || user.role !== 'ADMIN') return
+    
     let mounted = true
     setMembersLoading(true)
     setMembersError(null)
@@ -84,7 +118,7 @@ export default function Claims() {
       .catch(e => { if (!mounted) return; setMembersError(e.message || 'Failed to load members') })
       .finally(() => { if (!mounted) return; setMembersLoading(false) })
     return () => { mounted = false }
-  }, [])
+  }, [user])
 
   const filtered = useMemo(() => {
     let list = claims
@@ -96,76 +130,90 @@ export default function Claims() {
     return list
   }, [claims, filters])
 
+  const availableTabs = getAvailableTabs()
+  
+  // If user is not authenticated, show loading or redirect
+  if (!user) {
+    return <div className="flex items-center justify-center h-96">Loading...</div>
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex items-center justify-between">
         <div>
-          <h1>Claims</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Review, filter, and act on claims.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Claims Management</h1>
+          <p className="text-muted-foreground">
+            {user.role === 'PATIENT' && 'View and track your submitted claims'}
+            {user.role === 'PROVIDER' && 'Manage claims submitted to your practice'}
+            {user.role === 'ADMIN' && 'Comprehensive claims management and analytics'}
+          </p>
         </div>
-        <QuickActions />
+        {(user.role === 'PROVIDER' || user.role === 'PATIENT') && (
+          <Button onClick={() => setShowClaim(true)}>Submit Claim</Button>
+        )}
       </div>
 
-      <Tabs defaultValue="claims">
+      <Tabs defaultValue="claims" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="claims">Claims</TabsTrigger>
-          <TabsTrigger value="schemes">Schemes</TabsTrigger>
-          <TabsTrigger value="providers">Providers</TabsTrigger>
-          <TabsTrigger value="members">Members</TabsTrigger>
+          {availableTabs.map(tab => (
+            <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="claims">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Filter</CardTitle>
+              <CardTitle>
+                {user.role === 'PATIENT' && 'My Claims'}
+                {user.role === 'PROVIDER' && 'Claims to Review'}
+                {user.role === 'ADMIN' && 'All Claims'}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-                <Input placeholder="Search (ID, member, service)" value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))} />
-                <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={filters.status} onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}>
-                  <option value="">All statuses</option>
-                  <option value="APPROVED">Approved</option>
+            <CardContent className="space-y-4">
+              {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</div>}
+              <div className="flex items-center gap-4">
+                <Input
+                  placeholder="Search claims..."
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  className="max-w-sm"
+                />
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                  className="rounded border px-3 py-2"
+                >
+                  <option value="">All Statuses</option>
                   <option value="PENDING">Pending</option>
+                  <option value="APPROVED">Approved</option>
                   <option value="REJECTED">Rejected</option>
+                  <option value="INVESTIGATING">Investigating</option>
+                  <option value="REQUIRES_PREAUTH">Requires Pre-auth</option>
                 </select>
-                <div className="col-span-3" />
               </div>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <Badge>last 7 days</Badge>
-                <Badge>last 30 days</Badge>
-                <Badge>last 90 days</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="text-base">Claims Table</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-auto">
+              <div className="border rounded-lg">
                 <Table>
-          <Thead>
+                  <Thead>
                     <Tr>
-            <Th><button onClick={() => setOrdering(ordering === 'id' ? '-id' : 'id')}>Claim ID</button></Th>
-            <Th>Member</Th>
-            <Th>Provider</Th>
-            <Th>Service</Th>
-            <Th><button onClick={() => setOrdering(ordering === 'date_submitted' ? '-date_submitted' : 'date_submitted')}>Date</button></Th>
-            <Th className="text-right"><button onClick={() => setOrdering(ordering === 'cost' ? '-cost' : 'cost')}>Amount</button></Th>
+                      <Th><button onClick={() => setOrdering(ordering === 'id' ? '-id' : 'id')}>Claim ID</button></Th>
+                      <Th>Member</Th>
+                      {user.role === 'ADMIN' && <Th>Provider</Th>}
+                      <Th>Service</Th>
+                      <Th><button onClick={() => setOrdering(ordering === 'date_submitted' ? '-date_submitted' : 'date_submitted')}>Date</button></Th>
+                      <Th className="text-right"><button onClick={() => setOrdering(ordering === 'cost' ? '-cost' : 'cost')}>Amount</button></Th>
                       <Th>Status</Th>
                       <Th></Th>
                     </Tr>
                   </Thead>
                   <Tbody>
                     {loading && Array.from({ length: 8 }).map((_, i) => (
-                      <Tr key={i}><Td colSpan={8} className="text-xs text-muted-foreground">Loading…</Td></Tr>
+                      <Tr key={i}><Td colSpan={user.role === 'ADMIN' ? 8 : 7} className="text-xs text-muted-foreground">Loading…</Td></Tr>
                     ))}
                     {!loading && filtered.map((c) => (
                       <Tr key={c.id}>
                         <Td>#{c.id}</Td>
                         <Td>{c.patient_detail?.user_username}</Td>
-                        <Td>{c.provider_username || `#${c.provider}`}</Td>
+                        {user.role === 'ADMIN' && <Td>{c.provider_username || `#${c.provider}`}</Td>}
                         <Td>{c.service_type_name}</Td>
                         <Td>{new Date(c.date_submitted).toLocaleDateString()}</Td>
                         <Td className="text-right">{formatCurrency(c.cost)}</Td>
@@ -175,21 +223,32 @@ export default function Claims() {
                           </Badge>
                         </Td>
                         <Td>
-                          <Button variant="ghost" className="px-2">⋮</Button>
+                          <ClaimActionsMenu
+                            claim={c}
+                            userRole={user.role}
+                            userId={user.id}
+                            onClaimUpdate={handleClaimUpdate}
+                          />
                         </Td>
                       </Tr>
                     ))}
                   </Tbody>
                 </Table>
               </div>
-              {/* <div className="mt-3 text-sm text-muted-foreground">Hover a row to reveal actions. Select with checkboxes for bulk actions.</div> */}
               <Separator className="my-3" />
               <div className="mt-3 flex items-center justify-end gap-2 text-sm">
                 <button className="rounded border px-2 py-1 disabled:opacity-50" disabled={!prev} onClick={() => prev && api.get<any>(prev).then((r) => { setClaims(r.results ?? r); setNext(r.next ?? null); setPrev(r.previous ?? null) })}>Prev</button>
                 <button className="rounded border px-2 py-1 disabled:opacity-50" disabled={!next} onClick={() => next && api.get<any>(next).then((r) => { setClaims(r.results ?? r); setNext(r.next ?? null); setPrev(r.previous ?? null) })}>Next</button>
               </div>
               {!loading && filtered.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground">Empty state: No claims match filters. <button className="text-accent underline" onClick={() => setShowClaim(true)}>Submit Claim</button></div>
+                <div className="text-center text-sm text-muted-foreground">
+                  {user.role === 'PATIENT' && 'No claims found. '}
+                  {user.role === 'PROVIDER' && 'No claims to review. '}
+                  {user.role === 'ADMIN' && 'No claims match filters. '}
+                  {(user.role === 'PROVIDER' || user.role === 'PATIENT') && (
+                    <button className="text-accent underline" onClick={() => setShowClaim(true)}>Submit Claim</button>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

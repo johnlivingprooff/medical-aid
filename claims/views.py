@@ -212,6 +212,161 @@ class ClaimViewSet(viewsets.ModelViewSet):
 		approved, payable, reason = validate_and_process_claim(temp_claim)
 		return Response({'approved': approved, 'payable': payable, 'reason': reason})
 
+	@action(detail=True, methods=['post'], url_path='approve')
+	def approve_claim(self, request, pk=None):
+		"""Approve a claim - only providers and admins can do this"""
+		claim = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+		
+		# Check permissions - only provider who received the claim or admin can approve
+		if role == 'PROVIDER' and claim.provider != user:
+			return Response({'detail': 'You can only approve claims submitted to you'}, status=status.HTTP_403_FORBIDDEN)
+		elif role not in ['PROVIDER', 'ADMIN']:
+			return Response({'detail': 'Only providers and admins can approve claims'}, status=status.HTTP_403_FORBIDDEN)
+		
+		# Check if claim can be approved
+		if claim.status not in [Claim.Status.PENDING, Claim.Status.INVESTIGATING, Claim.Status.REQUIRES_PREAUTH]:
+			return Response({'detail': f'Cannot approve claim with status: {claim.status}'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Validate claim coverage before approval
+		approved, payable, reason = validate_and_process_claim(claim)
+		if not approved:
+			return Response({
+				'detail': 'Claim validation failed',
+				'reason': reason,
+				'approved': False
+			}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Approve the claim
+		from django.utils import timezone
+		claim.status = Claim.Status.APPROVED
+		claim.coverage_checked = True
+		claim.processed_date = timezone.now()
+		claim.processed_by = user
+		claim.save(update_fields=['status', 'coverage_checked', 'processed_date', 'processed_by'])
+		
+		# Create invoice if approved
+		from decimal import Decimal
+		try:
+			benefit = SchemeBenefit.objects.get(scheme=claim.patient.scheme, benefit_type=claim.service_type)
+			
+			# Calculate patient responsibility components
+			claim_amount = Decimal(str(claim.cost))
+			deductible = min(Decimal(str(benefit.deductible_amount or 0)), claim_amount)
+			after_deductible = claim_amount - deductible
+			
+			copay_fixed = Decimal(str(benefit.copayment_fixed or 0))
+			copay_percentage = Decimal(str(benefit.copayment_percentage or 0))
+			copay_percent_amount = after_deductible * (copay_percentage / 100)
+			total_copay = copay_fixed + copay_percent_amount
+			
+			invoice, created = Invoice.objects.get_or_create(
+				claim=claim,
+				defaults={
+					'amount': payable,
+					'patient_deductible': deductible,
+					'patient_copay': total_copay,
+					'patient_coinsurance': 0
+				}
+			)
+		except SchemeBenefit.DoesNotExist:
+			invoice, created = Invoice.objects.get_or_create(
+				claim=claim,
+				defaults={'amount': payable}
+			)
+		
+		# Emit alerts for low balance and fraud checks
+		try:
+			benefit = SchemeBenefit.objects.get(scheme=claim.patient.scheme, benefit_type=claim.service_type)
+		except SchemeBenefit.DoesNotExist:
+			benefit = None
+		if benefit and benefit.coverage_amount is not None:
+			from django.db.models import Sum
+			approved_qs = Claim.objects.filter(
+				patient=claim.patient,
+				service_type=claim.service_type,
+				status=Claim.Status.APPROVED,
+			)
+			used_amount = float(approved_qs.aggregate(total=Sum("cost"))['total'] or 0.0)
+			remaining_after = float(benefit.coverage_amount) - used_amount
+			remaining_count = None
+			if benefit.coverage_limit_count is not None:
+				remaining_count = max(benefit.coverage_limit_count - approved_qs.count(), 0)
+			emit_low_balance_alerts(claim, benefit, remaining_after, remaining_count)
+		emit_fraud_alert_if_needed(claim)
+		
+		serializer = self.get_serializer(claim)
+		return Response({
+			'detail': 'Claim approved successfully',
+			'claim': serializer.data,
+			'invoice_created': created if 'created' in locals() else False
+		})
+
+	@action(detail=True, methods=['post'], url_path='reject')
+	def reject_claim(self, request, pk=None):
+		"""Reject a claim - only providers and admins can do this"""
+		claim = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+		
+		# Check permissions - only provider who received the claim or admin can reject
+		if role == 'PROVIDER' and claim.provider != user:
+			return Response({'detail': 'You can only reject claims submitted to you'}, status=status.HTTP_403_FORBIDDEN)
+		elif role not in ['PROVIDER', 'ADMIN']:
+			return Response({'detail': 'Only providers and admins can reject claims'}, status=status.HTTP_403_FORBIDDEN)
+		
+		# Check if claim can be rejected
+		if claim.status in [Claim.Status.APPROVED, Claim.Status.REJECTED]:
+			return Response({'detail': f'Cannot reject claim with status: {claim.status}'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Get rejection reason from request
+		rejection_reason = request.data.get('reason', 'No reason provided')
+		
+		# Reject the claim
+		from django.utils import timezone
+		claim.status = Claim.Status.REJECTED
+		claim.coverage_checked = True
+		claim.rejection_reason = rejection_reason
+		claim.rejection_date = timezone.now()
+		claim.processed_by = user
+		claim.save(update_fields=['status', 'coverage_checked', 'rejection_reason', 'rejection_date', 'processed_by'])
+		
+		serializer = self.get_serializer(claim)
+		return Response({
+			'detail': 'Claim rejected successfully',
+			'claim': serializer.data
+		})
+
+	@action(detail=True, methods=['post'], url_path='investigate')
+	def investigate_claim(self, request, pk=None):
+		"""Mark claim for investigation - only providers and admins"""
+		claim = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+		
+		# Check permissions
+		if role == 'PROVIDER' and claim.provider != user:
+			return Response({'detail': 'You can only investigate claims submitted to you'}, status=status.HTTP_403_FORBIDDEN)
+		elif role not in ['PROVIDER', 'ADMIN']:
+			return Response({'detail': 'Only providers and admins can investigate claims'}, status=status.HTTP_403_FORBIDDEN)
+		
+		# Check if claim can be investigated
+		if claim.status not in [Claim.Status.PENDING, Claim.Status.REQUIRES_PREAUTH]:
+			return Response({'detail': f'Cannot investigate claim with status: {claim.status}'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		investigation_notes = request.data.get('notes', 'Under investigation')
+		
+		claim.status = Claim.Status.INVESTIGATING
+		claim.notes = f"{claim.notes}\n\n[Investigation] {investigation_notes}".strip()
+		claim.save(update_fields=['status', 'notes'])
+		
+		serializer = self.get_serializer(claim)
+		return Response({
+			'detail': 'Claim marked for investigation',
+			'claim': serializer.data
+		})
+
 
 class InvoiceViewSet(viewsets.ModelViewSet):
 	queryset = Invoice.objects.select_related('claim', 'claim__patient__user', 'claim__provider').all()
