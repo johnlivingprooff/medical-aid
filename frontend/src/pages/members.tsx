@@ -163,14 +163,14 @@ export default function Members() {
               <>
                 <div>
                   <div className="font-medium">
-                    {selectedMember.user?.first_name || selectedMember.user?.last_name 
-                      ? `${selectedMember.user.first_name} ${selectedMember.user.last_name}`.trim()
-                      : selectedMember.user?.username || 'Unknown Member'
+                    {selectedMember.user_first_name || selectedMember.user_last_name 
+                      ? `${selectedMember.user_first_name || ''} ${selectedMember.user_last_name || ''}`.trim()
+                      : selectedMember.user_username || 'Unknown Member'
                     }
                   </div>
                   <div className="text-muted-foreground">
                     {selectedMember.member_id ? `${selectedMember.member_id} • ` : ''}
-                    {selectedMember.scheme?.name || 'No Scheme'} • 
+                    {selectedMember.scheme_name || 'No Scheme'} • 
                     <span className={`ml-1 ${
                       selectedMember.status === 'ACTIVE' ? 'text-success' :
                       selectedMember.status === 'INACTIVE' ? 'text-muted-foreground' : 'text-warning'
@@ -179,10 +179,10 @@ export default function Members() {
                     </span>
                   </div>
                 </div>
-                {selectedMember.user?.email && (
+                {selectedMember.user_email && (
                   <div>
                     <div className="mb-1 text-xs text-muted-foreground">Contact</div>
-                    <div>{selectedMember.user.email}</div>
+                    <div>{selectedMember.user_email}</div>
                   </div>
                 )}
                 <div>

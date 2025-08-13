@@ -11,6 +11,9 @@ User = get_user_model()
 
 class PatientSerializer(serializers.ModelSerializer):
     user_username = serializers.CharField(source='user.username', read_only=True)
+    user_first_name = serializers.CharField(source='user.first_name', read_only=True)
+    user_last_name = serializers.CharField(source='user.last_name', read_only=True)
+    user_email = serializers.CharField(source='user.email', read_only=True)
     member_id = serializers.CharField(read_only=True)
     user_date_joined = serializers.DateTimeField(source='user.date_joined', read_only=True)
     scheme_name = serializers.CharField(source='scheme.name', read_only=True)
@@ -25,7 +28,8 @@ class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
         fields = [
-            'id', 'member_id', 'user', 'user_username', 'user_date_joined', 'date_of_birth', 'gender', 'status', 
+            'id', 'member_id', 'user', 'user_username', 'user_first_name', 'user_last_name', 'user_email',
+            'user_date_joined', 'date_of_birth', 'gender', 'status', 
             'scheme', 'scheme_name', 'enrollment_date', 'benefit_year_start', 'principal_member', 'principal_member_name',
             'relationship', 'phone', 'emergency_contact', 'emergency_phone', 'last_claim_date', 'next_renewal', 
             'first_name', 'last_name', 'age', 'is_dependent', 'diagnoses', 'investigations', 'treatments'
