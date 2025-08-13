@@ -12,7 +12,23 @@ interface AdminStats {
   total_patients: number
   total_providers: number
   total_claims: number
+  total_schemes: number
   system_health: 'healthy' | 'warning' | 'error'
+  claim_stats: {
+    pending: number
+    approved: number
+    rejected: number
+    processing: number
+    investigating: number
+  }
+  role_breakdown: Record<string, number>
+  patient_stats: {
+    active: number
+    inactive: number
+    suspended: number
+  }
+  recent_claims: number
+  database_status: string
 }
 
 export default function Admin() {
@@ -27,22 +43,12 @@ export default function Admin() {
         setLoading(true)
         setError(null)
         
-        // In a real implementation, you'd have an admin stats endpoint
-        // For now, simulate some admin data
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        const mockStats: AdminStats = {
-          total_users: 25,
-          total_patients: 18,
-          total_providers: 7,
-          total_claims: 342,
-          system_health: 'healthy'
-        }
-        
-        setStats(mockStats)
-      } catch (error) {
+        // Fetch real admin stats from backend
+        const response = await api.get<AdminStats>('/api/core/admin/stats/')
+        setStats(response)
+      } catch (error: any) {
         console.error('Error fetching admin stats:', error)
-        setError('Failed to load admin data')
+        setError(error?.response?.data?.error || error.message || 'Failed to load admin data')
       } finally {
         setLoading(false)
       }
@@ -56,11 +62,37 @@ export default function Admin() {
   const handleResetData = async () => {
     if (window.confirm('Are you sure you want to reset all demo data? This action cannot be undone.')) {
       try {
-        // In a real implementation, you'd call: await api.post('/api/admin/reset-data/')
-        alert('Data reset functionality would be implemented here')
-      } catch (error) {
+        const response = await api.post<{ message: string }>('/api/core/admin/actions/', { action: 'reset_demo_data' })
+        alert(response.message || 'Demo data reset completed successfully')
+        // Refresh stats after reset
+        if (user?.role === 'ADMIN') {
+          const refreshedStats = await api.get<AdminStats>('/api/core/admin/stats/')
+          setStats(refreshedStats)
+        }
+      } catch (error: any) {
         console.error('Error resetting data:', error)
+        alert(error?.response?.data?.error || 'Failed to reset demo data')
       }
+    }
+  }
+
+  const handleExportData = async () => {
+    try {
+      const response = await api.post<{ message: string }>('/api/core/admin/actions/', { action: 'export_data' })
+      alert(response.message || 'Data export completed successfully')
+    } catch (error: any) {
+      console.error('Error exporting data:', error)
+      alert(error?.response?.data?.error || 'Failed to export data')
+    }
+  }
+
+  const handleGenerateReports = async () => {
+    try {
+      const response = await api.post<{ message: string }>('/api/core/admin/actions/', { action: 'generate_reports' })
+      alert(response.message || 'Reports generated successfully')
+    } catch (error: any) {
+      console.error('Error generating reports:', error)
+      alert(error?.response?.data?.error || 'Failed to generate reports')
     }
   }
 
@@ -148,6 +180,52 @@ export default function Admin() {
         )}
       </div>
 
+      {/* Claims Breakdown */}
+      {!loading && stats?.claim_stats && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-yellow-600">{stats.claim_stats.pending}</p>
+                <p className="text-sm text-muted-foreground">Pending</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">{stats.claim_stats.approved}</p>
+                <p className="text-sm text-muted-foreground">Approved</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-600">{stats.claim_stats.rejected}</p>
+                <p className="text-sm text-muted-foreground">Rejected</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{stats.claim_stats.processing}</p>
+                <p className="text-sm text-muted-foreground">Processing</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-orange-600">{stats.claim_stats.investigating}</p>
+                <p className="text-sm text-muted-foreground">Investigating</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* System Health */}
       <Card>
         <CardHeader>
@@ -160,17 +238,32 @@ export default function Admin() {
           {loading ? (
             <Skeleton className="h-8 w-32" />
           ) : (
-            <div className="flex items-center gap-2">
-              <Badge variant={
-                stats?.system_health === 'healthy' ? 'success' :
-                stats?.system_health === 'warning' ? 'warning' : 'destructive'
-              }>
-                {stats?.system_health === 'healthy' ? 'All Systems Operational' :
-                 stats?.system_health === 'warning' ? 'Minor Issues Detected' : 'Critical Issues'}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Last checked: {new Date().toLocaleTimeString()}
-              </span>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge variant={
+                  stats?.system_health === 'healthy' ? 'success' :
+                  stats?.system_health === 'warning' ? 'warning' : 'destructive'
+                }>
+                  {stats?.system_health === 'healthy' ? 'All Systems Operational' :
+                   stats?.system_health === 'warning' ? 'Minor Issues Detected' : 'Critical Issues'}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Last checked: {new Date().toLocaleTimeString()}
+                </span>
+              </div>
+              {stats?.database_status && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Database:</span>
+                  <Badge variant={stats.database_status === 'connected' ? 'success' : 'destructive'}>
+                    {stats.database_status}
+                  </Badge>
+                </div>
+              )}
+              {stats?.recent_claims !== undefined && (
+                <div className="text-sm text-muted-foreground">
+                  Recent activity: {stats.recent_claims} new claims since last login
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -193,14 +286,14 @@ export default function Admin() {
                   <p className="text-sm font-medium">Export System Data</p>
                   <p className="text-xs text-muted-foreground">Generate CSV export of all system data</p>
                 </div>
-                <Button variant="outline" size="sm">Export</Button>
+                <Button variant="outline" size="sm" onClick={handleExportData}>Export</Button>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Generate Reports</p>
                   <p className="text-xs text-muted-foreground">Create comprehensive system reports</p>
                 </div>
-                <Button variant="outline" size="sm">Generate</Button>
+                <Button variant="outline" size="sm" onClick={handleGenerateReports}>Generate</Button>
               </div>
             </div>
           </div>

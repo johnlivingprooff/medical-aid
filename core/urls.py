@@ -5,6 +5,7 @@ from .views_providers import ProvidersAnalyticsView, ProviderDetailAnalyticsView
 from .views_schemes import SchemesOverviewView
 from .views_members import MembersAnalyticsView
 from .views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView
+from .views_admin import AdminStatsView, AdminActionsView
 
 urlpatterns = [
     path('health/', HealthCheckView.as_view(), name='health'),
@@ -21,4 +22,7 @@ urlpatterns = [
     path('analytics/schemes/overview/', SchemesOverviewView.as_view(), name='schemes-overview'),
     # Members analytics
     path('analytics/members/', MembersAnalyticsView.as_view(), name='members-analytics'),
+    # Admin endpoints
+    path('admin/stats/', AdminStatsView.as_view(), name='admin-stats'),
+    path('admin/actions/', AdminActionsView.as_view(), name='admin-actions'),
 ]
