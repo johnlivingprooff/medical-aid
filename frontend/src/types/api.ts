@@ -6,6 +6,7 @@ export type DashboardStats = {
     pending_claim_value: number;
     utilization_rate: number;
     avg_processing_days: number;
+    data_period?: '30_days' | 'all_time' | 'custom';
   };
   status_snapshot: Record<string, { count: number; amount: number }>;
   scheme_utilization: Array<{ patient__scheme__name: string; total_amount: number; total_claims: number }>;

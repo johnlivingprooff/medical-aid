@@ -30,7 +30,7 @@ class SchemeBenefit(models.Model):
 	scheme = models.ForeignKey(SchemeCategory, on_delete=models.CASCADE, related_name='benefits')
 	benefit_type = models.ForeignKey(BenefitType, on_delete=models.CASCADE, related_name='scheme_benefits')
 	coverage_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Maximum coverage amount')
-	coverage_limit_count = models.PositiveIntegerField(null=True, blank=True, help_text='Max number of uses in period')
+	coverage_limit_count = models.PositiveIntegerField(default=1, null=True, blank=True, help_text='Max number of uses in period')
 	coverage_period = models.CharField(max_length=20, choices=CoveragePeriod.choices, default=CoveragePeriod.BENEFIT_YEAR)
 	
 	# Medical Aid specific features
@@ -54,6 +54,12 @@ class SchemeBenefit(models.Model):
 
 	class Meta:
 		unique_together = ('scheme', 'benefit_type')
+
+	def save(self, *args, **kwargs):
+		# Ensure coverage_limit_count has a default value of 1
+		if self.coverage_limit_count is None:
+			self.coverage_limit_count = 1
+		super().save(*args, **kwargs)
 
 	def __str__(self) -> str:  # pragma: no cover
 		return f"{self.scheme.name} - {self.benefit_type}"

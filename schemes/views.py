@@ -99,10 +99,11 @@ class SchemeBenefitViewSet(viewsets.ModelViewSet):
 		self._recalc_scheme_price(scheme_id)
 
 	def _recalc_scheme_price(self, scheme_id: int):
-		from django.db.models import F, Sum
+		from django.db.models import F, Sum, Value
+		from django.db.models.functions import Coalesce
 		total = (
 			SchemeBenefit.objects.filter(scheme_id=scheme_id)
-			.annotate(final=F('coverage_amount') * F('coverage_limit_count'))
+			.annotate(final=F('coverage_amount') * Coalesce(F('coverage_limit_count'), Value(1)))
 			.aggregate(total=Sum('final'))['total']
 			or 0
 		)

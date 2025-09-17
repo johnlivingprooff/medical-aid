@@ -17,6 +17,7 @@ type SchemeOverview = {
   total_claims_30d: number
   utilization_percent: number
   breakdown: Array<{ name: string; percent: number }>
+  price?: number
 }
 
 export default function Schemes() {
@@ -75,7 +76,7 @@ export default function Schemes() {
                 <CardTitle>{s.name}</CardTitle>
                 <Badge variant="info">Utilization {Math.round(s.utilization_percent)}%</Badge>
               </div>
-              <CardDescription>{s.members_count.toLocaleString()} members • Claim value {formatCurrency(s.total_amount_30d || 0)}</CardDescription>
+              <CardDescription>{s.members_count.toLocaleString()} members • Scheme value {formatCurrency(s.price || 0)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {s.breakdown.slice(0,3).map((b, idx) => (

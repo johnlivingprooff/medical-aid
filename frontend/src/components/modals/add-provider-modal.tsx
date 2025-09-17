@@ -54,7 +54,7 @@ export function AddProviderModal({ open, onOpenChange, onSuccess }: Props) {
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader><CardTitle>Add Provider</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[70vh] overflow-y-auto">
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2"><Label>Username</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} required /></div>
             <div className="space-y-2"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>

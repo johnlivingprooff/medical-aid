@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
+import { X } from 'lucide-react'
 import type { SchemeCategory, BenefitType, SchemeBenefit } from '@/types/models'
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; schemeId?: number }
@@ -93,7 +94,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
         scheme: currentScheme.id,
         benefit_type: btId,
         coverage_amount: coverageAmount ? Number(coverageAmount) : null,
-        coverage_limit_count: coverageLimitCount ? Number(coverageLimitCount) : null,
+        coverage_limit_count: coverageLimitCount ? Number(coverageLimitCount) : 1,
         coverage_period: coveragePeriod,
       })
       // refresh scheme to get benefits list
@@ -111,10 +112,20 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
 
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 grid p-4 place-items-center bg-black/40">
       <Card className="w-full max-w-3xl">
-        <CardHeader><CardTitle>Manage Schemes</CardTitle></CardHeader>
-        <CardContent className="space-y-6">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle>Manage Schemes</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 hover:bg-muted"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </CardHeader>
+        <CardContent className="max-h-[70vh] overflow-y-auto space-y-6">
           <form onSubmit={addScheme} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-2 sm:col-span-1">
               <Label htmlFor="name">Scheme Name</Label>
@@ -124,13 +135,13 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
               <Label htmlFor="desc">Description</Label>
               <Input id="desc" value={description} onChange={(e) => setDescription(e.target.value)} disabled={!!currentScheme} />
             </div>
-            <div className="sm:col-span-3 flex justify-end gap-2">
+            <div className="flex justify-end gap-2 sm:col-span-3">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
               {!currentScheme && (
                 <Button type="submit" disabled={creating}>{creating ? 'Creating…' : 'Create Scheme'}</Button>
               )}
             </div>
-            {error && <div className="sm:col-span-3 text-sm text-destructive">{error}</div>}
+            {error && <div className="text-sm sm:col-span-3 text-destructive">{error}</div>}
           </form>
 
           {currentScheme && (
@@ -142,7 +153,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
                   <Label>Benefit</Label>
                     
                   <select
-                    className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                    className="w-full px-3 text-sm border rounded-md h-9 bg-background"
                     value={benefitType === '' ? (newTypeName ? 'new' : '') : benefitType}
                     onChange={(e) => {
                       if (e.target.value === 'new') {
@@ -214,11 +225,11 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
                 </div>
                 <div className="space-y-1">
                   <Label>Limit count</Label>
-                  <Input value={coverageLimitCount} onChange={(e) => setCoverageLimitCount(e.target.value)} placeholder="e.g. 12" />
+                  <Input value={coverageLimitCount} onChange={(e) => setCoverageLimitCount(e.target.value)} placeholder="e.g. 12 (default: 1)" />
                 </div>
                 <div className="space-y-1">
                   <Label>Period</Label>
-                  <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" value={coveragePeriod} onChange={(e) => setCoveragePeriod(e.target.value)}>
+                  <select className="w-full px-3 text-sm border rounded-md h-9 bg-background" value={coveragePeriod} onChange={(e) => setCoveragePeriod(e.target.value)}>
                     <option value="PER_VISIT">Per Visit</option>
                     <option value="MONTHLY">Monthly</option>
                     <option value="YEARLY">Yearly</option>
@@ -227,7 +238,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
                 <div className="flex items-end justify-end gap-2">
                   <Button type="submit" disabled={savingBenefit}>{savingBenefit ? 'Adding…' : 'Add Benefit'}</Button>
                 </div>
-                {benefitError && <div className="sm:col-span-5 text-sm text-destructive">{benefitError}</div>}
+                {benefitError && <div className="text-sm sm:col-span-5 text-destructive">{benefitError}</div>}
               </form>
 
               {benefits.length > 0 && (
@@ -235,7 +246,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
                   <div className="text-sm font-medium">Benefits added</div>
                   <div className="grid grid-cols-1 gap-2">
                     {benefits.map(b => (
-                      <div key={b.id} className="rounded border p-2 text-sm flex items-center justify-between">
+                      <div key={b.id} className="flex items-center justify-between p-2 text-sm border rounded">
                         <div>
                           <div className="font-medium">{b.benefit_type_detail?.name}</div>
                           <div className="text-xs text-muted-foreground">{b.coverage_period} • {b.coverage_limit_count ?? 'No count limit'} • {b.coverage_amount != null ? `${b.coverage_amount} MWK` : 'No amount limit'}</div>

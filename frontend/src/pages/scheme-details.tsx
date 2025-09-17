@@ -5,9 +5,10 @@ import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
 import { Button } from '@/components/ui/button'
 import { ManageSchemesModal } from '@/components/modals/manage-schemes-modal'
+import type { SchemeBenefit } from '@/types/models'
 
 type Member = { id: number; username: string; joined: string; next_renewal: string; amount_spent_12m: number }
-type Scheme = { id: number; name: string; description?: string; price: number; members: Member[] }
+type Scheme = { id: number; name: string; description?: string; price: number; members: Member[]; benefits: SchemeBenefit[] }
 
 export default function SchemeDetails() {
   const { id } = useParams()
@@ -60,6 +61,99 @@ export default function SchemeDetails() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Benefits Breakdown</CardTitle>
+          <CardDescription>Individual benefits and coverage details</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {scheme.benefits?.length ? (
+              <>
+                {/* Total Benefits Summary */}
+                <div className="p-4 border-2 rounded-lg border-primary/20 bg-primary/5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Total Benefits Value</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {formatCurrency(scheme.price || 0)}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground">Active Benefits</div>
+                      <div className="text-lg font-semibold">{scheme.benefits.filter(b => b.is_active).length}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Individual Benefits */}
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {scheme.benefits.map((benefit) => (
+                    <div key={benefit.id} className="p-4 border rounded-lg shadow-sm bg-card">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium">{benefit.benefit_type_detail.name}</h4>
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            benefit.is_active
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                          }`}>
+                            {benefit.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Coverage Amount</span>
+                            <span className="font-medium">
+                              {benefit.coverage_amount ? formatCurrency(benefit.coverage_amount) : 'Unlimited'}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Period</span>
+                            <span className="font-medium">
+                              {benefit.coverage_period.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </div>
+
+                          {benefit.coverage_limit_count && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Limit Count</span>
+                              <span className="font-medium">{benefit.coverage_limit_count}</span>
+                            </div>
+                          )}
+
+                          {benefit.waiting_period_days > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Waiting Period</span>
+                              <span className="font-medium">{benefit.waiting_period_days} days</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="pt-2 border-t">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Effective: {new Date(benefit.effective_date).toLocaleDateString()}</span>
+                            {benefit.expiry_date && (
+                              <span>Expires: {new Date(benefit.expiry_date).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                <div className="text-sm">No benefits configured for this scheme.</div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Members</CardTitle>
           <CardDescription>Consumption based on approved claims in the last 12 months</CardDescription>
         </CardHeader>
@@ -69,12 +163,12 @@ export default function SchemeDetails() {
               const percent = scheme.price ? Math.min(100, Math.round((m.amount_spent_12m / scheme.price) * 100)) : 0
               const bar = percent > 70 ? 'bg-destructive' : 'bg-success'
               return (
-                <div key={m.id} className="rounded border p-3">
+                <div key={m.id} className="p-3 border rounded">
                   <div className="flex items-center justify-between text-sm">
                     <div className="font-medium">{m.username}</div>
                     <div className="text-muted-foreground">{percent}% used</div>
                   </div>
-                  <div className="mt-2 h-2 rounded bg-muted">
+                  <div className="h-2 mt-2 rounded bg-muted">
                     <div className={`h-2 rounded ${bar}`} style={{ width: `${percent}%` }} />
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">Joined {new Date(m.joined).toLocaleDateString()} • Next renewal {new Date(m.next_renewal).toLocaleDateString()}</div>

@@ -55,8 +55,12 @@ export const api = {
 };
 
 // Convenience typed calls for core endpoints
-export async function getDashboardStats() {
-  return api.get<import('../types/api').DashboardStats>('/api/core/dashboard/stats/');
+export async function getDashboardStats(startDate?: string, endDate?: string) {
+  const params = new URLSearchParams();
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+  const query = params.toString();
+  return api.get<import('../types/api').DashboardStats>(`/api/core/dashboard/stats/${query ? `?${query}` : ''}`);
 }
 
 export async function getActivityFeed() {

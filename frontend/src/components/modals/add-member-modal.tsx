@@ -63,7 +63,7 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
       <Card className="w-full max-w-lg">
         <CardHeader><CardTitle>Add Member</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[70vh] overflow-y-auto">
           <form onSubmit={submit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">

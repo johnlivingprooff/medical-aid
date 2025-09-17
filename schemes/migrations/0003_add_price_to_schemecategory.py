@@ -10,11 +10,12 @@ class Migration(migrations.Migration):
     def compute_prices(apps, schema_editor):
         SchemeCategory = apps.get_model('schemes', 'SchemeCategory')
         SchemeBenefit = apps.get_model('schemes', 'SchemeBenefit')
-        from django.db.models import F, Sum
+        from django.db.models import F, Sum, Value
+        from django.db.models.functions import Coalesce
         for scheme in SchemeCategory.objects.all():
             total = (
                 SchemeBenefit.objects.filter(scheme=scheme)
-                .annotate(final=F('coverage_amount') * F('coverage_limit_count'))
+                .annotate(final=F('coverage_amount') * Coalesce(F('coverage_limit_count'), Value(1)))
                 .aggregate(total=Sum('final'))['total'] or 0
             )
             scheme.price = total

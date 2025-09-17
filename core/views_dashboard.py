@@ -19,16 +19,39 @@ class DashboardStatsView(APIView):
 
     @extend_schema(responses={200: OpenApiResponse(description='Dashboard KPIs and snapshots')})
     def get(self, request):
-        since = datetime.utcnow() - timedelta(days=30)
+        # Parse date range from query parameters
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        
+        if start_date_str and end_date_str:
+            try:
+                start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+                data_period = 'custom'
+            except ValueError:
+                # Invalid date format, default to last 30 days
+                start_date = datetime.utcnow() - timedelta(days=30)
+                end_date = datetime.utcnow()
+                data_period = '30_days'
+        else:
+            # Default to last 30 days
+            start_date = datetime.utcnow() - timedelta(days=30)
+            end_date = datetime.utcnow()
+            data_period = '30_days'
+        
         role = getattr(request.user, 'role', None)
-        # Scope queryset based on role
+
+        # Get all claims for comprehensive metrics
         if role == 'PATIENT':
-            claims_period = Claim.objects.filter(date_submitted__gte=since, patient__user=request.user)
+            all_claims = Claim.objects.filter(patient__user=request.user)
+            claims_period = all_claims.filter(date_submitted__gte=start_date, date_submitted__lte=end_date)
         elif role == 'PROVIDER':
-            claims_period = Claim.objects.filter(date_submitted__gte=since, provider=request.user)
+            all_claims = Claim.objects.filter(provider=request.user)
+            claims_period = all_claims.filter(date_submitted__gte=start_date, date_submitted__lte=end_date)
         else:
             # ADMIN and others default to all
-            claims_period = Claim.objects.filter(date_submitted__gte=since)
+            all_claims = Claim.objects.all()
+            claims_period = all_claims.filter(date_submitted__gte=start_date, date_submitted__lte=end_date)
 
         total_claims = claims_period.count()
         approved_amount = claims_period.filter(status=Claim.Status.APPROVED).aggregate(a=Sum('cost'))['a'] or 0
@@ -37,9 +60,11 @@ class DashboardStatsView(APIView):
 
         utilization_rate = float(approved_amount) / float(total_amount) if total_amount else 0.0
 
+        # Processing time calculation
         approved_with_invoice = Invoice.objects.filter(
             claim__status=Claim.Status.APPROVED,
-            claim__date_submitted__gte=since,
+            claim__date_submitted__gte=start_date,
+            claim__date_submitted__lte=end_date,
         ).annotate(
             processing_time=ExpressionWrapper(
                 F('created_at') - F('claim__date_submitted'), output_field=DurationField()
@@ -74,6 +99,7 @@ class DashboardStatsView(APIView):
                 'pending_claim_value': float(pending_amount),
                 'utilization_rate': utilization_rate,
                 'avg_processing_days': round(avg_processing_days, 2),
+                'data_period': data_period,
             },
             'status_snapshot': status_map,
             'scheme_utilization': scheme_utilization,
