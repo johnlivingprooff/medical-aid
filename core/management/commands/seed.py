@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import timedelta, date
@@ -11,14 +12,71 @@ from core.models import SystemSettings
 
 
 class Command(BaseCommand):
-    help = "Seed comprehensive sample data for development aligned with enhanced models"
+    help = "Comprehensive seed command that runs all individual seed commands"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--skip-edi',
+            action='store_true',
+            help='Skip seeding EDI validation rules'
+        )
+        parser.add_argument(
+            '--skip-credentialing',
+            action='store_true',
+            help='Skip seeding credentialing rules'
+        )
+        parser.add_argument(
+            '--skip-notifications',
+            action='store_true',
+            help='Skip seeding notification data'
+        )
+        parser.add_argument(
+            '--basic-only',
+            action='store_true',
+            help='Only seed basic data (users, schemes, patients, claims)'
+        )
 
     def handle(self, *args, **options):
+        self.stdout.write(self.style.SUCCESS('🚀 Starting comprehensive database seeding...'))
+
+        # Run basic data seeding
+        self.seed_basic_data()
+
+        # Run additional seed commands if not skipped
+        if not options['basic_only']:
+            if not options['skip_edi']:
+                self.stdout.write('\n📋 Seeding EDI validation rules...')
+                try:
+                    call_command('seed_edi_rules')
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f'EDI seeding failed: {e}'))
+
+            if not options['skip_credentialing']:
+                self.stdout.write('\n🔐 Seeding credentialing rules...')
+                try:
+                    call_command('seed_credentialing')
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f'Credentialing seeding failed: {e}'))
+
+            if not options['skip_notifications']:
+                self.stdout.write('\n📢 Seeding notification data...')
+                try:
+                    call_command('seed_notifications')
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f'Notification seeding failed: {e}'))
+
+        self.stdout.write(self.style.SUCCESS('\n✅ Database seeding completed successfully!'))
+        self.display_summary()
+
+    def seed_basic_data(self):
+        """Seed the core medical aid data"""
+        self.stdout.write('🏥 Seeding core medical aid data...')
+
         User = get_user_model()
-        
+
         # Create admin user
         admin, created = User.objects.get_or_create(
-            username='admin', 
+            username='admin',
             defaults={
                 'role': 'ADMIN',
                 'email': 'admin@medicalaid.com',
@@ -40,7 +98,7 @@ class Command(BaseCommand):
                 'phone': '+27123456789', 'address': '123 Medical Ave', 'city': 'Cape Town'
             },
             {
-                'username': 'dr_jones', 'first_name': 'Sarah', 'last_name': 'Jones', 
+                'username': 'dr_jones', 'first_name': 'Sarah', 'last_name': 'Jones',
                 'facility_name': 'Family Health Clinic', 'facility_type': 'CLINIC',
                 'phone': '+27123456790', 'address': '456 Health St', 'city': 'Johannesburg'
             },
@@ -70,7 +128,7 @@ class Command(BaseCommand):
             if created or not provider.password:
                 provider.set_password('Password123!')
                 provider.save()
-            
+
             # Create provider profile
             profile, _ = ProviderProfile.objects.get_or_create(
                 user=provider,
@@ -87,10 +145,10 @@ class Command(BaseCommand):
         # Create comprehensive benefit types
         benefit_types_data = [
             'CONSULTATION', 'SPECIALIST', 'EMERGENCY', 'SURGERY',
-            'LAB', 'RADIOLOGY', 'PHARMACY', 'IMAGING', 
+            'LAB', 'RADIOLOGY', 'PHARMACY', 'IMAGING',
             'PHYSIOTHERAPY', 'DENTAL', 'OPTICAL', 'MATERNITY'
         ]
-        
+
         benefit_types = {}
         for bt_name in benefit_types_data:
             bt, _ = BenefitType.objects.get_or_create(name=bt_name)
@@ -104,7 +162,7 @@ class Command(BaseCommand):
                 'price': Decimal('2500.00')
             },
             {
-                'name': 'Standard Plus', 
+                'name': 'Standard Plus',
                 'description': 'Enhanced standard coverage with additional benefits',
                 'price': Decimal('1800.00')
             },
@@ -176,7 +234,7 @@ class Command(BaseCommand):
             scheme = schemes[scheme_name]
             for benefit_data in benefits:
                 bt_name, coverage_amount, coverage_limit_count, coverage_period, deductible, copay_percent, copay_fixed = benefit_data
-                
+
                 SchemeBenefit.objects.get_or_create(
                     scheme=scheme,
                     benefit_type=benefit_types[bt_name],
@@ -236,7 +294,7 @@ class Command(BaseCommand):
 
         patients = []
         principal_members = {}
-        
+
         for patient_data in patients_data:
             # Create user
             patient_user, created = User.objects.get_or_create(
@@ -257,7 +315,7 @@ class Command(BaseCommand):
             if patient_data['relationship'] == 'SPOUSE':
                 # Find principal with same last name
                 principal_member = principal_members.get(patient_data['last_name'])
-            
+
             # Create patient profile
             patient, created = Patient.objects.get_or_create(
                 user=patient_user,
@@ -275,11 +333,11 @@ class Command(BaseCommand):
                     'benefit_year_start': date(date.today().year, 1, 1),  # Benefit year starts Jan 1
                 }
             )
-            
+
             # Store principal members for dependent linking
             if patient_data['relationship'] == 'PRINCIPAL':
                 principal_members[patient_data['last_name']] = patient
-            
+
             patients.append(patient)
 
         # Create comprehensive sample claims with realistic scenarios
@@ -324,7 +382,7 @@ class Command(BaseCommand):
                     'create_invoice': True,
                     'invoice_status': 'PAID'
                 },
-                
+
                 # Standard Plus member claims
                 {
                     'patient': patients[2],  # mary_smith
@@ -348,7 +406,7 @@ class Command(BaseCommand):
                     'diagnosis_code': 'K59.00',
                     'notes': 'Gastrointestinal consultation',
                 },
-                
+
                 # Family Care member claims
                 {
                     'patient': patients[3],  # peter_jones (suspended)
@@ -374,7 +432,7 @@ class Command(BaseCommand):
                     'create_invoice': True,
                     'invoice_status': 'PENDING'
                 },
-                
+
                 # Basic Essential member claims
                 {
                     'patient': patients[5],  # tom_brown
@@ -399,7 +457,7 @@ class Command(BaseCommand):
                     'notes': 'Fever investigation - additional documentation requested',
                     'priority': 'HIGH'
                 },
-                
+
                 # Additional claims for analytics variety
                 {
                     'patient': patients[0],
@@ -454,32 +512,6 @@ class Command(BaseCommand):
                         payment_status=claim_data.get('invoice_status', 'PENDING')
                     )
 
-        self.stdout.write(self.style.SUCCESS('Comprehensive seed data created successfully!'))
-        self.stdout.write(self.style.SUCCESS(f'Created:'))
-        self.stdout.write(f'  - {User.objects.filter(role="ADMIN").count()} Admin(s)')
-        self.stdout.write(f'  - {User.objects.filter(role="PROVIDER").count()} Provider(s)')
-        self.stdout.write(f'  - {User.objects.filter(role="PATIENT").count()} Patient(s)')
-        self.stdout.write(f'  - {ProviderProfile.objects.count()} Provider Profile(s)')
-        self.stdout.write(f'  - {SchemeCategory.objects.count()} Scheme(s)')
-        self.stdout.write(f'  - {BenefitType.objects.count()} Benefit Type(s)')
-        self.stdout.write(f'  - {SchemeBenefit.objects.count()} Scheme Benefit(s)')
-        self.stdout.write(f'  - {Patient.objects.count()} Patient Profile(s)')
-        self.stdout.write(f'  - {Claim.objects.count()} Claim(s)')
-        self.stdout.write(f'  - {Invoice.objects.count()} Invoice(s)')
-        
-        # Recompute scheme prices after seeding benefits
-        from django.db.models import F, Sum
-        for scheme in SchemeCategory.objects.all():
-            total = (
-                SchemeBenefit.objects.filter(scheme=scheme)
-                .annotate(final=F('coverage_amount') * F('coverage_limit_count'))
-                .aggregate(total=Sum('final'))['total'] or 0
-            )
-            if scheme.price != total:
-                scheme.price = total
-                scheme.save(update_fields=['price'])
-                self.stdout.write(f'  - Updated {scheme.name} price to {scheme.price}')
-
         # Seed system settings
         self.stdout.write('\nSeeding system settings...')
         system_settings = [
@@ -514,7 +546,7 @@ class Command(BaseCommand):
                 'description': 'Enable/disable fraud detection system for claims.'
             }
         ]
-        
+
         for setting_data in system_settings:
             setting, created = SystemSettings.objects.get_or_create(
                 key=setting_data['key'],
@@ -530,4 +562,88 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'  - {setting.key} already exists: {setting.value}')
 
-        self.stdout.write('\nSeeding completed successfully!')
+    def display_summary(self):
+        """Display a comprehensive summary of all seeded data"""
+        from django.contrib.auth import get_user_model
+        from schemes.models import SchemeCategory, SchemeBenefit, BenefitType
+        from claims.models import Patient, Claim, Invoice
+        from accounts.models import ProviderProfile
+
+        User = get_user_model()
+
+        self.stdout.write('\n' + '='*60)
+        self.stdout.write(self.style.SUCCESS('📊 DATABASE SEEDING SUMMARY'))
+        self.stdout.write('='*60)
+
+        # User statistics
+        total_users = User.objects.count()
+        admins = User.objects.filter(role='ADMIN').count()
+        providers = User.objects.filter(role='PROVIDER').count()
+        patients = User.objects.filter(role='PATIENT').count()
+
+        self.stdout.write(f'\n👥 USER ACCOUNTS:')
+        self.stdout.write(f'  • Total Users: {total_users}')
+        self.stdout.write(f'  • Administrators: {admins}')
+        self.stdout.write(f'  • Healthcare Providers: {providers}')
+        self.stdout.write(f'  • Patients: {patients}')
+
+        # Provider details
+        provider_profiles = ProviderProfile.objects.count()
+        self.stdout.write(f'\n🏥 PROVIDER PROFILES: {provider_profiles}')
+
+        # Medical schemes
+        schemes = SchemeCategory.objects.count()
+        benefits = SchemeBenefit.objects.count()
+        benefit_types = BenefitType.objects.count()
+
+        self.stdout.write(f'\n💼 MEDICAL SCHEMES:')
+        self.stdout.write(f'  • Scheme Categories: {schemes}')
+        self.stdout.write(f'  • Benefit Types: {benefit_types}')
+        self.stdout.write(f'  • Scheme Benefits: {benefits}')
+
+        # Patient data
+        patient_profiles = Patient.objects.count()
+        active_patients = Patient.objects.filter(status='ACTIVE').count()
+        suspended_patients = Patient.objects.filter(status='SUSPENDED').count()
+
+        self.stdout.write(f'\n👨‍👩‍👧‍👦 PATIENT DATA:')
+        self.stdout.write(f'  • Total Patient Profiles: {patient_profiles}')
+        self.stdout.write(f'  • Active Members: {active_patients}')
+        self.stdout.write(f'  • Suspended Members: {suspended_patients}')
+
+        # Claims and billing
+        total_claims = Claim.objects.count()
+        approved_claims = Claim.objects.filter(status='APPROVED').count()
+        pending_claims = Claim.objects.filter(status='PENDING').count()
+        rejected_claims = Claim.objects.filter(status='REJECTED').count()
+        invoices = Invoice.objects.count()
+        paid_invoices = Invoice.objects.filter(payment_status='PAID').count()
+
+        self.stdout.write(f'\n📋 CLAIMS & BILLING:')
+        self.stdout.write(f'  • Total Claims: {total_claims}')
+        self.stdout.write(f'  • Approved Claims: {approved_claims}')
+        self.stdout.write(f'  • Pending Claims: {pending_claims}')
+        self.stdout.write(f'  • Rejected Claims: {rejected_claims}')
+        self.stdout.write(f'  • Total Invoices: {invoices}')
+        self.stdout.write(f'  • Paid Invoices: {paid_invoices}')
+
+        # System settings
+        from core.models import SystemSettings
+        settings_count = SystemSettings.objects.count()
+        self.stdout.write(f'\n⚙️  SYSTEM SETTINGS: {settings_count}')
+
+        self.stdout.write('\n' + '='*60)
+        self.stdout.write(self.style.SUCCESS('✅ SEEDING COMPLETE - READY FOR DEVELOPMENT!'))
+        self.stdout.write('='*60)
+
+        # Login information
+        self.stdout.write(f'\n🔐 ADMIN LOGIN:')
+        self.stdout.write(f'  Username: admin')
+        self.stdout.write(f'  Password: Password123!')
+        self.stdout.write(f'  Email: admin@medicalaid.com')
+
+        self.stdout.write(f'\n🚀 QUICK START:')
+        self.stdout.write(f'  1. Start server: python manage.py runserver')
+        self.stdout.write(f'  2. Visit: http://localhost:8000/admin/')
+        self.stdout.write(f'  3. Login with admin credentials above')
+        self.stdout.write(f'  4. API docs: http://localhost:8000/api/docs/')
