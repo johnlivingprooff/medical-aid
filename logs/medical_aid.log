@@ -779,3 +779,550 @@ INFO 2025-09-19 01:28:39,869 basehttp 24376 26596 "GET /api/accounts/me/ HTTP/1.
 INFO 2025-09-19 01:28:40,474 basehttp 24376 26596 "GET /api/accounts/me/ HTTP/1.1" 200 123
 INFO 2025-09-19 01:28:41,261 basehttp 24376 19616 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 576
 INFO 2025-09-19 01:28:42,669 basehttp 24376 19616 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 576
+WARNING 2025-09-19 01:29:41,943 log 24376 6996 Not Found: /favicon.ico
+WARNING 2025-09-19 01:29:41,946 basehttp 24376 6996 "GET /favicon.ico HTTP/1.1" 404 17465
+WARNING 2025-09-19 01:29:42,130 log 24376 20892 Not Found: /api/
+WARNING 2025-09-19 01:29:42,130 basehttp 24376 20892 "GET /api/ HTTP/1.1" 404 17437
+INFO 2025-09-19 01:29:42,389 basehttp 24376 20892 "GET /static/debug_toolbar/css/toolbar.css HTTP/1.1" 200 29468
+INFO 2025-09-19 01:29:42,408 basehttp 24376 20892 "GET /static/debug_toolbar/css/print.css HTTP/1.1" 200 43
+INFO 2025-09-19 01:29:42,550 basehttp 24376 6996 "GET /static/debug_toolbar/js/toolbar.js HTTP/1.1" 200 14879
+INFO 2025-09-19 01:29:42,653 basehttp 24376 6996 "GET /static/debug_toolbar/js/utils.js HTTP/1.1" 200 4700
+INFO 2025-09-19 01:29:53,010 basehttp 24376 6996 "GET /api/docs/ HTTP/1.1" 200 17808
+ERROR 2025-09-19 01:29:56,022 log 24376 24424 Internal Server Error: /api/schema/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 206, in parse
+    endpoints = self._get_paths_and_endpoints()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 196, in _get_paths_and_endpoints
+    view = self.create_view(callback, method)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 147, in create_view
+    action = getattr(view, view.action)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'BillingManagementViewSet' object has no attribute 'summary'
+ERROR 2025-09-19 01:29:56,338 basehttp 24376 24424 "GET /api/schema/ HTTP/1.1" 500 157617
+ERROR 2025-09-19 01:29:56,699 log 24376 24424 Internal Server Error: /api/schema/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\views.py", line 84, in get
+    return self._get_schema_response(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\views.py", line 92, in _get_schema_response
+    data=generator.get_schema(request=request, public=self.serve_public),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 285, in get_schema
+    paths=self.parse(request, public),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 206, in parse
+    endpoints = self._get_paths_and_endpoints()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 196, in _get_paths_and_endpoints
+    view = self.create_view(callback, method)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\drf_spectacular\generators.py", line 147, in create_view
+    action = getattr(view, view.action)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'BillingManagementViewSet' object has no attribute 'summary'
+ERROR 2025-09-19 01:29:57,048 basehttp 24376 24424 "GET /api/schema/ HTTP/1.1" 500 157617
+INFO 2025-09-19 01:29:57,369 basehttp 24376 24424 "GET /__debug__/history_sidebar/?request_id=74b908b9571b47929e180cf9fcdbe6c0 HTTP/1.1" 200 9110
+WARNING 2025-09-19 01:30:11,744 log 24376 17412 Not Found: /
+WARNING 2025-09-19 01:30:11,744 basehttp 24376 17412 "GET / HTTP/1.1" 404 17402
+INFO 2025-09-19 01:30:33,288 basehttp 24376 15260 "GET /admin HTTP/1.1" 301 0
+INFO 2025-09-19 01:30:33,539 basehttp 24376 10020 "GET /admin/ HTTP/1.1" 302 0
+INFO 2025-09-19 01:30:34,419 basehttp 24376 10020 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 17307
+INFO 2025-09-19 01:30:35,064 basehttp 24376 21684 "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2682
+INFO 2025-09-19 01:30:35,219 basehttp 24376 21684 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+INFO 2025-09-19 01:30:35,398 basehttp 24376 21684 "GET /static/admin/css/login.css HTTP/1.1" 200 958
+INFO 2025-09-19 01:30:35,420 basehttp 24376 10020 "GET /static/admin/css/base.css HTTP/1.1" 200 21544
+INFO 2025-09-19 01:30:35,661 basehttp 24376 17480 "GET /static/admin/css/responsive.css HTTP/1.1" 200 17905
+INFO 2025-09-19 01:30:35,839 basehttp 24376 16936 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2025-09-19 01:30:35,842 basehttp 24376 21684 "GET /static/admin/js/theme.js HTTP/1.1" 200 1943
+INFO 2025-09-19 01:30:44,080 basehttp 24376 21872 "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+INFO 2025-09-19 01:30:44,513 basehttp 24376 21872 "GET /admin/ HTTP/1.1" 200 29302
+INFO 2025-09-19 01:30:44,570 basehttp 24376 21872 "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+INFO 2025-09-19 01:30:44,594 basehttp 24376 14264 "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+INFO 2025-09-19 01:30:44,604 basehttp 24376 21872 "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+ERROR 2025-09-19 01:31:11,188 log 24376 8608 Internal Server Error: /admin/billing/billingcycle/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 89, in execute_sql
+    return self._execute_sql(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 234, in execute
+    return self._record(super().execute, sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 160, in _record
+    return method(sql, params)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.ProgrammingError: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\options.py", line 716, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\sites.py", line 240, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\options.py", line 2126, in changelist_view
+    "selection_note": _("0 of %(cnt)s selected") % {"cnt": len(cl.result_list)},
+                                                           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 382, in __len__
+    self._fetch_all()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 96, in execute_sql
+    query_dict['analysis'] = _explain_query(self.connection, q, params)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 58, in _explain_query
+    cur.execute(prefixed_query, params)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 234, in execute
+    return self._record(super().execute, sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 160, in _record
+    return method(sql, params)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.ProgrammingError: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+ERROR 2025-09-19 01:31:11,928 basehttp 24376 8608 "GET /admin/billing/billingcycle/ HTTP/1.1" 500 493115
+ERROR 2025-09-19 01:31:54,701 log 24376 14664 Internal Server Error: /admin/billing/billingcycle/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 89, in execute_sql
+    return self._execute_sql(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 234, in execute
+    return self._record(super().execute, sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 160, in _record
+    return method(sql, params)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.ProgrammingError: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\options.py", line 716, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\sites.py", line 240, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\options.py", line 2126, in changelist_view
+    "selection_note": _("0 of %(cnt)s selected") % {"cnt": len(cl.result_list)},
+                                                           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 382, in __len__
+    self._fetch_all()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 96, in execute_sql
+    query_dict['analysis'] = _explain_query(self.connection, q, params)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 58, in _explain_query
+    cur.execute(prefixed_query, params)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 234, in execute
+    return self._record(super().execute, sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 160, in _record
+    return method(sql, params)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.ProgrammingError: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+ERROR 2025-09-19 01:31:55,460 basehttp 24376 14664 "GET /admin/billing/billingcycle/ HTTP/1.1" 500 493115
+WARNING 2025-09-19 01:32:03,851 log 24376 14664 Not Found: /
+WARNING 2025-09-19 01:32:03,851 basehttp 24376 14664 "GET / HTTP/1.1" 404 17403
+INFO 2025-09-19 01:32:07,480 basehttp 24376 26048 "GET /admin/ HTTP/1.1" 200 29302
+INFO 2025-09-19 01:32:30,140 basehttp 24376 3508 "GET /admin/auth/group/ HTTP/1.1" 200 28379
+INFO 2025-09-19 01:32:30,230 basehttp 24376 3508 "GET /static/admin/css/changelists.css HTTP/1.1" 200 6811
+INFO 2025-09-19 01:32:30,280 basehttp 24376 3508 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2025-09-19 01:32:30,343 basehttp 24376 3508 "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+INFO 2025-09-19 01:32:30,408 basehttp 24376 3508 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9042
+INFO 2025-09-19 01:32:30,430 basehttp 24376 11652 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+INFO 2025-09-19 01:32:30,450 basehttp 24376 3508 "GET /static/admin/js/actions.js HTTP/1.1" 200 8067
+INFO 2025-09-19 01:32:30,466 basehttp 24376 11652 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2025-09-19 01:32:30,474 basehttp 24376 3508 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2025-09-19 01:32:30,495 basehttp 24376 3508 "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+WARNING 2025-09-19 01:32:30,539 model_factory 24376 17580 Response to request with pk 53802d07-06a1-4f2c-b2ee-48bfb8b2b926 has content type text/javascript but was unable to parse it
+INFO 2025-09-19 01:32:30,609 basehttp 24376 17580 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-19 01:32:30,617 basehttp 24376 11652 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+INFO 2025-09-19 01:32:30,643 basehttp 24376 17580 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+INFO 2025-09-19 01:32:30,691 basehttp 24376 17580 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+ERROR 2025-09-19 01:32:38,498 log 24376 18180 Internal Server Error: /admin/billing/invoice/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 89, in execute_sql
+    return self._execute_sql(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1562, in execute_sql
+    cursor.execute(sql, params)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 234, in execute
+    return self._record(super().execute, sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 160, in _record
+    return method(sql, params)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.ProgrammingError: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\options.py", line 716, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\sites.py", line 240, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\contrib\admin\options.py", line 2126, in changelist_view
+    "selection_note": _("0 of %(cnt)s selected") % {"cnt": len(cl.result_list)},
+                                                           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 382, in __len__
+    self._fetch_all()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 96, in execute_sql
+    query_dict['analysis'] = _explain_query(self.connection, q, params)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\sql.py", line 58, in _explain_query
+    cur.execute(prefixed_query, params)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 234, in execute
+    return self._record(super().execute, sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\debug_toolbar\panels\sql\tracking.py", line 160, in _record
+    return method(sql, params)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\psycopg\cursor.py", line 97, in execute
+    raise ex.with_traceback(None)
+django.db.utils.ProgrammingError: column schemes_membersubscription.patient_id does not exist
+LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
+                                                             ^
+ERROR 2025-09-19 01:32:38,900 basehttp 24376 18180 "GET /admin/billing/invoice/ HTTP/1.1" 500 500716
