@@ -17,14 +17,15 @@ from .serializers import (
     BillingCycleSerializer, BillingSettingsSerializer
 )
 from schemes.models import MemberSubscription
-from core.permissions import IsAdminOrProvider, IsOwnerOrAdmin
+from core.permissions import IsAdminOrProvider, IsAdminProviderOrPatient
 
 
 class PaymentMethodViewSet(viewsets.ModelViewSet):
     """ViewSet for managing payment methods"""
 
+    queryset = PaymentMethod.objects.all()
     serializer_class = PaymentMethodSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated, IsAdminProviderOrPatient]
 
     def get_queryset(self):
         user = self.request.user
@@ -65,8 +66,9 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
 class InvoiceViewSet(viewsets.ModelViewSet):
     """ViewSet for managing invoices"""
 
+    queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated, IsAdminProviderOrPatient]
 
     def get_queryset(self):
         user = self.request.user
@@ -115,7 +117,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     """ViewSet for managing payments"""
 
     serializer_class = PaymentSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated, IsAdminProviderOrPatient]
     queryset = Payment.objects.all()
 
     def get_queryset(self):

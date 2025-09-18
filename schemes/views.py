@@ -1,11 +1,18 @@
 from rest_framework import viewsets, permissions
-from .models import SchemeCategory, SchemeBenefit, BenefitType, BenefitCategory, SubscriptionTier, MemberSubscription
+from .models import (
+    SchemeCategory, SchemeBenefit, BenefitType, BenefitCategory,
+    SubscriptionTier, MemberSubscription, PaymentMethod, Invoice,
+    Payment, BillingHistory
+)
 from .serializers import (
     SchemeCategorySerializer, SchemeBenefitSerializer, BenefitTypeSerializer,
     BenefitCategorySerializer, SubscriptionTierSerializer, MemberSubscriptionSerializer,
-    SubscriptionCreateSerializer
+    SubscriptionCreateSerializer, PaymentMethodSerializer, InvoiceSerializer,
+    PaymentSerializer, BillingHistorySerializer, PaymentProcessingSerializer,
+    BillingSummarySerializer
 )
 from .subscription_service import SubscriptionService
+from .billing_service import BillingService
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
@@ -305,3 +312,306 @@ class BenefitTypeViewSet(viewsets.ModelViewSet):
 		if self.action in ['create', 'update', 'partial_update', 'destroy']:
 			return [IsAdmin()]
 		return super().get_permissions()
+
+
+# Billing ViewSets
+
+class PaymentMethodViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing payment methods"""
+
+    serializer_class = PaymentMethodSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['payment_type', 'is_default', 'is_active']
+    ordering_fields = ['-is_default', '-created_at']
+
+    def get_queryset(self):
+        """Return payment methods for the current user"""
+        return PaymentMethod.objects.filter(member=self.request.user.patient_profile)
+
+    def perform_create(self, serializer):
+        """Set the member to the current user's patient profile"""
+        serializer.save(member=self.request.user.patient_profile)
+
+    @action(detail=True, methods=['post'])
+    def set_default(self, request, pk=None):
+        """Set this payment method as the default"""
+        payment_method = self.get_object()
+        payment_method.is_default = True
+        payment_method.save()
+
+        # Ensure only one default payment method
+        PaymentMethod.objects.filter(
+            member=payment_method.member
+        ).exclude(pk=payment_method.pk).update(is_default=False)
+
+        return Response({'message': 'Payment method set as default'})
+
+
+class InvoiceViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing invoices"""
+
+    serializer_class = InvoiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['status', 'issued_date', 'due_date', 'paid_date']
+    search_fields = ['invoice_number']
+    ordering_fields = ['-issued_date', 'due_date']
+
+    def get_queryset(self):
+        """Filter invoices based on user role"""
+        user = self.request.user
+
+        if user.role == 'ADMIN':
+            return Invoice.objects.all().select_related(
+                'subscription', 'subscription__member', 'payment_method'
+            )
+        elif hasattr(user, 'patient_profile'):
+            return Invoice.objects.filter(
+                subscription__member=user.patient_profile
+            ).select_related('subscription', 'payment_method')
+        else:
+            return Invoice.objects.none()
+
+    @action(detail=True, methods=['post'])
+    def send_invoice(self, request, pk=None):
+        """Mark invoice as sent"""
+        invoice = self.get_object()
+        if invoice.status == 'DRAFT':
+            invoice.status = 'SENT'
+            invoice.save()
+            return Response({'message': 'Invoice marked as sent'})
+        return Response(
+            {'error': 'Invoice is not in draft status'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    @action(detail=False, methods=['get'])
+    def overdue(self, request):
+        """Get overdue invoices"""
+        overdue_invoices = BillingService.check_overdue_invoices()
+        serializer = self.get_serializer(overdue_invoices, many=True)
+        return Response(serializer.data)
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing payments"""
+
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['status', 'payment_method', 'payment_date']
+    search_fields = ['payment_id', 'transaction_id']
+    ordering_fields = ['-payment_date', '-created_at']
+
+    def get_queryset(self):
+        """Filter payments based on user role"""
+        user = self.request.user
+
+        if user.role == 'ADMIN':
+            return Payment.objects.all().select_related('invoice', 'invoice__subscription')
+        elif hasattr(user, 'patient_profile'):
+            return Payment.objects.filter(
+                invoice__subscription__member=user.patient_profile
+            ).select_related('invoice', 'invoice__subscription')
+        else:
+            return Payment.objects.none()
+
+    @action(detail=True, methods=['post'])
+    def process_refund(self, request, pk=None):
+        """Process a refund for a payment"""
+        payment = self.get_object()
+        refund_amount = request.data.get('amount')
+
+        if not refund_amount:
+            return Response(
+                {'error': 'Refund amount is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not payment.can_refund:
+            return Response(
+                {'error': 'Payment cannot be refunded'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            refund_amount = float(refund_amount)
+            if refund_amount > (payment.amount - payment.refund_amount):
+                return Response(
+                    {'error': 'Refund amount exceeds available amount'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except ValueError:
+            return Response(
+                {'error': 'Invalid refund amount'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Process refund (in real implementation, integrate with payment gateway)
+        payment.refund_amount += refund_amount
+        payment.refund_date = timezone.now()
+        payment.refund_reason = request.data.get('reason', '')
+        payment.save()
+
+        return Response({'message': 'Refund processed successfully'})
+
+
+class BillingHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for viewing billing history"""
+
+    serializer_class = BillingHistorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['action', 'timestamp']
+    ordering_fields = ['-timestamp']
+
+    def get_queryset(self):
+        """Filter billing history based on user role"""
+        user = self.request.user
+
+        if user.role == 'ADMIN':
+            return BillingHistory.objects.all().select_related(
+                'subscription', 'invoice', 'payment', 'performed_by'
+            )
+        elif hasattr(user, 'patient_profile'):
+            return BillingHistory.objects.filter(
+                subscription__member=user.patient_profile
+            ).select_related('subscription', 'invoice', 'payment', 'performed_by')
+        else:
+            return BillingHistory.objects.none()
+
+
+class BillingManagementViewSet(viewsets.ViewSet):
+    """ViewSet for billing management operations"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def process_payment(self, request):
+        """Process a payment for an invoice"""
+        serializer = PaymentProcessingSerializer(data=request.data, context={'request': request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        invoice = serializer.validated_data['invoice_id']
+        payment_method = serializer.validated_data['payment_method_id']
+        payment_data = serializer.validated_data.get('payment_data', {})
+
+        success, message, payment = BillingService.process_payment(
+            invoice, payment_method, payment_data
+        )
+
+        if success:
+            payment_serializer = PaymentSerializer(payment)
+            return Response({
+                'message': message,
+                'payment': payment_serializer.data
+            })
+        else:
+            return Response(
+                {'error': message},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'])
+    def generate_invoice(self, request):
+        """Generate an invoice for a subscription"""
+        subscription_id = request.data.get('subscription_id')
+        billing_start_date = request.data.get('billing_start_date')
+        billing_end_date = request.data.get('billing_end_date')
+        notes = request.data.get('notes', '')
+
+        if not subscription_id:
+            return Response(
+                {'error': 'subscription_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            subscription = MemberSubscription.objects.get(id=subscription_id)
+        except MemberSubscription.DoesNotExist:
+            return Response(
+                {'error': 'Subscription not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check permissions
+        if (not request.user.role == 'ADMIN' and
+            subscription.member != request.user.patient_profile):
+            return Response(
+                {'error': 'Permission denied'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        invoice = BillingService.generate_invoice(
+            subscription, billing_start_date, billing_end_date, notes
+        )
+
+        serializer = InvoiceSerializer(invoice)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def billing_summary(self, request):
+        """Get billing summary for current user"""
+        if not hasattr(request.user, 'patient_profile'):
+            return Response(
+                {'error': 'Patient profile not found'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get active subscription
+        subscription = MemberSubscription.objects.filter(
+            member=request.user.patient_profile,
+            status='ACTIVE'
+        ).first()
+
+        if not subscription:
+            return Response({'error': 'No active subscription found'})
+
+        summary = BillingService.get_subscription_billing_summary(subscription)
+        serializer = BillingSummarySerializer(summary)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def cancel_subscription(self, request):
+        """Cancel a subscription"""
+        subscription_id = request.data.get('subscription_id')
+        cancel_date = request.data.get('cancel_date')
+        refund_prorated = request.data.get('refund_prorated', True)
+
+        if not subscription_id:
+            return Response(
+                {'error': 'subscription_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            subscription = MemberSubscription.objects.get(id=subscription_id)
+        except MemberSubscription.DoesNotExist:
+            return Response(
+                {'error': 'Subscription not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check permissions
+        if (not request.user.role == 'ADMIN' and
+            subscription.member != request.user.patient_profile):
+            return Response(
+                {'error': 'Permission denied'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        success, message = BillingService.cancel_subscription(
+            subscription, cancel_date, refund_prorated
+        )
+
+        if success:
+            return Response({'message': message})
+        else:
+            return Response(
+                {'error': message},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdmin])
+    def process_bulk_renewals(self, request):
+        """Process bulk renewals (admin only)"""
+        results = BillingService.process_bulk_renewals()
+        return Response(results)

@@ -6,7 +6,7 @@ from django.db import models
 from django.conf import settings
 from decimal import Decimal
 from django.utils import timezone
-from .models import MemberSubscription
+from schemes.models import MemberSubscription
 
 
 class PaymentMethod(models.Model):
@@ -21,7 +21,7 @@ class PaymentMethod(models.Model):
     subscription = models.ForeignKey(
         MemberSubscription,
         on_delete=models.CASCADE,
-        related_name='payment_methods'
+        related_name='billing_payment_methods'
     )
     payment_type = models.CharField(
         max_length=20,
@@ -47,8 +47,9 @@ class PaymentMethod(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Payment Method'
-        verbose_name_plural = 'Payment Methods'
+        verbose_name = 'Billing Payment Method'
+        verbose_name_plural = 'Billing Payment Methods'
+        app_label = 'billing'
         unique_together = ['subscription', 'is_default']  # Only one default per subscription
 
     def __str__(self):
@@ -70,7 +71,7 @@ class Invoice(models.Model):
     subscription = models.ForeignKey(
         MemberSubscription,
         on_delete=models.CASCADE,
-        related_name='invoices'
+        related_name='billing_invoices'
     )
     billing_period_start = models.DateField()
     billing_period_end = models.DateField()
@@ -112,9 +113,10 @@ class Invoice(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Invoice'
-        verbose_name_plural = 'Invoices'
+        verbose_name = 'Billing Invoice'
+        verbose_name_plural = 'Billing Invoices'
         ordering = ['-created_at']
+        app_label = 'billing'
 
     def __str__(self):
         return f"Invoice {self.invoice_number} - {self.subscription.patient.user.get_full_name()}"
@@ -195,9 +197,10 @@ class Payment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Payment'
-        verbose_name_plural = 'Payments'
+        verbose_name = 'Billing Payment'
+        verbose_name_plural = 'Billing Payments'
         ordering = ['-created_at']
+        app_label = 'billing'
 
     def __str__(self):
         return f"Payment {self.payment_id} - {self.amount}"
@@ -247,6 +250,7 @@ class BillingCycle(models.Model):
         verbose_name = 'Billing Cycle'
         verbose_name_plural = 'Billing Cycles'
         ordering = ['-billing_date']
+        app_label = 'billing'
 
     def __str__(self):
         return f"Billing Cycle {self.cycle_start} - {self.cycle_end}"
@@ -302,6 +306,7 @@ class BillingSettings(models.Model):
     class Meta:
         verbose_name = 'Billing Setting'
         verbose_name_plural = 'Billing Settings'
+        app_label = 'billing'
 
     def __str__(self):
         return f"Billing Settings ({self.currency})"

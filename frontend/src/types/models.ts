@@ -521,3 +521,232 @@ export interface SystemAnnouncementRequest {
   target_roles: Array<'ADMIN' | 'PROVIDER' | 'PATIENT'>;
   priority?: NotificationPriority;
 }
+
+export interface PaymentMethodCreateRequest {
+  payment_type: 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_ACCOUNT' | 'PAYPAL' | 'APPLE_PAY' | 'GOOGLE_PAY' | 'DIGITAL_WALLET';
+  provider: 'STRIPE' | 'PAYPAL' | 'PAYFAST' | 'OTHER';
+  provider_payment_method_id: string;
+  last_four: string;
+  expiry_month: number;
+  expiry_year: number;
+  card_brand?: string;
+  bank_name?: string;
+  account_holder_name: string;
+  is_default?: boolean;
+}
+
+export interface SubscriptionInvoice {
+  id: number;
+  subscription: number;
+  subscription_detail: {
+    id: number;
+    tier_detail: {
+      name: string;
+      monthly_price: number;
+      yearly_price: number;
+    };
+    subscription_type: 'MONTHLY' | 'YEARLY';
+  };
+  invoice_number: string;
+  amount: number;
+  total_amount?: number; // Alias for amount
+  status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+  due_date: string;
+  paid_date?: string;
+  payment_reference?: string;
+  billing_start_date?: string;
+  billing_end_date?: string;
+  line_items: InvoiceLineItem[];
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceLineItem {
+  id: number;
+  description: string;
+  amount: number;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+export interface SubscriptionInvoiceCreateRequest {
+  subscription_id: number;
+  amount: number;
+  due_date: string;
+  line_items: Array<{
+    description: string;
+    amount: number;
+    quantity: number;
+    unit_price: number;
+  }>;
+  notes?: string;
+}
+
+export interface SubscriptionPayment {
+  id: number;
+  invoice: number;
+  invoice_detail: SubscriptionInvoice;
+  payment_method: number;
+  payment_method_detail: PaymentMethod;
+  amount: number;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
+  payment_reference: string;
+  payment_id?: string; // Alias for payment_reference
+  provider_transaction_id?: string;
+  transaction_id?: string; // Alias for provider_transaction_id
+  failure_reason?: string;
+  refunded_amount: number;
+  processed_at?: string;
+  payment_date?: string; // Alias for processed_at
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionPaymentCreateRequest {
+  invoice_id: number;
+  payment_method_id: number;
+  amount: number;
+}
+
+export interface RefundRequest {
+  amount: number;
+  reason: string;
+}
+
+export interface BillingHistory {
+  id: number;
+  subscription: number;
+  subscription_detail: {
+    id: number;
+    tier_detail: {
+      name: string;
+    };
+  };
+  invoice?: number;
+  invoice_detail?: SubscriptionInvoice;
+  payment?: number;
+  payment_detail?: SubscriptionPayment;
+  activity_type: 'INVOICE_CREATED' | 'PAYMENT_PROCESSED' | 'PAYMENT_FAILED' | 'REFUND_PROCESSED' | 'SUBSCRIPTION_RENEWED' | 'SUBSCRIPTION_CANCELLED';
+  action?: string; // Alias for activity_type
+  description: string;
+  amount?: number;
+  created_at: string;
+  timestamp?: string; // Alias for created_at
+}
+
+export interface BillingOverview {
+  total_outstanding: number;
+  total_paid_this_month: number;
+  total_overdue: number;
+  upcoming_payments: Array<{
+    subscription_id: number;
+    tier_name: string;
+    amount: number;
+    due_date: string;
+  }>;
+  recent_payments: SubscriptionPayment[];
+  payment_methods_count: number;
+}
+
+export interface PaymentStats {
+  total_payments: number;
+  successful_payments: number;
+  failed_payments: number;
+  refunded_amount: number;
+  average_payment_amount: number;
+  payment_method_distribution: Record<string, number>;
+  monthly_revenue: Array<{
+    month: string;
+    amount: number;
+    count: number;
+  }>;
+}
+
+// Billing App Types (from billing app models)
+export interface PaymentMethod {
+  id: number;
+  subscription: number;
+  payment_type: 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_ACCOUNT' | 'PAYPAL' | 'APPLE_PAY' | 'GOOGLE_PAY' | 'DIGITAL_WALLET';
+  provider: 'STRIPE' | 'PAYPAL' | 'PAYFAST' | 'OTHER';
+  account_number?: string;
+  account_number_masked?: string;
+  expiry_date?: string;
+  expiry_month?: number;
+  expiry_year?: number;
+  card_brand?: string;
+  card_holder_name?: string;
+  card_number_masked?: string;
+  paypal_email?: string;
+  bank_name?: string;
+  account_holder_name?: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Invoice {
+  id: number;
+  invoice_number: string;
+  subscription: number;
+  billing_period_start: string;
+  billing_period_end: string;
+  due_date: string;
+  amount: number;
+  tax_amount: number;
+  discount_amount: number;
+  status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED';
+  payment_method?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Payment {
+  id: number;
+  invoice: number;
+  payment_method: number;
+  amount: number;
+  currency: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
+  transaction_id?: string;
+  payment_date: string;
+  processed_at?: string;
+  failure_reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingCycle {
+  id: number;
+  subscription: number;
+  billing_date: string;
+  due_date: string;
+  amount: number;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  payment_method?: number;
+  invoice?: number;
+  retry_count: number;
+  max_retries: number;
+  next_retry_date?: string;
+  failure_reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingSettings {
+  id: number;
+  default_payment_provider: 'STRIPE' | 'PAYPAL' | 'PAYFAST' | 'OTHER';
+  auto_retry_failed_payments: boolean;
+  max_retry_attempts: number;
+  retry_interval_days: number;
+  late_payment_grace_period_days: number;
+  default_currency: string;
+  tax_rate: number;
+  invoice_prefix: string;
+  email_invoice_on_creation: boolean;
+  email_payment_receipt: boolean;
+  created_at: string;
+  updated_at: string;
+}

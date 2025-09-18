@@ -140,6 +140,88 @@ export const subscriptionApi = {
     ),
 };
 
+// Billing API Client (for the billing app)
+export const billingApi = {
+  // Payment Methods
+  getPaymentMethods: (params?: { subscription?: number; is_active?: boolean }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.subscription) queryParams.append('subscription', params.subscription.toString());
+    if (params?.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    const query = queryParams.toString();
+    return api.get<import('../types/models').PaymentMethod[]>(`/api/billing/payment-methods/${query ? `?${query}` : ''}`);
+  },
+  getPaymentMethod: (id: number) =>
+    api.get<import('../types/models').PaymentMethod>(`/api/billing/payment-methods/${id}/`),
+  createPaymentMethod: (data: Partial<import('../types/models').PaymentMethod>) =>
+    api.post<import('../types/models').PaymentMethod>('/api/billing/payment-methods/', data),
+  updatePaymentMethod: (id: number, data: Partial<import('../types/models').PaymentMethod>) =>
+    api.put<import('../types/models').PaymentMethod>(`/api/billing/payment-methods/${id}/`, data),
+  deletePaymentMethod: (id: number) =>
+    api.delete(`/api/billing/payment-methods/${id}/`),
+
+  // Invoices
+  getInvoices: (params?: { subscription?: number; status?: string; date_from?: string; date_to?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.subscription) queryParams.append('subscription', params.subscription.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').Invoice[]>(`/api/billing/invoices/${query ? `?${query}` : ''}`);
+  },
+  getInvoice: (id: number) =>
+    api.get<import('../types/models').Invoice>(`/api/billing/invoices/${id}/`),
+  createInvoice: (data: Partial<import('../types/models').Invoice>) =>
+    api.post<import('../types/models').Invoice>('/api/billing/invoices/', data),
+  updateInvoice: (id: number, data: Partial<import('../types/models').Invoice>) =>
+    api.put<import('../types/models').Invoice>(`/api/billing/invoices/${id}/`, data),
+  deleteInvoice: (id: number) =>
+    api.delete(`/api/billing/invoices/${id}/`),
+
+  // Payments
+  getPayments: (params?: { invoice?: number; payment_method?: number; status?: string; date_from?: string; date_to?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.invoice) queryParams.append('invoice', params.invoice.toString());
+    if (params?.payment_method) queryParams.append('payment_method', params.payment_method.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').Payment[]>(`/api/billing/payments/${query ? `?${query}` : ''}`);
+  },
+  getPayment: (id: number) =>
+    api.get<import('../types/models').Payment>(`/api/billing/payments/${id}/`),
+  createPayment: (data: Partial<import('../types/models').Payment>) =>
+    api.post<import('../types/models').Payment>('/api/billing/payments/', data),
+  updatePayment: (id: number, data: Partial<import('../types/models').Payment>) =>
+    api.put<import('../types/models').Payment>(`/api/billing/payments/${id}/`, data),
+  deletePayment: (id: number) =>
+    api.delete(`/api/billing/payments/${id}/`),
+
+  // Billing Cycles
+  getBillingCycles: (params?: { subscription?: number; status?: string; date_from?: string; date_to?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.subscription) queryParams.append('subscription', params.subscription.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').BillingCycle[]>(`/api/billing/billing-cycles/${query ? `?${query}` : ''}`);
+  },
+  getBillingCycle: (id: number) =>
+    api.get<import('../types/models').BillingCycle>(`/api/billing/billing-cycles/${id}/`),
+  retryPayment: (id: number) =>
+    api.post<import('../types/models').BillingCycle>(`/api/billing/billing-cycles/${id}/retry_payment/`),
+
+  // Billing Settings
+  getBillingSettings: () =>
+    api.get<import('../types/models').BillingSettings[]>('/api/billing/settings/'),
+  getCurrentBillingSettings: () =>
+    api.get<import('../types/models').BillingSettings>('/api/billing/settings/current/'),
+  updateBillingSettings: (id: number, data: Partial<import('../types/models').BillingSettings>) =>
+    api.put<import('../types/models').BillingSettings>(`/api/billing/settings/${id}/`, data),
+};
+
 // Notification API Client
 export const notificationApi = {
   // Notification CRUD operations
@@ -271,4 +353,88 @@ export const notificationApi = {
   // Dashboard
   getDashboardData: () =>
     api.get<import('../types/models').NotificationDashboardData>('/api/accounts/dashboard/data/'),
+};
+
+// Subscription Billing API Client (for subscription management)
+export const subscriptionBillingApi = {
+  // Payment Methods
+  getPaymentMethods: () =>
+    api.get<import('../types/models').PaymentMethod[]>('/api/schemes/payment-methods/'),
+  createPaymentMethod: (data: import('../types/models').PaymentMethodCreateRequest) =>
+    api.post<import('../types/models').PaymentMethod>('/api/schemes/payment-methods/', data),
+  updatePaymentMethod: (id: number, data: Partial<import('../types/models').PaymentMethod>) =>
+    api.put<import('../types/models').PaymentMethod>(`/api/schemes/payment-methods/${id}/`, data),
+  deletePaymentMethod: (id: number) =>
+    api.delete(`/api/schemes/payment-methods/${id}/`),
+  setDefaultPaymentMethod: (id: number) =>
+    api.post<import('../types/models').PaymentMethod>(`/api/schemes/payment-methods/${id}/set-default/`),
+
+  // Invoices
+  getInvoices: (params?: { status?: string; subscription?: number; date_from?: string; date_to?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.subscription) queryParams.append('subscription', params.subscription.toString());
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').SubscriptionInvoice[]>(`/api/schemes/invoices/${query ? `?${query}` : ''}`);
+  },
+  getInvoice: (id: number) =>
+    api.get<import('../types/models').SubscriptionInvoice>(`/api/schemes/invoices/${id}/`),
+  createInvoice: (data: import('../types/models').SubscriptionInvoiceCreateRequest) =>
+    api.post<import('../types/models').SubscriptionInvoice>('/api/schemes/invoices/', data),
+  updateInvoice: (id: number, data: Partial<import('../types/models').SubscriptionInvoice>) =>
+    api.put<import('../types/models').SubscriptionInvoice>(`/api/schemes/invoices/${id}/`, data),
+  deleteInvoice: (id: number) =>
+    api.delete(`/api/schemes/invoices/${id}/`),
+
+  // Payments
+  getPayments: (params?: { status?: string; invoice?: number; payment_method?: number; date_from?: string; date_to?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.invoice) queryParams.append('invoice', params.invoice.toString());
+    if (params?.payment_method) queryParams.append('payment_method', params.payment_method.toString());
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').SubscriptionPayment[]>(`/api/schemes/payments/${query ? `?${query}` : ''}`);
+  },
+  getPayment: (id: number) =>
+    api.get<import('../types/models').SubscriptionPayment>(`/api/schemes/payments/${id}/`),
+  createPayment: (data: import('../types/models').SubscriptionPaymentCreateRequest) =>
+    api.post<import('../types/models').SubscriptionPayment>('/api/schemes/payments/', data),
+  updatePayment: (id: number, data: Partial<import('../types/models').SubscriptionPayment>) =>
+    api.put<import('../types/models').SubscriptionPayment>(`/api/schemes/payments/${id}/`, data),
+  deletePayment: (id: number) =>
+    api.delete(`/api/schemes/payments/${id}/`),
+  processPayment: (id: number) =>
+    api.post<import('../types/models').SubscriptionPayment>(`/api/schemes/payments/${id}/process/`),
+  refundPayment: (id: number, data: import('../types/models').RefundRequest) =>
+    api.post<import('../types/models').SubscriptionPayment>(`/api/schemes/payments/${id}/refund/`, data),
+
+  // Billing History
+  getBillingHistory: (params?: { subscription?: number; date_from?: string; date_to?: string; limit?: number }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.subscription) queryParams.append('subscription', params.subscription.toString());
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    const query = queryParams.toString();
+    return api.get<import('../types/models').BillingHistory[]>(`/api/schemes/billing-history/${query ? `?${query}` : ''}`);
+  },
+
+  // Billing Management
+  getBillingOverview: () =>
+    api.get<import('../types/models').BillingOverview>('/api/schemes/billing/overview/'),
+  generateInvoice: (subscriptionId: number) =>
+    api.post<import('../types/models').SubscriptionInvoice>(`/api/schemes/billing/generate-invoice/${subscriptionId}/`),
+  processRenewal: (subscriptionId: number) =>
+    api.post<import('../types/models').SubscriptionPayment>(`/api/schemes/billing/process-renewal/${subscriptionId}/`),
+  getPaymentStats: (params?: { date_from?: string; date_to?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').PaymentStats>(`/api/schemes/billing/payment-stats/${query ? `?${query}` : ''}`);
+  },
 };

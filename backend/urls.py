@@ -38,6 +38,7 @@ urlpatterns = [
     # App endpoints
     path('api/accounts/', include('accounts.urls')),
     path('api/schemes/', include('schemes.urls')),
+    path('api/billing/', include('billing.urls')),
     path('api/claims/', include('claims.urls')),
     path('api/patients/', include('claims.urls_patients')),  # Main patient endpoints
     path('api/invoices/', include('claims.urls_invoices')),

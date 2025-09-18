@@ -1,2 +1,781 @@
 INFO 2025-09-18 13:04:41,123 tasks 25276 28652 Health check completed: Some systems unhealthy
 INFO 2025-09-18 13:04:41,168 tasks 25276 28652 Cache warmup completed successfully
+INFO 2025-09-18 17:20:04,932 autoreload 16452 9548 Watching for file changes with StatReloader
+INFO 2025-09-18 17:20:49,019 autoreload 16452 9548 J:\Documents\CODE\Projects\medical-aid\schemes\urls.py changed, reloading.
+INFO 2025-09-18 17:20:55,133 autoreload 15688 9764 Watching for file changes with StatReloader
+INFO 2025-09-18 17:21:23,713 autoreload 1524 22656 Watching for file changes with StatReloader
+INFO 2025-09-18 17:22:49,654 autoreload 22844 23004 Watching for file changes with StatReloader
+INFO 2025-09-18 21:38:18,360 autoreload 22400 24268 Watching for file changes with StatReloader
+INFO 2025-09-18 21:39:37,597 autoreload 23196 20896 Watching for file changes with StatReloader
+INFO 2025-09-18 21:40:44,474 autoreload 7888 3648 Watching for file changes with StatReloader
+ERROR 2025-09-18 21:40:52,096 log 7888 5564 Internal Server Error: /api/billing/payment-methods/
+Traceback (most recent call last):
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 87, in __call__
+    self.process_request(request)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 132, in process_request
+    self._apply_dynamic_mappings()
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 111, in _apply_dynamic_mappings
+    dynamic.inject_context_manager_func(module=module,
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\profiling\dynamic.py", line 208, in inject_context_manager_func
+    cls, func = _get_func(module, func_name)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\profiling\dynamic.py", line 42, in _get_func
+    func = getattr(module, func_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'claims.views' has no attribute '*'
+ERROR 2025-09-18 21:40:52,099 basehttp 7888 5564 "GET /api/billing/payment-methods/ HTTP/1.1" 500 94829
+INFO 2025-09-18 21:41:26,328 autoreload 7888 3648 J:\Documents\CODE\Projects\medical-aid\billing\models.py changed, reloading.
+INFO 2025-09-18 21:41:30,317 autoreload 26116 11084 Watching for file changes with StatReloader
+INFO 2025-09-18 21:41:39,065 autoreload 26116 11084 J:\Documents\CODE\Projects\medical-aid\billing\models.py changed, reloading.
+INFO 2025-09-18 21:41:41,202 autoreload 8588 21920 Watching for file changes with StatReloader
+INFO 2025-09-18 21:42:07,555 autoreload 8588 21920 J:\Documents\CODE\Projects\medical-aid\billing\models.py changed, reloading.
+INFO 2025-09-18 21:42:09,696 autoreload 12496 13652 Watching for file changes with StatReloader
+INFO 2025-09-18 21:42:22,349 autoreload 12496 13652 J:\Documents\CODE\Projects\medical-aid\billing\models.py changed, reloading.
+INFO 2025-09-18 21:42:25,310 autoreload 22628 23656 Watching for file changes with StatReloader
+INFO 2025-09-18 21:42:30,591 autoreload 22628 23656 J:\Documents\CODE\Projects\medical-aid\billing\models.py changed, reloading.
+INFO 2025-09-18 21:42:33,798 autoreload 25264 26388 Watching for file changes with StatReloader
+INFO 2025-09-18 21:42:41,984 autoreload 8780 25596 Watching for file changes with StatReloader
+ERROR 2025-09-18 21:43:25,698 log 25264 916 Internal Server Error: /api/billing/payment-methods/
+Traceback (most recent call last):
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 87, in __call__
+    self.process_request(request)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 132, in process_request
+    self._apply_dynamic_mappings()
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 111, in _apply_dynamic_mappings
+    dynamic.inject_context_manager_func(module=module,
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\profiling\dynamic.py", line 208, in inject_context_manager_func
+    cls, func = _get_func(module, func_name)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\profiling\dynamic.py", line 42, in _get_func
+    func = getattr(module, func_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'claims.views' has no attribute '*'
+ERROR 2025-09-18 21:43:25,701 basehttp 25264 916 "GET /api/billing/payment-methods/ HTTP/1.1" 500 94829
+INFO 2025-09-18 21:45:04,759 autoreload 25264 26388 J:\Documents\CODE\Projects\medical-aid\schemes\models.py changed, reloading.
+INFO 2025-09-18 21:45:09,747 autoreload 23432 24808 Watching for file changes with StatReloader
+INFO 2025-09-18 21:45:30,499 autoreload 23432 24808 J:\Documents\CODE\Projects\medical-aid\schemes\models.py changed, reloading.
+INFO 2025-09-18 21:45:34,488 autoreload 16312 22324 Watching for file changes with StatReloader
+INFO 2025-09-18 21:46:53,144 autoreload 16312 22324 J:\Documents\CODE\Projects\medical-aid\schemes\models.py changed, reloading.
+INFO 2025-09-18 21:46:56,838 autoreload 19544 19464 Watching for file changes with StatReloader
+INFO 2025-09-18 21:48:20,922 autoreload 22148 26288 Watching for file changes with StatReloader
+INFO 2025-09-18 21:50:00,801 autoreload 23840 23492 Watching for file changes with StatReloader
+INFO 2025-09-18 21:50:06,865 autoreload 26128 12552 Watching for file changes with StatReloader
+INFO 2025-09-18 21:50:29,326 autoreload 1420 24268 Watching for file changes with StatReloader
+INFO 2025-09-18 21:50:43,898 autoreload 11576 24868 Watching for file changes with StatReloader
+ERROR 2025-09-18 21:50:48,131 log 11576 1976 Internal Server Error: /api/billing/payment-methods/
+Traceback (most recent call last):
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 87, in __call__
+    self.process_request(request)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 132, in process_request
+    self._apply_dynamic_mappings()
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\middleware.py", line 111, in _apply_dynamic_mappings
+    dynamic.inject_context_manager_func(module=module,
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\profiling\dynamic.py", line 208, in inject_context_manager_func
+    cls, func = _get_func(module, func_name)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\silk\profiling\dynamic.py", line 42, in _get_func
+    func = getattr(module, func_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'claims.views' has no attribute '*'
+ERROR 2025-09-18 21:50:48,134 basehttp 11576 1976 "GET /api/billing/payment-methods/ HTTP/1.1" 500 94829
+INFO 2025-09-18 21:52:04,022 autoreload 11576 24868 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-18 21:52:11,602 autoreload 22728 10448 Watching for file changes with StatReloader
+WARNING 2025-09-18 21:52:12,427 profiler 22728 10448 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 21:52:19,361 autoreload 19824 9872 Watching for file changes with StatReloader
+WARNING 2025-09-18 21:52:20,090 profiler 19824 9872 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 21:52:49,054 log 22728 24292 Unauthorized: /api/billing/payment-methods/
+WARNING 2025-09-18 21:52:49,055 basehttp 22728 24292 "GET /api/billing/payment-methods/ HTTP/1.1" 401 58
+INFO 2025-09-18 21:57:56,239 basehttp 22728 13244 "POST /api/auth/login/ HTTP/1.1" 200 708
+INFO 2025-09-18 21:58:06,320 basehttp 22728 13244 "POST /api/auth/login/ HTTP/1.1" 200 708
+WARNING 2025-09-18 21:58:17,075 log 22728 13244 Unauthorized: /api/billing/payment-methods/
+WARNING 2025-09-18 21:58:17,076 basehttp 22728 13244 "GET /api/billing/payment-methods/ HTTP/1.1" 401 183
+INFO 2025-09-18 21:58:28,210 basehttp 22728 13244 "POST /api/auth/login/ HTTP/1.1" 200 708
+ERROR 2025-09-18 21:58:28,567 log 22728 13244 Internal Server Error: /api/billing/payment-methods/
+Traceback (most recent call last):
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\viewsets.py", line 124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\mixins.py", line 38, in list
+    queryset = self.filter_queryset(self.get_queryset())
+                                    ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\billing\views.py", line 35, in get_queryset
+    return PaymentMethod.objects.filter(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1532, in build_filter
+    self.check_related_objects(join_info.final_field, value, join_info.opts)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1346, in check_related_objects
+    self.check_query_object_type(value, opts, field)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1323, in check_query_object_type
+    raise ValueError(
+ValueError: Cannot query "testuser (PATIENT)": Must be "MemberSubscription" instance.
+ERROR 2025-09-18 21:58:28,649 basehttp 22728 13244 "GET /api/billing/payment-methods/ HTTP/1.1" 500 172810
+INFO 2025-09-18 21:58:28,652 basehttp 22728 13244 - Broken pipe from ('127.0.0.1', 56429)
+INFO 2025-09-18 22:00:29,902 autoreload 22728 10448 J:\Documents\CODE\Projects\medical-aid\billing\views.py changed, reloading.
+INFO 2025-09-18 22:00:35,416 autoreload 11968 23448 Watching for file changes with StatReloader
+WARNING 2025-09-18 22:00:36,394 profiler 11968 23448 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 22:00:40,935 basehttp 11968 25512 "POST /api/auth/login/ HTTP/1.1" 200 708
+INFO 2025-09-18 22:00:41,068 basehttp 11968 25512 "GET /api/billing/payment-methods/ HTTP/1.1" 200 100
+INFO 2025-09-18 22:02:11,777 basehttp 11968 25512 "POST /api/auth/login/ HTTP/1.1" 200 708
+ERROR 2025-09-18 22:02:11,876 log 11968 25512 Internal Server Error: /api/billing/invoices/
+Traceback (most recent call last):
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\viewsets.py", line 124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\rest_framework\mixins.py", line 38, in list
+    queryset = self.filter_queryset(self.get_queryset())
+                                    ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\billing\views.py", line 77, in get_queryset
+    return Invoice.objects.filter(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1532, in build_filter
+    self.check_related_objects(join_info.final_field, value, join_info.opts)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1346, in check_related_objects
+    self.check_query_object_type(value, opts, field)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\site-packages\django\db\models\sql\query.py", line 1323, in check_query_object_type
+    raise ValueError(
+ValueError: Cannot query "testuser (PATIENT)": Must be "MemberSubscription" instance.
+ERROR 2025-09-18 22:02:11,937 basehttp 11968 25512 "GET /api/billing/invoices/ HTTP/1.1" 500 172504
+INFO 2025-09-18 22:02:11,945 basehttp 11968 25512 - Broken pipe from ('127.0.0.1', 55941)
+INFO 2025-09-18 22:04:35,811 autoreload 11968 23448 J:\Documents\CODE\Projects\medical-aid\billing\views.py changed, reloading.
+INFO 2025-09-18 22:04:40,134 autoreload 26120 22348 Watching for file changes with StatReloader
+WARNING 2025-09-18 22:04:40,987 profiler 26120 22348 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 22:05:00,724 basehttp 26120 25892 "POST /api/auth/login/ HTTP/1.1" 200 708
+INFO 2025-09-18 22:05:00,994 basehttp 26120 25892 "GET /api/billing/invoices/ HTTP/1.1" 200 100
+INFO 2025-09-18 22:05:25,642 autoreload 26120 22348 J:\Documents\CODE\Projects\medical-aid\billing\views.py changed, reloading.
+INFO 2025-09-18 22:05:30,300 autoreload 15892 23960 Watching for file changes with StatReloader
+WARNING 2025-09-18 22:05:30,805 profiler 15892 23960 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 22:05:54,797 basehttp 15892 21852 "POST /api/auth/login/ HTTP/1.1" 200 708
+INFO 2025-09-18 22:05:54,888 basehttp 15892 21852 "GET /api/billing/payments/ HTTP/1.1" 200 100
+INFO 2025-09-18 22:15:58,888 autoreload 15892 23960 J:\Documents\CODE\Projects\medical-aid\schemes\views.py changed, reloading.
+INFO 2025-09-18 22:16:04,870 autoreload 22088 18692 Watching for file changes with StatReloader
+WARNING 2025-09-18 22:16:05,471 profiler 22088 18692 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 22:34:59,405 autoreload 22088 18692 J:\Documents\CODE\Projects\medical-aid\billing\views.py changed, reloading.
+INFO 2025-09-18 22:35:03,212 autoreload 24368 3596 Watching for file changes with StatReloader
+WARNING 2025-09-18 22:35:03,846 profiler 24368 3596 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 22:35:07,328 autoreload 24368 3596 J:\Documents\CODE\Projects\medical-aid\billing\views.py changed, reloading.
+INFO 2025-09-18 22:35:08,885 autoreload 22680 13672 Watching for file changes with StatReloader
+WARNING 2025-09-18 22:35:09,448 profiler 22680 13672 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:36:21,223 profiler 22728 24152 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:36:52,320 profiler 24500 25976 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:50:53,049 profiler 22460 23892 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:51:43,306 profiler 21628 24604 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:52:17,817 profiler 8968 17292 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:52:36,181 profiler 14284 17060 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:53:12,172 profiler 13784 20688 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:53:30,768 profiler 24540 25904 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:54:12,539 profiler 23492 22332 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:54:37,943 profiler 22408 3400 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:54:53,445 profiler 3472 13976 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:55:13,436 profiler 25948 20220 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:56:07,976 profiler 25968 12152 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 22:56:28,307 profiler 24804 24144 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 23:53:39,551 autoreload 22680 13672 J:\Documents\CODE\Projects\medical-aid\billing\views.py changed, reloading.
+INFO 2025-09-18 23:53:48,566 autoreload 17200 4192 Watching for file changes with StatReloader
+WARNING 2025-09-18 23:53:49,058 profiler 17200 4192 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 23:54:08,320 autoreload 11592 17428 Watching for file changes with StatReloader
+WARNING 2025-09-18 23:54:08,565 profiler 11592 17428 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 23:55:16,851 autoreload 11592 17428 J:\Documents\CODE\Projects\medical-aid\schemes\migrations\0007_add_performance_indexes.py changed, reloading.
+INFO 2025-09-18 23:55:20,435 autoreload 11248 21384 Watching for file changes with StatReloader
+WARNING 2025-09-18 23:55:20,971 profiler 11248 21384 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 23:55:45,609 profiler 22500 2908 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 23:56:16,913 profiler 25616 18584 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 23:56:31,645 profiler 21336 4780 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-18 23:56:55,635 profiler 23672 12272 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-18 23:57:07,637 autoreload 3644 12464 Watching for file changes with StatReloader
+WARNING 2025-09-18 23:57:07,963 profiler 3644 12464 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-19 00:08:42,092 autoreload 23556 11736 Watching for file changes with StatReloader
+WARNING 2025-09-19 00:08:43,875 profiler 23556 11736 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-19 00:09:05,276 autoreload 23556 11736 J:\Documents\CODE\Projects\medical-aid\schemes\models.py changed, reloading.
+INFO 2025-09-19 00:09:10,627 autoreload 956 22788 Watching for file changes with StatReloader
+WARNING 2025-09-19 00:09:11,159 profiler 956 22788 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-19 00:09:16,651 autoreload 4920 16428 Watching for file changes with StatReloader
+WARNING 2025-09-19 00:09:16,958 profiler 4920 16428 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-19 00:10:54,142 autoreload 956 22788 J:\Documents\CODE\Projects\medical-aid\schemes\models.py changed, reloading.
+INFO 2025-09-19 00:10:54,460 autoreload 4920 16428 J:\Documents\CODE\Projects\medical-aid\schemes\models.py changed, reloading.
+INFO 2025-09-19 00:10:59,248 autoreload 16792 21328 Watching for file changes with StatReloader
+INFO 2025-09-19 00:10:59,247 autoreload 23052 8468 Watching for file changes with StatReloader
+WARNING 2025-09-19 00:10:59,851 profiler 23052 8468 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-19 00:10:59,851 profiler 16792 21328 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-19 00:11:23,932 profiler 21964 19556 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-19 00:11:40,979 profiler 3240 14616 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-19 00:12:00,759 autoreload 23052 8468 J:\Documents\CODE\Projects\medical-aid\schemes\migrations\0002_alter_subscriptiontier_options_and_more.py changed, reloading.
+INFO 2025-09-19 00:12:12,128 autoreload 22080 8156 Watching for file changes with StatReloader
+WARNING 2025-09-19 00:12:12,775 profiler 22080 8156 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-19 00:48:38,799 profiler 24400 22520 Cannot execute silk_profile as silk is not installed correctly.
+WARNING 2025-09-19 00:50:46,183 profiler 1916 24244 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-19 00:51:37,624 autoreload 22080 8156 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-19 00:51:40,656 autoreload 19684 25776 Watching for file changes with StatReloader
+WARNING 2025-09-19 00:52:06,176 profiler 18360 21692 Cannot execute silk_profile as silk is not installed correctly.
+INFO 2025-09-19 00:52:11,367 autoreload 19684 25776 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-19 00:52:13,436 autoreload 6372 25952 Watching for file changes with StatReloader
+INFO 2025-09-19 00:53:35,605 autoreload 6372 25952 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-19 00:53:37,529 autoreload 4840 25556 Watching for file changes with StatReloader
+INFO 2025-09-19 00:54:50,860 autoreload 24368 21808 Watching for file changes with StatReloader
+INFO 2025-09-19 00:55:52,460 autoreload 24368 21808 J:\Documents\CODE\Projects\medical-aid\schemes\migrations\0007_add_performance_indexes.py changed, reloading.
+INFO 2025-09-19 00:55:55,693 autoreload 5396 22744 Watching for file changes with StatReloader
+INFO 2025-09-19 00:58:37,504 autoreload 7216 4292 Watching for file changes with StatReloader
+INFO 2025-09-19 01:02:55,011 autoreload 5888 22188 Watching for file changes with StatReloader
+ERROR 2025-09-19 01:04:18,997 log 5888 5904 Internal Server Error: /api/accounts/me/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 86, in __call__
+    self.process_request(request)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 131, in process_request
+    self._apply_dynamic_mappings()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 110, in _apply_dynamic_mappings
+    dynamic.inject_context_manager_func(module=module,
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\profiling\dynamic.py", line 208, in inject_context_manager_func
+    cls, func = _get_func(module, func_name)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\profiling\dynamic.py", line 42, in _get_func
+    func = getattr(module, func_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'claims.views' has no attribute '*'
+ERROR 2025-09-19 01:04:19,053 log 5888 25160 Internal Server Error: /api/accounts/me/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 86, in __call__
+    self.process_request(request)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 131, in process_request
+    self._apply_dynamic_mappings()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 110, in _apply_dynamic_mappings
+    dynamic.inject_context_manager_func(module=module,
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\profiling\dynamic.py", line 208, in inject_context_manager_func
+    cls, func = _get_func(module, func_name)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\profiling\dynamic.py", line 42, in _get_func
+    func = getattr(module, func_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'claims.views' has no attribute '*'
+ERROR 2025-09-19 01:04:19,057 basehttp 5888 5904 "OPTIONS /api/accounts/me/ HTTP/1.1" 500 100339
+ERROR 2025-09-19 01:04:19,057 basehttp 5888 25160 "OPTIONS /api/accounts/me/ HTTP/1.1" 500 100339
+ERROR 2025-09-19 01:05:08,604 log 5888 26340 Internal Server Error: /api/auth/login/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 86, in __call__
+    self.process_request(request)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 131, in process_request
+    self._apply_dynamic_mappings()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 110, in _apply_dynamic_mappings
+    dynamic.inject_context_manager_func(module=module,
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\profiling\dynamic.py", line 208, in inject_context_manager_func
+    cls, func = _get_func(module, func_name)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\profiling\dynamic.py", line 42, in _get_func
+    func = getattr(module, func_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'claims.views' has no attribute '*'
+ERROR 2025-09-19 01:05:08,606 basehttp 5888 26340 "OPTIONS /api/auth/login/ HTTP/1.1" 500 100335
+INFO 2025-09-19 01:06:46,824 autoreload 5888 22188 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-19 01:06:52,163 autoreload 15612 17556 Watching for file changes with StatReloader
+ERROR 2025-09-19 01:09:43,061 log 15612 25288 Internal Server Error: /api/auth/login/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 96, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 177, in process_response
+    self._process_response(request, response)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 155, in _process_response
+    collector.finalise()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 157, in finalise
+    with self.request.prof_file.storage.open(file_name, 'w+b') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\base.py", line 22, in open
+    return self._open(name, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\filesystem.py", line 68, in _open
+    return File(open(self.path(name), mode))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'J:\\Documents\\CODE\\Projects\\medical-aid\\media\\d91ff597-6cec-4cd6-a9ef-2b6189b54c15.prof'
+ERROR 2025-09-19 01:09:43,070 basehttp 15612 25288 "OPTIONS /api/auth/login/ HTTP/1.1" 500 113799
+INFO 2025-09-19 01:11:17,230 autoreload 16252 23384 Watching for file changes with StatReloader
+ERROR 2025-09-19 01:11:44,982 log 16252 13100 Internal Server Error: /api/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 96, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 177, in process_response
+    self._process_response(request, response)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 155, in _process_response
+    collector.finalise()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 157, in finalise
+    with self.request.prof_file.storage.open(file_name, 'w+b') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\base.py", line 22, in open
+    return self._open(name, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\filesystem.py", line 68, in _open
+    return File(open(self.path(name), mode))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'J:\\Documents\\CODE\\Projects\\medical-aid\\media\\f992e36b-83b5-4008-9c4f-44e849c2959d.prof'
+ERROR 2025-09-19 01:11:44,989 basehttp 16252 13100 "GET /api/ HTTP/1.1" 500 114999
+ERROR 2025-09-19 01:11:48,578 log 16252 3264 Internal Server Error: /favicon.ico
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 96, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 177, in process_response
+    self._process_response(request, response)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 155, in _process_response
+    collector.finalise()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 157, in finalise
+    with self.request.prof_file.storage.open(file_name, 'w+b') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\base.py", line 22, in open
+    return self._open(name, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\filesystem.py", line 68, in _open
+    return File(open(self.path(name), mode))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'J:\\Documents\\CODE\\Projects\\medical-aid\\media\\1fd67db1-7ff0-46b8-8dac-55f543f609d4.prof'
+ERROR 2025-09-19 01:11:48,581 basehttp 16252 3264 "GET /favicon.ico HTTP/1.1" 500 114799
+INFO 2025-09-19 01:12:43,863 autoreload 16252 23384 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-19 01:12:46,459 autoreload 16644 6572 Watching for file changes with StatReloader
+ERROR 2025-09-19 01:13:38,565 log 16644 17200 Internal Server Error: /api/auth/login/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 96, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 177, in process_response
+    self._process_response(request, response)
+  File "C:\Users\JohnLivingprooff\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\middleware.py", line 155, in _process_response
+    collector.finalise()
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 157, in finalise
+    with self.request.prof_file.storage.open(file_name, 'w+b') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\base.py", line 22, in open
+    return self._open(name, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\files\storage\filesystem.py", line 68, in _open
+    return File(open(self.path(name), mode))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'J:\\Documents\\CODE\\Projects\\medical-aid\\media\\6abe9601-5218-4848-9d25-6fcec2376979.prof'
+ERROR 2025-09-19 01:13:38,569 basehttp 16644 17200 "OPTIONS /api/auth/login/ HTTP/1.1" 500 113813
+INFO 2025-09-19 01:20:12,546 autoreload 16644 6572 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-19 01:20:17,941 autoreload 22612 19216 Watching for file changes with StatReloader
+INFO 2025-09-19 01:20:21,701 autoreload 22612 19216 J:\Documents\CODE\Projects\medical-aid\backend\settings.py changed, reloading.
+INFO 2025-09-19 01:20:24,054 autoreload 22344 26524 Watching for file changes with StatReloader
+INFO 2025-09-19 01:21:00,720 basehttp 22344 25972 "OPTIONS /api/auth/login/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:08,658 basehttp 22344 25972 "POST /api/auth/login/ HTTP/1.1" 200 620
+INFO 2025-09-19 01:21:09,158 basehttp 22344 25972 "OPTIONS /api/accounts/me/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:09,720 basehttp 22344 25444 "GET /api/accounts/me/ HTTP/1.1" 200 123
+INFO 2025-09-19 01:21:13,041 basehttp 22344 25972 "OPTIONS /api/core/dashboard/stats/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:13,099 basehttp 22344 25972 "OPTIONS /api/core/dashboard/activity/ HTTP/1.1" 200 0
+ERROR 2025-09-19 01:21:13,121 collector 22344 25972 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:13,183 basehttp 22344 25972 "OPTIONS /api/alerts/ HTTP/1.1" 200 0
+ERROR 2025-09-19 01:21:13,215 collector 22344 25972 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:13,293 basehttp 22344 25972 "OPTIONS /api/core/dashboard/stats/ HTTP/1.1" 200 0
+ERROR 2025-09-19 01:21:13,315 collector 22344 25972 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:13,398 basehttp 22344 25972 "OPTIONS /api/core/dashboard/activity/ HTTP/1.1" 200 0
+ERROR 2025-09-19 01:21:13,447 collector 22344 23116 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+ERROR 2025-09-19 01:21:13,567 collector 22344 23528 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:13,643 basehttp 22344 23528 "OPTIONS /api/alerts/ HTTP/1.1" 200 0
+ERROR 2025-09-19 01:21:13,699 collector 22344 25720 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:13,909 basehttp 22344 23116 "GET /api/core/dashboard/activity/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:21:14,021 basehttp 22344 25444 "GET /api/core/dashboard/stats/ HTTP/1.1" 200 224
+ERROR 2025-09-19 01:21:14,043 collector 22344 25444 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:14,544 basehttp 22344 25720 "GET /api/alerts/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:21:14,725 basehttp 22344 23116 "GET /api/core/dashboard/activity/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:21:15,065 basehttp 22344 25444 "GET /api/core/dashboard/stats/ HTTP/1.1" 200 224
+INFO 2025-09-19 01:21:15,131 basehttp 22344 25720 "GET /api/alerts/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:21:35,358 basehttp 22344 24080 "OPTIONS /api/core/reports/scheme-usage/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:35,361 basehttp 22344 26072 "OPTIONS /api/core/reports/scheme-usage/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:35,361 basehttp 22344 4588 "OPTIONS /api/core/reports/disease-stats/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:35,361 basehttp 22344 20896 "OPTIONS /api/core/reports/disease-stats/ HTTP/1.1" 200 0
+ERROR 2025-09-19 01:21:35,905 collector 22344 25716 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:36,135 basehttp 22344 15924 "GET /api/core/reports/disease-stats/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:21:36,212 basehttp 22344 25716 "GET /api/core/reports/scheme-usage/ HTTP/1.1" 200 14
+ERROR 2025-09-19 01:21:36,220 collector 22344 25716 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:21:36,419 basehttp 22344 15924 "GET /api/core/reports/disease-stats/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:21:36,430 basehttp 22344 25716 "GET /api/core/reports/scheme-usage/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:21:39,609 basehttp 22344 14428 "OPTIONS /api/core/settings/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:39,610 basehttp 22344 22336 "OPTIONS /api/core/settings/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:42,430 basehttp 22344 23708 "GET /api/core/settings/ HTTP/1.1" 200 100
+INFO 2025-09-19 01:21:46,179 basehttp 22344 22336 "OPTIONS /api/core/analytics/schemes/overview/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:46,180 basehttp 22344 14428 "OPTIONS /api/core/analytics/schemes/overview/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:46,519 basehttp 22344 23708 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+INFO 2025-09-19 01:21:46,740 basehttp 22344 23708 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+INFO 2025-09-19 01:21:55,542 basehttp 22344 6672 "OPTIONS /api/schemes/categories/2/details/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:55,550 basehttp 22344 18660 "OPTIONS /api/schemes/categories/2/details/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:21:56,179 basehttp 22344 22592 "GET /api/schemes/categories/2/details/ HTTP/1.1" 200 262
+INFO 2025-09-19 01:21:56,306 basehttp 22344 22592 "GET /api/schemes/categories/2/details/ HTTP/1.1" 200 262
+INFO 2025-09-19 01:22:13,118 basehttp 22344 19052 "OPTIONS /api/patients/?ordering=-id HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:13,120 basehttp 22344 20356 "OPTIONS /api/patients/?ordering=-id HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:13,999 basehttp 22344 18248 "GET /api/patients/?ordering=-id HTTP/1.1" 200 707
+INFO 2025-09-19 01:22:14,021 basehttp 22344 20356 "OPTIONS /api/patients/5/coverage-balance/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:14,545 basehttp 22344 18248 "GET /api/patients/5/coverage-balance/ HTTP/1.1" 200 46
+INFO 2025-09-19 01:22:19,508 basehttp 22344 20356 "OPTIONS /api/core/admin/stats/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:19,511 basehttp 22344 19052 "OPTIONS /api/core/admin/stats/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:19,840 basehttp 22344 18248 "GET /api/core/admin/stats/ HTTP/1.1" 200 349
+INFO 2025-09-19 01:22:20,131 basehttp 22344 18248 "GET /api/core/admin/stats/ HTTP/1.1" 200 349
+INFO 2025-09-19 01:22:34,241 basehttp 22344 10732 "GET /api/alerts/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:34,345 basehttp 22344 10732 "GET /api/alerts/ HTTP/1.1" 200 14
+ERROR 2025-09-19 01:22:36,789 collector 22344 8716 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:22:36,915 basehttp 22344 10732 "GET /api/core/reports/scheme-usage/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:37,130 basehttp 22344 8716 "GET /api/core/reports/disease-stats/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:37,203 basehttp 22344 10732 "GET /api/core/reports/scheme-usage/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:37,409 basehttp 22344 8716 "GET /api/core/reports/disease-stats/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:40,345 basehttp 22344 8716 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+INFO 2025-09-19 01:22:40,512 basehttp 22344 8716 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+INFO 2025-09-19 01:22:40,673 basehttp 22344 25312 "OPTIONS /api/core/analytics/members/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:40,690 basehttp 22344 13492 "OPTIONS /api/core/analytics/providers/ HTTP/1.1" 200 0
+ERROR 2025-09-19 01:22:40,699 collector 22344 10732 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:22:40,714 basehttp 22344 20848 "OPTIONS /api/claims/?ordering=-date_submitted HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:40,739 basehttp 22344 13348 "OPTIONS /api/core/analytics/providers/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:40,758 basehttp 22344 8892 "OPTIONS /api/claims/?ordering=-date_submitted HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:40,758 basehttp 22344 20668 "OPTIONS /api/core/analytics/members/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:22:40,934 basehttp 22344 8716 "GET /api/core/analytics/members/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:40,954 basehttp 22344 10732 "GET /api/core/analytics/providers/ HTTP/1.1" 200 14
+ERROR 2025-09-19 01:22:40,971 collector 22344 10732 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+ERROR 2025-09-19 01:22:41,121 collector 22344 14704 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:22:41,238 basehttp 22344 10732 "GET /api/core/analytics/members/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:41,251 basehttp 22344 8716 "GET /api/claims/?ordering=-date_submitted HTTP/1.1" 200 100
+INFO 2025-09-19 01:22:41,341 basehttp 22344 14704 "GET /api/core/analytics/providers/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:46,168 basehttp 22344 25112 "GET /api/core/analytics/providers/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:22:46,360 basehttp 22344 25112 "GET /api/core/analytics/providers/ HTTP/1.1" 200 14
+ERROR 2025-09-19 01:23:14,003 collector 22344 23868 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+ERROR 2025-09-19 01:23:14,004 collector 22344 12768 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:23:14,741 basehttp 22344 23868 "GET /api/core/analytics/providers/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:23:14,914 basehttp 22344 11776 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+ERROR 2025-09-19 01:23:14,932 collector 22344 11776 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:23:14,979 basehttp 22344 12768 "GET /api/core/analytics/members/ HTTP/1.1" 200 14
+ERROR 2025-09-19 01:23:14,999 collector 22344 12768 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:23:15,600 basehttp 22344 23868 "GET /api/core/analytics/providers/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:23:15,619 basehttp 22344 12768 "GET /api/core/analytics/members/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:23:15,649 basehttp 22344 11776 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+ERROR 2025-09-19 01:23:16,879 collector 22344 11776 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+ERROR 2025-09-19 01:23:16,879 collector 22344 12768 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:23:17,181 basehttp 22344 23868 "GET /api/alerts/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:23:17,280 basehttp 22344 12768 "GET /api/core/dashboard/activity/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:23:17,398 basehttp 22344 11776 "GET /api/core/dashboard/stats/ HTTP/1.1" 200 224
+ERROR 2025-09-19 01:23:17,421 collector 22344 10992 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 01:23:17,490 basehttp 22344 23868 "GET /api/alerts/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:23:17,848 basehttp 22344 11776 "GET /api/core/dashboard/stats/ HTTP/1.1" 200 224
+INFO 2025-09-19 01:23:17,871 basehttp 22344 10992 "GET /api/core/dashboard/activity/ HTTP/1.1" 200 14
+INFO 2025-09-19 01:23:20,920 basehttp 22344 26468 "OPTIONS /api/schemes/categories/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:23:21,113 basehttp 22344 10992 "GET /api/schemes/categories/ HTTP/1.1" 200 302
+INFO 2025-09-19 01:23:34,008 basehttp 22344 10992 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+INFO 2025-09-19 01:23:34,152 basehttp 22344 10992 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 376
+INFO 2025-09-19 01:23:44,412 basehttp 22344 11040 "OPTIONS /api/core/search/?q=pr&type=all&limit=8 HTTP/1.1" 200 0
+INFO 2025-09-19 01:23:44,763 basehttp 22344 11040 "OPTIONS /api/core/search/?q=pre&type=all&limit=8 HTTP/1.1" 200 0
+ERROR 2025-09-19 01:23:45,101 log 22344 24364 Internal Server Error: /api/core/search/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\core\views_search.py", line 50, in get
+    claim_results = self._search_claims(query, limit, request.user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\core\views_search.py", line 128, in _search_claims
+    claims = base_query.filter(
+             ^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1472, in build_filter
+    return self._add_q(
+           ^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'diagnosis' into field. Choices are: cost, coverage_checked, date_of_service, date_submitted, diagnosis_code, edi_transactions, fraud_alerts, id, invoice, notes, patient, patient_id, preauth_expiry, preauth_number, priority, procedure_code, processed_by, processed_by_id, processed_date, provider, provider_id, rejection_date, rejection_reason, service_type, service_type_id, status
+ERROR 2025-09-19 01:23:45,236 collector 22344 11748 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+ERROR 2025-09-19 01:23:45,450 log 22344 11748 Internal Server Error: /api/core/search/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\core\views_search.py", line 50, in get
+    claim_results = self._search_claims(query, limit, request.user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\core\views_search.py", line 128, in _search_claims
+    claims = base_query.filter(
+             ^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1476, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1494, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\query.py", line 1501, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1613, in add_q
+    clause, _ = self._add_q(q_object, self.used_aliases)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1472, in build_filter
+    return self._add_q(
+           ^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1645, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1495, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1307, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\db\models\sql\query.py", line 1772, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'diagnosis' into field. Choices are: cost, coverage_checked, date_of_service, date_submitted, diagnosis_code, edi_transactions, fraud_alerts, id, invoice, notes, patient, patient_id, preauth_expiry, preauth_number, priority, procedure_code, processed_by, processed_by_id, processed_date, provider, provider_id, rejection_date, rejection_reason, service_type, service_type_id, status
+ERROR 2025-09-19 01:23:45,560 basehttp 22344 24364 "GET /api/core/search/?q=pr&type=all&limit=8 HTTP/1.1" 500 194361
+ERROR 2025-09-19 01:23:45,579 basehttp 22344 11748 "GET /api/core/search/?q=pre&type=all&limit=8 HTTP/1.1" 500 194433
+INFO 2025-09-19 01:24:06,189 basehttp 22344 12688 "GET /api/patients/5/coverage-balance/ HTTP/1.1" 200 46
+INFO 2025-09-19 01:26:10,100 autoreload 24376 24584 Watching for file changes with StatReloader
+INFO 2025-09-19 01:26:19,239 basehttp 24376 16940 "OPTIONS /api/schemes/benefit-types/ HTTP/1.1" 200 0
+INFO 2025-09-19 01:26:20,871 basehttp 24376 5424 "GET /api/schemes/benefit-types/ HTTP/1.1" 200 100
+INFO 2025-09-19 01:26:58,125 basehttp 24376 5424 "POST /api/schemes/categories/ HTTP/1.1" 201 113
+INFO 2025-09-19 01:28:39,869 basehttp 24376 26596 "GET /api/accounts/me/ HTTP/1.1" 200 123
+INFO 2025-09-19 01:28:40,474 basehttp 24376 26596 "GET /api/accounts/me/ HTTP/1.1" 200 123
+INFO 2025-09-19 01:28:41,261 basehttp 24376 19616 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 576
+INFO 2025-09-19 01:28:42,669 basehttp 24376 19616 "GET /api/core/analytics/schemes/overview/ HTTP/1.1" 200 576

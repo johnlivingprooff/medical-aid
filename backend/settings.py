@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     # Local apps
     'accounts',
     'schemes',
+    'billing',
     'claims',
     'core',
 ]
@@ -200,6 +201,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Django Silk requires STORAGES configuration
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -342,20 +354,8 @@ SILKY_AUTHENTICATION = True  # Require authentication to view profiles
 SILKY_AUTHORISATION = True   # Require superuser to view profiles
 SILKY_MAX_RECORDED_REQUESTS = 10000  # Maximum number of requests to record
 SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10  # Check percentage for cleanup
-SILKY_DYNAMIC_PROFILING = [
-    {
-        'module': 'claims.views',
-        'function': '.*',
-        'start_line': 1,
-        'end_line': 1000,
-    },
-    {
-        'module': 'core.views',
-        'function': '.*',
-        'start_line': 1,
-        'end_line': 1000,
-    },
-]
+SILKY_PYTHON_PROFILER_RESULT_PATH = BASE_DIR / "silk_profiles"  # Custom path for profiling files
+SILKY_DYNAMIC_PROFILING = []  # Disabled dynamic profiling to avoid configuration issues
 
 # Logging Configuration
 LOGGING = {
