@@ -1,10 +1,17 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django.utils import timezone
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from .models import Patient, Claim, Invoice
+from .models import PreAuthorizationRequest, PreAuthorizationApproval, PreAuthorizationRule, FraudAlert
 from .serializers import PatientSerializer, ClaimSerializer, InvoiceSerializer
-from .services import validate_and_process_claim, emit_low_balance_alerts, emit_fraud_alert_if_needed
-from schemes.models import SchemeBenefit
+from .serializers import PreAuthorizationRequestSerializer, PreAuthorizationApprovalSerializer, PreAuthorizationRuleSerializer, FraudAlertSerializer
+from .services import validate_and_process_claim_enhanced, emit_low_balance_alerts, emit_fraud_alert_if_needed
+from schemes.models import SchemeBenefit, BenefitType
+from core.models import MemberMessage, MemberDocument
+from backend.pagination import OptimizedPagination
 
 
 class IsProviderOrReadOnlyForAuthenticated(permissions.BasePermission):
@@ -31,11 +38,26 @@ class IsAdmin(permissions.BasePermission):
 
 
 class PatientViewSet(viewsets.ModelViewSet):
-	queryset = Patient.objects.select_related('user', 'scheme').all()
+	queryset = Patient.objects.select_related(
+		'user',
+		'scheme',
+		'principal_member'
+	).prefetch_related(
+		'dependents'
+	).all()
 	serializer_class = PatientSerializer
 	permission_classes = [permissions.IsAuthenticated]
 	filterset_fields = ['scheme', 'gender']
 	search_fields = ['user__username']
+	pagination_class = OptimizedPagination
+
+	@method_decorator(cache_page(300))  # Cache for 5 minutes
+	def list(self, request, *args, **kwargs):
+		return super().list(request, *args, **kwargs)
+
+	@method_decorator(cache_page(300))  # Cache for 5 minutes
+	def retrieve(self, request, *args, **kwargs):
+		return super().retrieve(request, *args, **kwargs)
 
 	def get_queryset(self):
 		user = self.request.user
@@ -55,47 +77,141 @@ class PatientViewSet(viewsets.ModelViewSet):
 	@action(detail=True, methods=['get'], url_path='coverage-balance')
 	def coverage_balance(self, request, pk=None):
 		patient = self.get_object()
-		benefits = SchemeBenefit.objects.filter(scheme=patient.scheme, is_active=True)
-		from django.db.models import Sum
+		
+		# Get all active benefits for the patient's scheme with related data
+		benefits = SchemeBenefit.objects.filter(
+			scheme=patient.scheme, 
+			is_active=True
+		).select_related('benefit_type')
+		
+		from django.db.models import Sum, Count, Q
+		from django.utils import timezone as djtz
+		from .services import _period_start
+		
 		data = []
-		for b in benefits:
-			# compute period start using enhanced logic
-			from .services import _period_start
-			from django.utils import timezone as djtz
-			start = _period_start(b.coverage_period, djtz.now(), patient)
-			approved_qs = Claim.objects.filter(
+		current_time = djtz.now()
+		
+		# Get usage data for all benefit types in a single query
+		usage_data = {}
+		for benefit in benefits:
+			start_date = _period_start(benefit.coverage_period, current_time, patient)
+			
+			# Get approved claims for this benefit type within the period
+			claims_data = Claim.objects.filter(
 				patient=patient,
-				service_type=b.benefit_type,
+				service_type=benefit.benefit_type,
 				status=Claim.Status.APPROVED,
-				date_submitted__gte=start,
+				date_submitted__gte=start_date,
+			).aggregate(
+				total_cost=Sum('cost'),
+				claim_count=Count('id')
 			)
-			used_amount = float(approved_qs.aggregate(total=Sum('cost'))['total'] or 0.0)
-			remaining_amount = float(b.coverage_amount) - used_amount if b.coverage_amount is not None else None
+			
+			usage_data[benefit.id] = {
+				'used_amount': float(claims_data['total_cost'] or 0.0),
+				'used_count': claims_data['claim_count'] or 0,
+				'start_date': start_date
+			}
+		
+		# Build response data
+		for benefit in benefits:
+			usage = usage_data[benefit.id]
+			remaining_amount = float(benefit.coverage_amount) - usage['used_amount'] if benefit.coverage_amount is not None else None
 			remaining_count = None
-			if b.coverage_limit_count is not None:
-				used_count = approved_qs.count()
-				remaining_count = max(b.coverage_limit_count - used_count, 0)
+			if benefit.coverage_limit_count is not None:
+				remaining_count = max(benefit.coverage_limit_count - usage['used_count'], 0)
+				
 			data.append({
-				'benefit_type': b.benefit_type.id,
-				'benefit_type_name': b.benefit_type.name,
-				'coverage_amount': float(b.coverage_amount) if b.coverage_amount is not None else None,
-				'used_amount': used_amount,
+				'benefit_type': benefit.benefit_type.id,
+				'benefit_type_name': benefit.benefit_type.name,
+				'coverage_amount': float(benefit.coverage_amount) if benefit.coverage_amount is not None else None,
+				'used_amount': usage['used_amount'],
 				'remaining_amount': remaining_amount,
-				'coverage_limit_count': b.coverage_limit_count,
+				'coverage_limit_count': benefit.coverage_limit_count,
 				'remaining_count': remaining_count,
-				'coverage_period': b.coverage_period,
-				'deductible_amount': float(b.deductible_amount),
-				'copayment_percentage': float(b.copayment_percentage),
-				'copayment_fixed': float(b.copayment_fixed),
-				'requires_preauth': b.requires_preauth,
-				'waiting_period_days': b.waiting_period_days,
-				'network_only': b.network_only,
+				'coverage_period': benefit.coverage_period,
+				'deductible_amount': float(benefit.deductible_amount),
+				'copayment_percentage': float(benefit.copayment_percentage),
+				'copayment_fixed': float(benefit.copayment_fixed),
+				'requires_preauth': benefit.requires_preauth,
+				'waiting_period_days': benefit.waiting_period_days,
+				'network_only': benefit.network_only,
 			})
+		
 		return Response({'scheme': patient.scheme.name, 'balances': data})
+
+	@action(detail=True, methods=['get', 'post'], url_path='messages')
+	def messages(self, request, pk=None):
+		patient = self.get_object()
+		if request.method == 'GET':
+			qs = MemberMessage.objects.filter(patient=patient).order_by('-created_at')[:100]
+			return Response([
+				{
+					'id': m.id,
+					'subject': m.subject,
+					'body': m.body,
+					'direction': m.direction,
+					'sender': getattr(m.sender, 'username', None),
+					'created_at': m.created_at,
+					'read_at': m.read_at,
+				}
+				for m in qs
+			])
+		# POST - send a message to member
+		if getattr(request.user, 'role', None) not in ['ADMIN', 'PROVIDER']:
+			return Response({'detail': 'Only staff can message a member'}, status=status.HTTP_403_FORBIDDEN)
+		subject = request.data.get('subject', '')
+		body = request.data.get('message') or request.data.get('body')
+		if not body:
+			return Response({'detail': 'Message body is required'}, status=status.HTTP_400_BAD_REQUEST)
+		msg = MemberMessage.objects.create(
+			patient=patient,
+			sender=request.user,
+			subject=subject,
+			body=body,
+			direction=MemberMessage.Direction.TO_MEMBER,
+		)
+		return Response({'id': msg.id, 'created_at': msg.created_at}, status=status.HTTP_201_CREATED)
+
+	@action(detail=True, methods=['get', 'post'], url_path='documents')
+	def documents(self, request, pk=None):
+		patient = self.get_object()
+		if request.method == 'GET':
+			qs = MemberDocument.objects.filter(patient=patient).order_by('-created_at')
+			return Response([
+				{
+					'id': d.id,
+					'doc_type': d.doc_type,
+					'notes': d.notes,
+					'file': getattr(d.file, 'url', ''),
+					'created_at': d.created_at,
+				}
+				for d in qs
+			])
+		# POST - upload a document (multipart/form-data)
+		file = request.FILES.get('document') or request.FILES.get('file')
+		if not file:
+			return Response({'detail': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+		doc_type = request.data.get('doc_type', MemberDocument.DocType.OTHER)
+		notes = request.data.get('notes', '')
+		doc = MemberDocument.objects.create(
+			patient=patient,
+			uploaded_by=request.user if request.user.is_authenticated else None,
+			file=file,
+			doc_type=doc_type,
+			notes=notes,
+		)
+		return Response({'id': doc.id, 'file': getattr(doc.file, 'url', '')}, status=status.HTTP_201_CREATED)
 
 
 class ClaimViewSet(viewsets.ModelViewSet):
-	queryset = Claim.objects.select_related('patient__user', 'provider').all()
+	queryset = Claim.objects.select_related(
+		'patient__user',
+		'patient__scheme',
+		'provider',
+		'service_type',
+		'processed_by'
+	).all()  # Removed heavy prefetch_related for better pagination performance
 	serializer_class = ClaimSerializer
 	permission_classes = [IsProviderOrReadOnlyForAuthenticated]
 	filterset_fields = {
@@ -108,6 +224,15 @@ class ClaimViewSet(viewsets.ModelViewSet):
 		'service_type': ['exact', 'in'],
 	}
 	search_fields = ['service_type__name', 'patient__user__username', 'provider__username']
+	pagination_class = OptimizedPagination
+
+	@method_decorator(cache_page(300))  # Cache for 5 minutes
+	def list(self, request, *args, **kwargs):
+		return super().list(request, *args, **kwargs)
+
+	@method_decorator(cache_page(300))  # Cache for 5 minutes
+	def retrieve(self, request, *args, **kwargs):
+		return super().retrieve(request, *args, **kwargs)
 
 	def perform_create(self, serializer):
 		claim = serializer.save(provider=self.request.user)
@@ -117,7 +242,7 @@ class ClaimViewSet(viewsets.ModelViewSet):
 			claim.date_of_service = claim.date_submitted.date()
 			claim.save(update_fields=['date_of_service'])
 		
-		approved, payable, reason = validate_and_process_claim(claim)
+		approved, payable, reason, validation_details = validate_and_process_claim_enhanced(claim)
 		if approved:
 			claim.status = Claim.Status.APPROVED
 			claim.coverage_checked = True
@@ -125,11 +250,18 @@ class ClaimViewSet(viewsets.ModelViewSet):
 			claim.processed_by = self.request.user
 			claim.save(update_fields=['status', 'coverage_checked', 'processed_date', 'processed_by'])
 			
+			# Get benefit data once for both invoice and alerts
+			try:
+				benefit = SchemeBenefit.objects.select_related('benefit_type').get(
+					scheme=claim.patient.scheme, 
+					benefit_type=claim.service_type
+				)
+			except SchemeBenefit.DoesNotExist:
+				benefit = None
+			
 			# Create invoice with detailed breakdown
 			from decimal import Decimal
-			try:
-				benefit = SchemeBenefit.objects.get(scheme=claim.patient.scheme, benefit_type=claim.service_type)
-				
+			if benefit:
 				# Calculate patient responsibility components
 				claim_amount = Decimal(str(claim.cost))
 				deductible = min(Decimal(str(benefit.deductible_amount or 0)), claim_amount)
@@ -147,27 +279,33 @@ class ClaimViewSet(viewsets.ModelViewSet):
 					patient_copay=total_copay,
 					patient_coinsurance=0  # Could be enhanced later
 				)
-			except SchemeBenefit.DoesNotExist:
+			else:
 				Invoice.objects.create(claim=claim, amount=payable)
 			
 			# emit alerts for low balance and fraud checks
-			try:
-				benefit = SchemeBenefit.objects.get(scheme=claim.patient.scheme, benefit_type=claim.service_type)
-			except SchemeBenefit.DoesNotExist:
-				benefit = None
 			if benefit and benefit.coverage_amount is not None:
-				# naive remaining after approval
-				from django.db.models import Sum
-				approved_qs = Claim.objects.filter(
+				# Get usage data efficiently
+				from django.db.models import Sum, Count
+				from .services import _period_start
+				from django.utils import timezone as djtz
+				
+				start_date = _period_start(benefit.coverage_period, djtz.now(), claim.patient)
+				usage_data = Claim.objects.filter(
 					patient=claim.patient,
 					service_type=claim.service_type,
 					status=Claim.Status.APPROVED,
+					date_submitted__gte=start_date,
+				).aggregate(
+					total_cost=Sum('cost'),
+					claim_count=Count('id')
 				)
-				used_amount = float(approved_qs.aggregate(total=Sum("cost"))['total'] or 0.0)
+				
+				used_amount = float(usage_data['total_cost'] or 0.0)
 				remaining_after = float(benefit.coverage_amount) - used_amount
 				remaining_count = None
 				if benefit.coverage_limit_count is not None:
-					remaining_count = max(benefit.coverage_limit_count - approved_qs.count(), 0)
+					used_count = usage_data['claim_count'] or 0
+					remaining_count = max(benefit.coverage_limit_count - used_count, 0)
 				emit_low_balance_alerts(claim, benefit, remaining_after, remaining_count)
 			emit_fraud_alert_if_needed(claim)
 		else:
@@ -200,7 +338,7 @@ class ClaimViewSet(viewsets.ModelViewSet):
 		# expects: patient, service_type, cost
 		try:
 			patient_id = request.data['patient']
-			service_type = request.data['service_type']
+			service_type_id = request.data['service_type']
 			cost = request.data['cost']
 		except KeyError:
 			return Response({'detail': 'patient, service_type, cost required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -208,9 +346,18 @@ class ClaimViewSet(viewsets.ModelViewSet):
 			patient = Patient.objects.get(id=patient_id)
 		except Patient.DoesNotExist:
 			return Response({'detail': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+		try:
+			service_type = BenefitType.objects.get(id=service_type_id)
+		except BenefitType.DoesNotExist:
+			return Response({'detail': 'Service type not found'}, status=status.HTTP_404_NOT_FOUND)
 		temp_claim = Claim(patient=patient, provider=request.user, service_type=service_type, cost=cost)
-		approved, payable, reason = validate_and_process_claim(temp_claim)
-		return Response({'approved': approved, 'payable': payable, 'reason': reason})
+		approved, payable, reason, validation_details = validate_and_process_claim_enhanced(temp_claim)
+		return Response({
+			'approved': approved, 
+			'payable': payable, 
+			'reason': reason,
+			'validation_details': validation_details
+		})
 
 	@action(detail=True, methods=['post'], url_path='approve')
 	def approve_claim(self, request, pk=None):
@@ -230,12 +377,13 @@ class ClaimViewSet(viewsets.ModelViewSet):
 			return Response({'detail': f'Cannot approve claim with status: {claim.status}'}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Validate claim coverage before approval
-		approved, payable, reason = validate_and_process_claim(claim)
+		approved, payable, reason, validation_details = validate_and_process_claim_enhanced(claim)
 		if not approved:
 			return Response({
 				'detail': 'Claim validation failed',
 				'reason': reason,
-				'approved': False
+				'approved': False,
+				'validation_details': validation_details
 			}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Approve the claim
@@ -373,6 +521,15 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 	serializer_class = InvoiceSerializer
 	permission_classes = [IsProviderOrReadOnlyForAuthenticated]
 	filterset_fields = ['payment_status']
+	pagination_class = OptimizedPagination
+
+	@method_decorator(cache_page(300))  # Cache for 5 minutes
+	def list(self, request, *args, **kwargs):
+		return super().list(request, *args, **kwargs)
+
+	@method_decorator(cache_page(300))  # Cache for 5 minutes
+	def retrieve(self, request, *args, **kwargs):
+		return super().retrieve(request, *args, **kwargs)
 
 	def get_queryset(self):
 		user = self.request.user
@@ -395,3 +552,358 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 		if getattr(request.user, 'role', None) != 'ADMIN':
 			return Response({'detail': 'Admin only'}, status=status.HTTP_403_FORBIDDEN)
 		return super().partial_update(request, *args, **kwargs)
+
+
+class PreAuthorizationRuleViewSet(viewsets.ModelViewSet):
+	queryset = PreAuthorizationRule.objects.select_related('benefit_type', 'created_by', 'updated_by').all()
+	serializer_class = PreAuthorizationRuleSerializer
+	permission_classes = [IsAdmin]  # Only admins can manage rules
+	filterset_fields = ['benefit_type', 'rule_type', 'is_active', 'priority']
+	search_fields = ['name', 'description']
+
+	def perform_create(self, serializer):
+		serializer.save(created_by=self.request.user, updated_by=self.request.user)
+
+	def perform_update(self, serializer):
+		serializer.save(updated_by=self.request.user)
+
+
+class PreAuthorizationRequestViewSet(viewsets.ModelViewSet):
+	queryset = PreAuthorizationRequest.objects.select_related(
+		'patient__user', 'provider', 'benefit_type', 'requested_by', 'reviewed_by'
+	).all()
+	serializer_class = PreAuthorizationRequestSerializer
+	permission_classes = [permissions.IsAuthenticated]
+	filterset_fields = {
+		'status': ['exact', 'in'],
+		'urgency_level': ['exact', 'in'],
+		'priority': ['exact', 'in'],
+		'patient': ['exact'],
+		'provider': ['exact'],
+		'benefit_type': ['exact'],
+		'requested_date': ['gte', 'lte', 'date'],
+		'expiry_date': ['gte', 'lte', 'date'],
+	}
+	search_fields = ['request_number', 'procedure_description', 'patient__user__username']
+
+	def get_queryset(self):
+		user = self.request.user
+		qs = super().get_queryset()
+		role = getattr(user, 'role', None)
+		if role == 'ADMIN':
+			return qs
+		if role == 'PROVIDER':
+			return qs.filter(provider=user)
+		if role == 'PATIENT':
+			return qs.filter(patient__user=user)
+		return qs.none()
+
+	def perform_create(self, serializer):
+		request_obj = serializer.save(requested_by=self.request.user)
+		
+		# Auto-process based on rules if possible
+		from .services import PreAuthorizationService
+		service = PreAuthorizationService()
+		auto_result = service.process_auto_approval(request_obj)
+		
+		if auto_result['auto_processed']:
+			request_obj.status = auto_result['status']
+			request_obj.review_notes = auto_result['reason']
+			request_obj.reviewed_by = self.request.user
+			request_obj.reviewed_date = timezone.now()
+			if auto_result['approved_amount'] is not None:
+				request_obj.approved_amount = auto_result['approved_amount']
+			if auto_result['approved_conditions']:
+				request_obj.approved_conditions = auto_result['approved_conditions']
+			if auto_result['rejection_reason']:
+				request_obj.rejection_reason = auto_result['rejection_reason']
+			request_obj.save()
+
+	@action(detail=True, methods=['post'], url_path='approve')
+	def approve_request(self, request, pk=None):
+		"""Approve a pre-authorization request"""
+		preauth_request = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+		
+		# Check permissions
+		if role == 'PROVIDER' and preauth_request.provider != user:
+			return Response({'detail': 'You can only approve requests submitted to you'}, status=status.HTTP_403_FORBIDDEN)
+		elif role not in ['PROVIDER', 'ADMIN']:
+			return Response({'detail': 'Only providers and admins can approve requests'}, status=status.HTTP_403_FORBIDDEN)
+		
+		# Check if request can be approved
+		if preauth_request.status != PreAuthorizationRequest.Status.PENDING:
+			return Response({'detail': f'Cannot approve request with status: {preauth_request.status}'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Get approval data
+		approved_amount = request.data.get('approved_amount')
+		approved_conditions = request.data.get('approved_conditions', '')
+		approval_notes = request.data.get('approval_notes', '')
+		
+		if not approved_amount:
+			return Response({'detail': 'Approved amount is required'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Approve the request
+		from django.utils import timezone
+		preauth_request.status = PreAuthorizationRequest.Status.APPROVED
+		preauth_request.approved_amount = approved_amount
+		preauth_request.approved_conditions = approved_conditions
+		preauth_request.review_notes = approval_notes
+		preauth_request.reviewed_by = user
+		preauth_request.reviewed_date = timezone.now()
+		preauth_request.save()
+		
+		# Create approval record
+		PreAuthorizationApproval.objects.create(
+			request=preauth_request,
+			benefit_type=preauth_request.benefit_type,
+			approved_amount=approved_amount,
+			approved_conditions=approved_conditions,
+			approval_notes=approval_notes,
+			approved_by=user
+		)
+		
+		serializer = self.get_serializer(preauth_request)
+		return Response({
+			'detail': 'Pre-authorization request approved successfully',
+			'request': serializer.data
+		})
+
+	@action(detail=True, methods=['post'], url_path='reject')
+	def reject_request(self, request, pk=None):
+		"""Reject a pre-authorization request"""
+		preauth_request = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+		
+		# Check permissions
+		if role == 'PROVIDER' and preauth_request.provider != user:
+			return Response({'detail': 'You can only reject requests submitted to you'}, status=status.HTTP_403_FORBIDDEN)
+		elif role not in ['PROVIDER', 'ADMIN']:
+			return Response({'detail': 'Only providers and admins can reject requests'}, status=status.HTTP_403_FORBIDDEN)
+		
+		# Check if request can be rejected
+		if preauth_request.status != PreAuthorizationRequest.Status.PENDING:
+			return Response({'detail': f'Cannot reject request with status: {preauth_request.status}'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Get rejection data
+		rejection_reason = request.data.get('reason', 'No reason provided')
+		review_notes = request.data.get('review_notes', '')
+		
+		# Reject the request
+		from django.utils import timezone
+		preauth_request.status = PreAuthorizationRequest.Status.REJECTED
+		preauth_request.rejection_reason = rejection_reason
+		preauth_request.review_notes = review_notes
+		preauth_request.reviewed_by = user
+		preauth_request.reviewed_date = timezone.now()
+		preauth_request.save()
+		
+		serializer = self.get_serializer(preauth_request)
+		return Response({
+			'detail': 'Pre-authorization request rejected successfully',
+			'request': serializer.data
+		})
+
+	@action(detail=True, methods=['post'], url_path='extend')
+	def extend_request(self, request, pk=None):
+		"""Extend expiry date of a pre-authorization request"""
+		preauth_request = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+		
+		# Check permissions
+		if role == 'PROVIDER' and preauth_request.provider != user:
+			return Response({'detail': 'You can only extend requests submitted to you'}, status=status.HTTP_403_FORBIDDEN)
+		elif role not in ['PROVIDER', 'ADMIN']:
+			return Response({'detail': 'Only providers and admins can extend requests'}, status=status.HTTP_403_FORBIDDEN)
+		
+		# Check if request can be extended
+		if preauth_request.status not in [PreAuthorizationRequest.Status.PENDING, PreAuthorizationRequest.Status.APPROVED]:
+			return Response({'detail': f'Cannot extend request with status: {preauth_request.status}'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Get extension data
+		days_to_extend = request.data.get('days', 30)
+		extension_reason = request.data.get('reason', 'Extension requested')
+		
+		if not isinstance(days_to_extend, int) or days_to_extend <= 0:
+			return Response({'detail': 'Valid number of days to extend is required'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Extend the expiry date
+		from django.utils import timezone
+		from datetime import timedelta
+		current_expiry = preauth_request.expiry_date or timezone.now().date()
+		new_expiry = current_expiry + timedelta(days=days_to_extend)
+		
+		preauth_request.expiry_date = new_expiry
+		preauth_request.review_notes = f"{preauth_request.review_notes}\n\n[Extension] {extension_reason} - Extended by {days_to_extend} days".strip()
+		preauth_request.save(update_fields=['expiry_date', 'review_notes'])
+		
+		serializer = self.get_serializer(preauth_request)
+		return Response({
+			'detail': f'Pre-authorization request extended by {days_to_extend} days',
+			'request': serializer.data
+		})
+
+
+class PreAuthorizationApprovalViewSet(viewsets.ReadOnlyModelViewSet):
+	queryset = PreAuthorizationApproval.objects.select_related(
+		'request__patient__user', 'request__provider', 'benefit_type', 'approved_by'
+	).all()
+	serializer_class = PreAuthorizationApprovalSerializer
+	permission_classes = [permissions.IsAuthenticated]
+	filterset_fields = {
+		'request__patient': ['exact'],
+		'request__provider': ['exact'],
+		'benefit_type': ['exact'],
+		'approved_date': ['gte', 'lte', 'date'],
+		'is_active': ['exact'],
+	}
+	search_fields = ['request__request_number', 'request__procedure_description']
+
+	def get_queryset(self):
+		user = self.request.user
+		qs = super().get_queryset()
+		role = getattr(user, 'role', None)
+		if role == 'ADMIN':
+			return qs
+		if role == 'PROVIDER':
+			return qs.filter(request__provider=user)
+		if role == 'PATIENT':
+			return qs.filter(request__patient__user=user)
+		return qs.none()
+
+	@action(detail=True, methods=['post'], url_path='revoke')
+	def revoke_approval(self, request, pk=None):
+		"""Revoke a pre-authorization approval"""
+		approval = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+		
+		# Check permissions - only admin or the approver can revoke
+		if role not in ['ADMIN'] and approval.approved_by != user:
+			return Response({'detail': 'Only admins or the original approver can revoke approvals'}, status=status.HTTP_403_FORBIDDEN)
+		
+		# Check if approval can be revoked
+		if not approval.is_active:
+			return Response({'detail': 'Approval is already inactive'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Get revocation reason
+		revocation_reason = request.data.get('reason', 'Revoked by user')
+		
+		# Revoke the approval
+		from django.utils import timezone
+		approval.is_active = False
+		approval.expires_at = timezone.now()
+		approval.approval_notes = f"{approval.approval_notes}\n\n[REVOKED] {revocation_reason}".strip()
+		approval.save()
+		
+		# Update the original request status
+		approval.request.status = PreAuthorizationRequest.Status.REVOKED
+		approval.request.review_notes = f"{approval.request.review_notes}\n\n[REVOKED] {revocation_reason}".strip()
+		approval.request.save()
+		
+		serializer = self.get_serializer(approval)
+		return Response({
+			'detail': 'Pre-authorization approval revoked successfully',
+			'approval': serializer.data
+		})
+
+
+class FraudAlertViewSet(viewsets.ModelViewSet):
+	queryset = FraudAlert.objects.select_related(
+		'claim__patient__user', 'claim__provider', 'patient__user', 'provider', 'reviewed_by'
+	).all()
+	serializer_class = FraudAlertSerializer
+	permission_classes = [permissions.IsAuthenticated]
+	filterset_fields = {
+		'alert_type': ['exact', 'in'],
+		'severity': ['exact', 'in'],
+		'status': ['exact', 'in'],
+		'claim': ['exact'],
+		'patient': ['exact'],
+		'provider': ['exact'],
+		'fraud_score': ['gte', 'lte'],
+		'created_at': ['gte', 'lte', 'date'],
+	}
+	search_fields = ['title', 'description', 'detection_rule']
+
+	def get_queryset(self):
+		user = self.request.user
+		qs = super().get_queryset()
+		role = getattr(user, 'role', None)
+		if role == 'ADMIN':
+			return qs
+		if role == 'PROVIDER':
+			return qs.filter(provider=user)
+		if role == 'PATIENT':
+			return qs.filter(patient__user=user)
+		return qs.none()
+
+	@action(detail=True, methods=['post'], url_path='review')
+	def review_alert(self, request, pk=None):
+		"""Review and resolve a fraud alert"""
+		alert = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+
+		# Check permissions - only admin can review alerts
+		if role not in ['ADMIN']:
+			return Response({'detail': 'Only administrators can review fraud alerts'}, status=status.HTTP_403_FORBIDDEN)
+
+		# Get review data
+		action = request.data.get('action', 'REVIEWED')  # REVIEWED, DISMISSED, ESCALATED
+		notes = request.data.get('notes', '')
+		resolution_action = request.data.get('resolution_action', '')
+
+		if action == 'REVIEWED':
+			alert.mark_reviewed(user, notes, resolution_action)
+		elif action == 'DISMISSED':
+			alert.dismiss(user, notes)
+		elif action == 'ESCALATED':
+			alert.escalate(user, notes)
+		else:
+			return Response({'detail': 'Invalid action. Must be REVIEWED, DISMISSED, or ESCALATED'}, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer = self.get_serializer(alert)
+		return Response({
+			'detail': f'Fraud alert {action.lower()} successfully',
+			'alert': serializer.data
+		})
+
+	@action(detail=False, methods=['get'], url_path='stats')
+	def get_alert_stats(self, request):
+		"""Get fraud alert statistics"""
+		user = request.user
+		role = getattr(user, 'role', None)
+
+		# Base queryset
+		if role == 'ADMIN':
+			qs = FraudAlert.objects.all()
+		elif role == 'PROVIDER':
+			qs = FraudAlert.objects.filter(provider=user)
+		else:
+			return Response({'detail': 'Insufficient permissions'}, status=status.HTTP_403_FORBIDDEN)
+
+		# Calculate statistics
+		stats = {
+			'total_alerts': qs.count(),
+			'active_alerts': qs.filter(status=FraudAlert.Status.ACTIVE).count(),
+			'reviewed_alerts': qs.filter(status=FraudAlert.Status.REVIEWED).count(),
+			'dismissed_alerts': qs.filter(status=FraudAlert.Status.DISMISSED).count(),
+			'escalated_alerts': qs.filter(status=FraudAlert.Status.ESCALATED).count(),
+			'by_severity': {
+				'LOW': qs.filter(severity=FraudAlert.Severity.LOW).count(),
+				'MEDIUM': qs.filter(severity=FraudAlert.Severity.MEDIUM).count(),
+				'HIGH': qs.filter(severity=FraudAlert.Severity.HIGH).count(),
+				'CRITICAL': qs.filter(severity=FraudAlert.Severity.CRITICAL).count(),
+			},
+			'by_type': {
+				alert_type.value: qs.filter(alert_type=alert_type).count()
+				for alert_type in FraudAlert.AlertType
+			},
+			'high_risk_alerts': qs.filter(fraud_score__gte=0.8).count(),
+		}
+
+		return Response(stats)

@@ -18,17 +18,23 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenRefreshView
-from accounts.views import CustomTokenObtainPairView
+from accounts.views import CustomTokenObtainPairView, MFAVerifyView
 from core.views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView
+from django.conf import settings
+from django.conf.urls.static import static
+import debug_toolbar
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Django Silk profiling
+    path('silk/', include('silk.urls', namespace='silk')),
     # OpenAPI schema and docs
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     # Auth endpoints
     path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/mfa/verify/', MFAVerifyView.as_view(), name='mfa_verify'),
     # App endpoints
     path('api/accounts/', include('accounts.urls')),
     path('api/schemes/', include('schemes.urls')),
@@ -41,3 +47,9 @@ urlpatterns = [
     path('api/reports/scheme-usage/', SchemeUsageReportView.as_view(), name='report-scheme-usage-root'),
     path('api/reports/disease-stats/', DiseaseStatsReportView.as_view(), name='report-disease-stats-root'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]

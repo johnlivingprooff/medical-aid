@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import ProviderProfile
+from .models import ProviderProfile, ProviderNetworkMembership, CredentialingDocument
 
 User = get_user_model()
 
@@ -50,3 +50,22 @@ class RegisterSerializer(serializers.ModelSerializer):
                 city=city,
             )
         return user
+
+
+class ProviderNetworkMembershipSerializer(serializers.ModelSerializer):
+    provider_username = serializers.CharField(source='provider.username', read_only=True)
+    scheme_name = serializers.CharField(source='scheme.name', read_only=True)
+
+    class Meta:
+        model = ProviderNetworkMembership
+        fields = ['id', 'provider', 'provider_username', 'scheme', 'scheme_name', 'status', 'effective_from', 'effective_to', 'credential_status', 'credentialed_at', 'notes', 'meta']
+        read_only_fields = ['credentialed_at']
+
+
+class CredentialingDocumentSerializer(serializers.ModelSerializer):
+    uploaded_by_username = serializers.CharField(source='uploaded_by.username', read_only=True)
+
+    class Meta:
+        model = CredentialingDocument
+        fields = ['id', 'membership', 'uploaded_by', 'uploaded_by_username', 'file', 'doc_type', 'notes', 'status', 'created_at']
+        read_only_fields = ['uploaded_by', 'created_at']

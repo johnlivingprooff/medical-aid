@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { ToastProvider } from './components/ui/toast'
 import './index.css'
 import App from './App'
+import { registerServiceWorker } from './lib/service-worker'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -19,3 +20,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ToastProvider>
   </React.StrictMode>
 )
+
+// Register service worker for PWA functionality
+if (import.meta.env.PROD) {
+  registerServiceWorker()
+}

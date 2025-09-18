@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
+import { X } from 'lucide-react'
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; onSuccess?: () => void }
 
@@ -51,9 +52,25 @@ export function AddProviderModal({ open, onOpenChange, onSuccess }: Props) {
 
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader><CardTitle>Add Provider</CardTitle></CardHeader>
+    <div 
+      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      onClick={() => onOpenChange(false)}
+    >
+      <Card 
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Add Provider</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="h-6 w-6"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </CardHeader>
         <CardContent className="max-h-[70vh] overflow-y-auto">
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2"><Label>Username</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} required /></div>

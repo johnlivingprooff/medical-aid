@@ -1,11 +1,33 @@
-from django.urls import path
-from .views import HealthCheckView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import HealthCheckView, SystemSettingsViewSet
 from .views_dashboard import DashboardStatsView, ActivityFeedView
 from .views_providers import ProvidersAnalyticsView, ProviderDetailAnalyticsView
 from .views_schemes import SchemesOverviewView
 from .views_members import MembersAnalyticsView
 from .views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView
 from .views_admin import AdminStatsView, AdminActionsView
+from .views_search import GlobalSearchView
+from .views_edi import (
+    EDISubmitView,
+    EDITransactionDetailView,
+    EDIProviderTransactionsView,
+    EDIStatusUpdateView
+)
+from .views_providers_directory import (
+    ProviderDirectoryView,
+    ProviderDetailView,
+    ProviderDirectoryStatsView,
+    ProviderNetworkStatusView
+)
+from .views_provider_network_status import (
+    ProviderNetworkStatusView as NetworkStatusView,
+    ProviderNetworkDashboardView
+)
+
+# Create router for system settings
+router = DefaultRouter()
+router.register(r'settings', SystemSettingsViewSet, basename='system-settings')
 
 urlpatterns = [
     path('health/', HealthCheckView.as_view(), name='health'),
@@ -25,4 +47,21 @@ urlpatterns = [
     # Admin endpoints
     path('admin/stats/', AdminStatsView.as_view(), name='admin-stats'),
     path('admin/actions/', AdminActionsView.as_view(), name='admin-actions'),
+    # Search endpoint
+    path('search/', GlobalSearchView.as_view(), name='global-search'),
+    # EDI endpoints
+    path('edi/submit/', EDISubmitView.as_view(), name='edi-submit'),
+    path('edi/transactions/<str:transaction_id>/', EDITransactionDetailView.as_view(), name='edi-transaction-detail'),
+    path('edi/transactions/', EDIProviderTransactionsView.as_view(), name='edi-provider-transactions'),
+    path('edi/transactions/<str:transaction_id>/status/', EDIStatusUpdateView.as_view(), name='edi-status-update'),
+    # Provider directory endpoints
+    path('providers/directory/', ProviderDirectoryView.as_view(), name='provider-directory'),
+    path('providers/directory/stats/', ProviderDirectoryStatsView.as_view(), name='provider-directory-stats'),
+    path('providers/<str:username>/', ProviderDetailView.as_view(), name='provider-detail'),
+    path('providers/<str:username>/network-status/', ProviderNetworkStatusView.as_view(), name='provider-network-status'),
+    # Provider network status endpoints
+    path('providers/network/status/', NetworkStatusView.as_view(), name='provider-network-status-monitoring'),
+    path('providers/network/dashboard/', ProviderNetworkDashboardView.as_view(), name='provider-network-dashboard'),
+    # System settings
+    path('', include(router.urls)),
 ]

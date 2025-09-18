@@ -40,3 +40,49 @@ export type ProvidersAnalytics = {
     avg_processing_days: number;
   }>;
 };
+
+// Search-related types
+export type SearchResult = {
+  id: string | number;
+  type: 'scheme' | 'claim' | 'member' | 'provider' | 'service_type' | 'benefit_type';
+  title: string;
+  subtitle: string;
+  url: string;
+  metadata: Record<string, any>;
+};
+
+export type SearchResponse = {
+  results: SearchResult[];
+  total: number;
+  query: string;
+  entity_type: string;
+};
+
+export type SearchFilters = {
+  query: string;
+  entity_type?: 'all' | 'schemes' | 'claims' | 'members' | 'providers' | 'services' | 'benefits';
+  limit?: number;
+};
+
+// Subscription API Types
+export type SubscriptionTierListResponse = {
+  results: import('./models').SubscriptionTier[];
+  count: number;
+  next?: string;
+  previous?: string;
+};
+
+export type MemberSubscriptionListResponse = {
+  results: import('./models').MemberSubscription[];
+  count: number;
+  next?: string;
+  previous?: string;
+};
+
+export type SubscriptionUsageResponse = import('./models').SubscriptionUsageStats;
+
+export type SubscriptionAnalyticsResponse = import('./models').SubscriptionAnalytics;
+
+export type SubscriptionCreateRequest = import('./models').SubscriptionCreateRequest;
+
+export type SubscriptionUpgradeRequest = import('./models').SubscriptionUpgradeRequest;

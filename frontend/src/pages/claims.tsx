@@ -5,14 +5,23 @@ import { Button } from '@/components/ui/button'
 import { Table, Tbody, Td, Th, Thead, Tr } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
-import { SubmitClaimModal } from '@/components/modals/submit-claim-modal'
 import { QuickActions } from '@/components/layout/quick-actions'
 import { ClaimActionsMenu } from '@/components/claims/claim-actions-menu'
 import { useAuth } from '@/components/auth/auth-context'
 import type { Claim } from '@/types/models'
+
+// Lazy load heavy components
+const SubmitClaimModal = lazy(() => import('@/components/modals/submit-claim-modal').then(module => ({ default: module.SubmitClaimModal })))
+
+// Loading component for lazy-loaded components
+const ModalLoader = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+  </div>
+)
 
 export default function Claims() {
   const { user } = useAuth()
@@ -357,8 +366,9 @@ export default function Claims() {
           </Card>
         </TabsContent>
       </Tabs>
-      <SubmitClaimModal open={showClaim} onOpenChange={setShowClaim} />
-      
+      <Suspense fallback={<ModalLoader />}>
+        <SubmitClaimModal open={showClaim} onOpenChange={setShowClaim} />
+      </Suspense>
     </div>
   )
 }

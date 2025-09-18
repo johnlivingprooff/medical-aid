@@ -1,5 +1,4 @@
-import { Bell, ChevronDown, Search, SunMedium, Moon } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { Bell, ChevronDown, SunMedium, Moon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -10,6 +9,7 @@ import { logout } from '@/lib/auth'
 import logo from '@/assets/icon.ico'
 import { api } from '@/lib/api'
 import { useAuth } from '@/components/auth/auth-context'
+import { SearchBar } from '@/components/ui/search-bar'
 
 export function Header() {
   const [dark, setDark] = useState(false)
@@ -55,31 +55,32 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
+      <div className="container flex items-center gap-3 px-4 mx-auto h-14 max-w-7xl">
         <div className="flex items-center gap-2 md:hidden">
           {true
-            ? <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div>
+            ? <div className="flex items-center justify-center w-8 h-8 font-semibold rounded-md bg-accent text-accent-foreground">A</div>
             : <img src={logo} alt="Alo-Medical" style={{ width: 50 }} />}
           <span className="text-sm font-semibold">Alo‑Medical</span>
         </div>
-        <div className="hidden items-center gap-3 md:flex">
-          {/* <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground font-semibold">A</div> */}
+        <div className="items-center hidden gap-3 md:flex">
+          {/* <div className="flex items-center justify-center w-8 h-8 font-semibold rounded-md bg-accent text-accent-foreground">A</div> */}
           <div className="text-sm font-semibold">Med‑Aid Management Tool</div>
         </div>
         <div className="flex-1" />
-        <div className="relative w-full max-w-xl">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder='Search e.g. scheme:VIP status:pending provider:MedCare' className="pl-9 pr-24" aria-label="Smart search" />
-          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/
-          </div>
+        <div className="flex-1 max-w-xl">
+          <SearchBar 
+            placeholder="Search schemes, claims, members, providers..."
+            className="w-full"
+            compact={true}
+          />
         </div>
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex items-center justify-end flex-1 gap-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Toggle theme" onClick={toggleTheme} aria-pressed={dark}>
-                  <SunMedium className="h-5 w-5 hidden dark:block" />
-                  <Moon className="h-5 w-5 dark:hidden" />
+                  <SunMedium className="hidden w-5 h-5 dark:block" />
+                  <Moon className="w-5 h-5 dark:hidden" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Toggle theme</TooltipContent>
@@ -89,7 +90,7 @@ export function Header() {
             <DropdownMenu open={alertsOpen} onOpenChange={setAlertsOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-                  <Bell className="h-5 w-5" />
+                  <Bell className="w-5 h-5" />
                   {alerts.length > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">{Math.min(9, alerts.length)}</span>
                   )}
@@ -97,12 +98,12 @@ export function Header() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
                 <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Alerts</div>
-                <div className="my-1 h-px bg-border" />
+                <div className="h-px my-1 bg-border" />
                 {alerts.length === 0 ? (
-                  <div className="px-2 py-6 text-center text-sm text-muted-foreground">No alerts</div>
+                  <div className="px-2 py-6 text-sm text-center text-muted-foreground">No alerts</div>
                 ) : (
                   alerts.slice(0, 6).map((a) => (
-                    <DropdownMenuItem key={a.id} className="whitespace-normal leading-5">
+                    <DropdownMenuItem key={a.id} className="leading-5 whitespace-normal">
                       <div className="flex items-start gap-2">
                         <span className={`mt-1 h-2.5 w-2.5 rounded-full ${a.severity === 'HIGH' ? 'bg-destructive' : a.severity === 'MEDIUM' ? 'bg-warning' : 'bg-info'}`} />
                         <div>
@@ -113,7 +114,7 @@ export function Header() {
                     </DropdownMenuItem>
                   ))
                 )}
-                <div className="my-1 h-px bg-border" />
+                <div className="h-px my-1 bg-border" />
                 <DropdownMenuItem onClick={() => navigate('/alerts')}>View all alerts</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -125,7 +126,7 @@ export function Header() {
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <span className="hidden text-sm md:inline">{displayName}</span>
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

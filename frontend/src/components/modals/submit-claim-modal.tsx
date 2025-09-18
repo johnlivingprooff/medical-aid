@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
+import { X } from 'lucide-react'
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void }
 type BenefitType = { id: number; name: string }
@@ -80,9 +81,25 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
 
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <Card className="w-full max-w-xl">
-        <CardHeader><CardTitle>Submit Claim</CardTitle></CardHeader>
+    <div 
+      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      onClick={() => onOpenChange(false)}
+    >
+      <Card 
+        className="w-full max-w-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Submit Claim</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="h-6 w-6"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </CardHeader>
         <CardContent className="max-h-[70vh] overflow-y-auto">
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">

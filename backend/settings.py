@@ -48,6 +48,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_filters',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'debug_toolbar',
+    'silk',
+    # Celery
+    'django_celery_beat',
+    'django_celery_results',
     # Local apps
     'accounts',
     'schemes',
@@ -57,11 +64,19 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'silk.middleware.SilkyMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
+    'accounts.middleware.SessionSecurityMiddleware',
+    'accounts.middleware.SessionTimeoutMiddleware',
+    'core.middleware.ErrorTrackingMiddleware',
+    'core.middleware.RequestLoggingMiddleware',
+    'core.middleware.PerformanceMonitoringMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -71,7 +86,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -102,6 +117,52 @@ else:
             'PORT': os.getenv('POSTGRES_PORT', os.getenv('PGPORT', '5432')),
         }
     }
+
+
+# Caching Configuration
+# Redis caching with database fallback
+REDIS_AVAILABLE = False
+try:
+    import redis
+    r = redis.Redis(host='127.0.0.1', port=6379, db=1, socket_timeout=1)
+    r.ping()
+    REDIS_AVAILABLE = True
+except:
+    REDIS_AVAILABLE = False
+
+if REDIS_AVAILABLE:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 20,
+                    'decode_responses': True,
+                },
+                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            },
+            'KEY_PREFIX': 'medical_aid',
+            'TIMEOUT': 300,  # 5 minutes default
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'cache_table',
+        }
+    }
+
+# Celery Configuration - Use Redis if available, otherwise database
+if REDIS_AVAILABLE:
+    CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+    CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+else:
+    # Fallback to database broker (less efficient but works)
+    CELERY_BROKER_URL = 'django://'
+    CELERY_RESULT_BACKEND = 'django-db'
 
 
 # Password validation
@@ -148,6 +209,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
 
+# ENCRYPTION SETTINGS
+# Set ENCRYPTION_KEY environment variable in production
+# If not set, a key will be generated from SECRET_KEY (development only)
+ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+
 # DRF
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -162,8 +228,9 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
         'rest_framework.filters.SearchFilter',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 20,
+    'DEFAULT_PAGINATION_CLASS': 'backend.pagination.OptimizedPagination',
+    'PAGE_SIZE': 25,
+    'MAX_PAGE_SIZE': 100,
 }
 
 SPECTACULAR_SETTINGS = {
@@ -194,4 +261,173 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': False,
 }
 
+# OTP (Multi-Factor Authentication) Settings
+OTP_TOTP_ISSUER = 'Medical Aid System'
+
+# SESSION SETTINGS
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_SECURE = not DEBUG  # Secure in production
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Security settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year in production
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Media files (uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Debug Toolbar Configuration
+if DEBUG:
+    INTERNAL_IPS = [
+        '127.0.0.1',
+        'localhost',
+    ]
+
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_COLLAPSED': True,
+        'SHOW_TOOLBAR_CALLBACK': lambda request: True,
+    }
+
+# Celery Configuration
+if REDIS_AVAILABLE:
+    CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+    CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+else:
+    # Fallback to database broker (less efficient but works)
+    CELERY_BROKER_URL = 'django://'
+    CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# Celery Beat Settings
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Task routing
+CELERY_TASK_ROUTES = {
+    'core.tasks.cache_warmup': {'queue': 'cache'},
+    'core.tasks.cleanup_expired_cache': {'queue': 'cache'},
+    'core.tasks.generate_daily_reports': {'queue': 'reports'},
+    'core.tasks.health_check': {'queue': 'monitoring'},
+}
+
+# Task execution settings
+CELERY_TASK_TIME_LIMIT = 300  # 5 minutes
+CELERY_TASK_SOFT_TIME_LIMIT = 240  # 4 minutes
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
+
+# Result backend settings
+CELERY_RESULT_EXPIRES = 3600  # 1 hour
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_SEND_SENT_EVENT = True
+
+# Django Silk Configuration
+SILKY_PYTHON_PROFILER = True
+SILKY_PYTHON_PROFILER_BINARY = True
+SILKY_AUTHENTICATION = True  # Require authentication to view profiles
+SILKY_AUTHORISATION = True   # Require superuser to view profiles
+SILKY_MAX_RECORDED_REQUESTS = 10000  # Maximum number of requests to record
+SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10  # Check percentage for cleanup
+SILKY_DYNAMIC_PROFILING = [
+    {
+        'module': 'claims.views',
+        'function': '.*',
+        'start_line': 1,
+        'end_line': 1000,
+    },
+    {
+        'module': 'core.views',
+        'function': '.*',
+        'start_line': 1,
+        'end_line': 1000,
+    },
+]
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'medical_aid.log'),
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'errors.log'),
+            'formatter': 'verbose',
+        },
+        'performance_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'performance.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'medical_aid': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'medical_aid.errors': {
+            'handlers': ['console', 'error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'medical_aid.requests': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'medical_aid.performance': {
+            'handlers': ['console', 'performance_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+}
+
+# Ensure logs directory exists
+os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)

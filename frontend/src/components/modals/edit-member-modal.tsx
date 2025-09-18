@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
+import { X } from 'lucide-react'
 
 type Props = {
   open: boolean
@@ -52,9 +53,25 @@ export function EditMemberModal({ open, onOpenChange, member, onSave }: Props) {
 
   if (!open || !member) return null
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader><CardTitle>Edit Member</CardTitle></CardHeader>
+    <div 
+      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      onClick={() => onOpenChange(false)}
+    >
+      <Card 
+        className="w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Edit Member</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="h-6 w-6"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </CardHeader>
         <CardContent className="max-h-[70vh] overflow-y-auto">
           <form onSubmit={submit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

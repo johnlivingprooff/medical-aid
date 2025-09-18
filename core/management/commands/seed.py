@@ -7,6 +7,7 @@ from decimal import Decimal
 from schemes.models import SchemeCategory, SchemeBenefit, BenefitType
 from claims.models import Patient, Claim, Invoice
 from accounts.models import ProviderProfile
+from core.models import SystemSettings
 
 
 class Command(BaseCommand):
@@ -478,3 +479,55 @@ class Command(BaseCommand):
                 scheme.price = total
                 scheme.save(update_fields=['price'])
                 self.stdout.write(f'  - Updated {scheme.name} price to {scheme.price}')
+
+        # Seed system settings
+        self.stdout.write('\nSeeding system settings...')
+        system_settings = [
+            {
+                'key': 'PREAUTH_THRESHOLD',
+                'value': '1000.00',
+                'value_type': 'decimal',
+                'description': 'Default pre-authorization threshold for claims. Claims above this amount require pre-authorization unless benefit-specific limits are set.'
+            },
+            {
+                'key': 'DEFAULT_WAITING_PERIOD',
+                'value': '30',
+                'value_type': 'integer',
+                'description': 'Default waiting period in days for new members before benefits become active.'
+            },
+            {
+                'key': 'MAX_CLAIM_AMOUNT',
+                'value': '50000.00',
+                'value_type': 'decimal',
+                'description': 'Maximum allowed claim amount. Claims above this amount will be flagged for review.'
+            },
+            {
+                'key': 'AUTO_APPROVAL_ENABLED',
+                'value': 'true',
+                'value_type': 'boolean',
+                'description': 'Enable/disable automatic approval of claims below the pre-authorization threshold.'
+            },
+            {
+                'key': 'FRAUD_DETECTION_ENABLED',
+                'value': 'true',
+                'value_type': 'boolean',
+                'description': 'Enable/disable fraud detection system for claims.'
+            }
+        ]
+        
+        for setting_data in system_settings:
+            setting, created = SystemSettings.objects.get_or_create(
+                key=setting_data['key'],
+                defaults={
+                    'value': setting_data['value'],
+                    'value_type': setting_data['value_type'],
+                    'description': setting_data['description'],
+                    'updated_by': admin
+                }
+            )
+            if created:
+                self.stdout.write(f'  - Created {setting.key}: {setting.value}')
+            else:
+                self.stdout.write(f'  - {setting.key} already exists: {setting.value}')
+
+        self.stdout.write('\nSeeding completed successfully!')

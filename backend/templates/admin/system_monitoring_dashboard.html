@@ -1,0 +1,169 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <h1>{{ title }}</h1>
+        <p class="help">Last updated: {{ last_updated|date:"M d, Y H:i:s" }}</p>
+
+        <!-- System Resources -->
+        <div class="module">
+            <h2>System Resources</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #666;">CPU Usage</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">
+                        {{ system_stats.cpu_percent|floatformat:1 }}%
+                    </p>
+                    <div style="background: #e9ecef; height: 10px; border-radius: 5px;">
+                        <div style="background: {% if system_stats.cpu_percent > 80 %}#dc3545{% elif system_stats.cpu_percent > 60 %}#ffc107{% else %}#28a745{% endif %}; height: 10px; border-radius: 5px; width: {{ system_stats.cpu_percent }}%;"></div>
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #666;">Memory Usage</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">
+                        {{ system_stats.memory_percent|floatformat:1 }}%
+                    </p>
+                    <div style="background: #e9ecef; height: 10px; border-radius: 5px;">
+                        <div style="background: {% if system_stats.memory_percent > 80 %}#dc3545{% elif system_stats.memory_percent > 60 %}#ffc107{% else %}#28a745{% endif %}; height: 10px; border-radius: 5px; width: {{ system_stats.memory_percent }}%;"></div>
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #666;">Disk Usage</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">
+                        {{ system_stats.disk_usage|floatformat:1 }}%
+                    </p>
+                    <div style="background: #e9ecef; height: 10px; border-radius: 5px;">
+                        <div style="background: {% if system_stats.disk_usage > 80 %}#dc3545{% elif system_stats.disk_usage > 60 %}#ffc107{% else %}#28a745{% endif %}; height: 10px; border-radius: 5px; width: {{ system_stats.disk_usage }}%;"></div>
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #666;">Active Processes</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">
+                        {{ system_stats.process_count }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Performance -->
+        <div class="module">
+            <h2>Application Performance (Last Hour)</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #666;">Total Requests</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ total_requests }}</p>
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #856404;">Slow Requests (>1s)</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ slow_requests }}</p>
+                    <small>{{ slow_request_percentage|floatformat:1 }}% of total</small>
+                </div>
+
+                <div style="background: #d1ecf1; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #0c5460;">DB Connections</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ db_stats.connection_count }}</p>
+                </div>
+
+                <div style="background: #d4edda; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #155724;">Cache Backend</h3>
+                    <p style="font-size: 16px; font-weight: bold; margin: 5px 0;">{{ cache_stats.cache_backend }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Celery Tasks -->
+        <div class="module">
+            <h2>Background Tasks</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #666;">Active Tasks</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ celery_stats.active_tasks }}</p>
+                </div>
+
+                <div style="background: #f8d7da; padding: 15px; border-radius: 5px;">
+                    <h3 style="margin: 0; color: #721c24;">Failed Tasks (24h)</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ celery_stats.failed_tasks }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Requests -->
+        <div class="module">
+            <h2>Recent Requests</h2>
+            {% if recent_requests %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Path</th>
+                            <th>Status</th>
+                            <th>Time Taken</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in recent_requests %}
+                        <tr>
+                            <td>
+                                <span class="label label-{% if request.method == 'GET' %}success{% elif request.method == 'POST' %}primary{% elif request.method == 'PUT' %}warning{% else %}default{% endif %}">
+                                    {{ request.method }}
+                                </span>
+                            </td>
+                            <td>{{ request.path|truncatechars:50 }}</td>
+                            <td>
+                                {% if request.response_status == 200 %}
+                                    <span style="color: green;">✓ {{ request.response_status }}</span>
+                                {% elif request.response_status >= 400 %}
+                                    <span style="color: red;">✗ {{ request.response_status }}</span>
+                                {% else %}
+                                    <span style="color: orange;">{{ request.response_status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if request.time_taken > 1000 %}
+                                    <span style="color: red;">{{ request.time_taken|floatformat:0 }}ms</span>
+                                {% elif request.time_taken > 500 %}
+                                    <span style="color: orange;">{{ request.time_taken|floatformat:0 }}ms</span>
+                                {% else %}
+                                    <span style="color: green;">{{ request.time_taken|floatformat:0 }}ms</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ request.start_time|date:"H:i:s" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No requests recorded in the last hour.</p>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="module">
+            <h2>Monitoring Tools</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="{% url 'silk:summary' %}" class="button">
+                    View Silk Profiles
+                </a>
+                <a href="{% url 'silk:requests' %}" class="button">
+                    Request History
+                </a>
+                <a href="{% url 'admin:django_celery_beat_periodictask_changelist' %}" class="button">
+                    Manage Tasks
+                </a>
+                <a href="{% url 'admin:django_celery_results_taskresult_changelist' %}" class="button">
+                    Task Results
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

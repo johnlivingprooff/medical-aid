@@ -279,3 +279,245 @@ export interface TokenRefreshRequest {
 export interface TokenRefreshResponse {
   access: string;
 }
+
+// Subscription Types
+export interface BenefitCategory {
+  id: number;
+  name: string;
+  description: string;
+  subscription_required: boolean;
+  access_rules: Record<string, any>;
+}
+
+export interface SubscriptionTier {
+  id: number;
+  name: string;
+  scheme: number;
+  scheme_name: string;
+  tier_type: 'BASIC' | 'STANDARD' | 'PREMIUM' | 'ENTERPRISE';
+  description: string;
+  monthly_price: number;
+  yearly_price: number;
+  max_dependents: number;
+  max_claims_per_month?: number;
+  max_coverage_per_year?: number;
+  benefit_categories: BenefitCategory[];
+  benefit_category_ids: number[];
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface MemberSubscription {
+  id: number;
+  patient: number;
+  patient_detail: {
+    id: number;
+    member_id: string;
+    user: {
+      id: number;
+      username: string;
+      first_name: string;
+      last_name: string;
+    };
+  };
+  tier: number;
+  tier_detail: SubscriptionTier;
+  subscription_type: 'MONTHLY' | 'YEARLY';
+  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'SUSPENDED' | 'EXPIRED';
+  start_date: string;
+  end_date: string;
+  auto_renew: boolean;
+  last_payment_date?: string;
+  next_payment_date?: string;
+  claims_this_month: number;
+  coverage_used_this_year: number;
+  usage_stats: SubscriptionUsageStats;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionUsageStats {
+  claims_this_month: number;
+  max_claims_per_month?: number;
+  coverage_used_this_year: number;
+  max_coverage_per_year?: number;
+  remaining_coverage?: number;
+  subscription_status: string;
+  is_active: boolean;
+  tier_name: string;
+  monthly_price: number;
+  yearly_price: number;
+}
+
+export interface SubscriptionCreateRequest {
+  patient_id: number;
+  tier_id: number;
+  subscription_type: 'MONTHLY' | 'YEARLY';
+  start_date?: string;
+}
+
+export interface SubscriptionUpgradeRequest {
+  new_tier_id: number;
+}
+
+export interface SubscriptionAnalytics {
+  total_subscriptions: number;
+  active_subscriptions: number;
+  suspended_subscriptions: number;
+  cancelled_subscriptions: number;
+  active_percentage: number;
+  tier_distribution: Record<string, number>;
+}
+
+// Notification Types
+export type NotificationType =
+  | 'CLAIM_STATUS_UPDATE'
+  | 'CREDENTIALING_UPDATE'
+  | 'DOCUMENT_REVIEWED'
+  | 'MEMBERSHIP_EXPIRING'
+  | 'PAYMENT_PROCESSED'
+  | 'SYSTEM_MAINTENANCE'
+  | 'GENERAL_ANNOUNCEMENT';
+
+export type NotificationChannel = 'EMAIL' | 'SMS' | 'PUSH' | 'IN_APP';
+
+export type NotificationStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'FAILED' | 'READ';
+
+export type NotificationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export interface Notification {
+  id: number;
+  recipient: number;
+  recipient_name: string;
+  recipient_role: string;
+  notification_type: NotificationType;
+  title: string;
+  message: string;
+  html_message: string;
+  channel: NotificationChannel;
+  priority: NotificationPriority;
+  status: NotificationStatus;
+  is_read: boolean;
+  related_claim_id?: number;
+  related_membership_id?: number;
+  related_document_id?: number;
+  metadata: Record<string, any>;
+  scheduled_for?: string;
+  sent_at?: string;
+  read_at?: string;
+  created_at: string;
+  updated_at: string;
+  time_since_created: string;
+  related_claim?: {
+    id: number;
+    claim_number: string;
+    status: string;
+    cost: string;
+    date_of_service: string;
+  };
+  related_membership?: {
+    id: number;
+    scheme_name: string;
+    status: string;
+    effective_from: string;
+    effective_to?: string;
+  };
+  related_document?: {
+    id: number;
+    doc_type: string;
+    file_name: string;
+    status: string;
+    uploaded_at: string;
+  };
+  logs?: NotificationLog[];
+}
+
+export interface NotificationLog {
+  id: number;
+  notification: number;
+  notification_title: string;
+  recipient_name: string;
+  action: string;
+  message: string;
+  metadata: Record<string, any>;
+  created_at: string;
+}
+
+export interface NotificationTemplate {
+  id: number;
+  name: string;
+  notification_type: NotificationType;
+  channel: NotificationChannel;
+  subject_template: string;
+  message_template: string;
+  html_template: string;
+  variables: string[];
+  is_active: boolean;
+  created_by: number;
+  created_by_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationPreference {
+  id: number;
+  user: number;
+  user_name: string;
+  email_enabled: boolean;
+  sms_enabled: boolean;
+  push_enabled: boolean;
+  in_app_enabled: boolean;
+  claim_updates_enabled: boolean;
+  credentialing_updates_enabled: boolean;
+  payment_updates_enabled: boolean;
+  system_announcements_enabled: boolean;
+  quiet_hours_start?: string;
+  quiet_hours_end?: string;
+  timezone: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationStats {
+  total: number;
+  unread: number;
+  read: number;
+  failed: number;
+  by_type: Array<{
+    notification_type: string;
+    count: number;
+  }>;
+}
+
+export interface NotificationDashboardData {
+  recent_notifications: Notification[];
+  unread_count: number;
+  type_stats: Array<{
+    notification_type: string;
+    total: number;
+    unread: number;
+  }>;
+  recent_activity: Array<{
+    notification_type: string;
+    count: number;
+  }>;
+  preferences?: NotificationPreference;
+}
+
+export interface BulkNotificationRequest {
+  recipient_ids: number[];
+  notification_type: NotificationType;
+  title: string;
+  message: string;
+  html_message?: string;
+  priority?: NotificationPriority;
+  metadata?: Record<string, any>;
+}
+
+export interface SystemAnnouncementRequest {
+  title: string;
+  message: string;
+  html_message?: string;
+  target_roles: Array<'ADMIN' | 'PROVIDER' | 'PATIENT'>;
+  priority?: NotificationPriority;
+}

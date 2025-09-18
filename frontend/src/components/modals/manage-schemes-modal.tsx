@@ -112,8 +112,14 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
 
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 grid p-4 place-items-center bg-black/40">
-      <Card className="w-full max-w-3xl">
+    <div 
+      className="fixed inset-0 z-50 grid p-4 place-items-center bg-black/40"
+      onClick={() => onOpenChange(false)}
+    >
+      <Card 
+        className="w-full max-w-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Manage Schemes</CardTitle>
           <Button
