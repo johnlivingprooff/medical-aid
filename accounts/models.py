@@ -60,7 +60,7 @@ class ProviderProfile(models.Model):
 	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='provider_profile')
 	facility_name = models.CharField(max_length=150)
 	facility_type = models.CharField(max_length=20, choices=FacilityType.choices)
-	phone = EncryptedCharField(max_length=50, blank=True, help_text='Facility phone number (encrypted)')
+	phone = EncryptedCharField(max_length=150, blank=True, help_text='Facility phone number (encrypted)')
 	address = models.CharField(max_length=255, blank=True)
 	city = models.CharField(max_length=100, blank=True)
 

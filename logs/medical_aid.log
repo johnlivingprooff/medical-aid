@@ -1326,3 +1326,47 @@ django.db.utils.ProgrammingError: column schemes_membersubscription.patient_id d
 LINE 1: ...bscription"."id") INNER JOIN "claims_patient" ON ("schemes_m...
                                                              ^
 ERROR 2025-09-19 01:32:38,900 basehttp 24376 18180 "GET /admin/billing/invoice/ HTTP/1.1" 500 500716
+INFO 2025-09-19 02:25:59,500 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,504 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,506 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,509 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,512 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,516 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,519 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,522 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,524 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,527 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,531 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:25:59,533 cache 16532 4936 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,743 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,746 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,750 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,754 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,756 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,759 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,761 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,765 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,768 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,772 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,775 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:29:44,778 cache 25636 22732 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,103 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,107 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,110 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,113 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,116 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,119 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,122 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,125 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,128 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,132 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,135 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:32:06,138 cache 8220 22612 Benefit types cache invalidated
+INFO 2025-09-19 02:33:46,191 cache 11748 16584 System setting cache invalidated: PREAUTH_THRESHOLD
+INFO 2025-09-19 02:33:46,195 cache 11748 16584 System setting cache invalidated: DEFAULT_WAITING_PERIOD
+INFO 2025-09-19 02:33:46,197 cache 11748 16584 System setting cache invalidated: MAX_CLAIM_AMOUNT
+INFO 2025-09-19 02:33:46,201 cache 11748 16584 System setting cache invalidated: AUTO_APPROVAL_ENABLED
+INFO 2025-09-19 02:33:46,205 cache 11748 16584 System setting cache invalidated: FRAUD_DETECTION_ENABLED
+INFO 2025-09-19 02:34:18,081 autoreload 16472 16844 Watching for file changes with StatReloader
+INFO 2025-09-19 02:34:23,014 autoreload 16472 16844 J:\Documents\CODE\Projects\medical-aid\accounts\models.py changed, reloading.
+INFO 2025-09-19 02:34:25,877 autoreload 26356 25984 Watching for file changes with StatReloader

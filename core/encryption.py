@@ -150,10 +150,12 @@ class EncryptedTextField(models.TextField):
         return super().get_col(alias, output_field)
 
 
-class EncryptedDateField(models.DateField):
+class EncryptedDateField(models.CharField):
     """Encrypted date field for sensitive dates like date of birth."""
 
     def __init__(self, *args, **kwargs):
+        # Set a reasonable max_length for encrypted date strings
+        kwargs.setdefault('max_length', 150)
         super().__init__(*args, **kwargs)
 
     def from_db_value(self, value, expression, connection):

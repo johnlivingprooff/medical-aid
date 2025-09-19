@@ -43,9 +43,9 @@ class Patient(models.Model):
 	treatments = EncryptedTextField(blank=True, help_text="Medical treatments (encrypted PHI)")
 	
 	# Contact information (encrypted personal data)
-	phone = EncryptedCharField(max_length=20, blank=True, help_text="Patient phone number (encrypted)")
-	emergency_contact = EncryptedCharField(max_length=100, blank=True, help_text="Emergency contact name (encrypted)")
-	emergency_phone = EncryptedCharField(max_length=20, blank=True, help_text="Emergency contact phone (encrypted)")
+	phone = EncryptedCharField(max_length=150, blank=True, help_text="Patient phone number (encrypted)")
+	emergency_contact = EncryptedCharField(max_length=150, blank=True, help_text="Emergency contact name (encrypted)")
+	emergency_phone = EncryptedCharField(max_length=150, blank=True, help_text="Emergency contact phone (encrypted)")
 
 	# Subscription relationship (added for Phase 5)
 	subscription = models.OneToOneField(
@@ -163,8 +163,8 @@ class Claim(models.Model):
 	rejection_date = models.DateTimeField(null=True, blank=True)
 	
 	# Clinical information (encrypted PHI)
-	diagnosis_code = EncryptedCharField(max_length=20, blank=True, help_text='ICD-10 or other diagnosis code (encrypted)')
-	procedure_code = EncryptedCharField(max_length=20, blank=True, help_text='CPT or other procedure code (encrypted)')
+	diagnosis_code = EncryptedCharField(max_length=150, blank=True, help_text='ICD-10 or other diagnosis code (encrypted)')
+	procedure_code = EncryptedCharField(max_length=150, blank=True, help_text='CPT or other procedure code (encrypted)')
 	notes = EncryptedTextField(blank=True, help_text='Clinical notes (encrypted PHI)')
 	
 	# Pre-authorization
@@ -449,8 +449,8 @@ class Invoice(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 	
 	# Banking details for provider payments (encrypted financial data)
-	provider_bank_account = EncryptedCharField(max_length=50, blank=True, help_text='Provider bank account number (encrypted)')
-	provider_bank_name = EncryptedCharField(max_length=100, blank=True, help_text='Provider bank name (encrypted)')
+	provider_bank_account = EncryptedCharField(max_length=150, blank=True, help_text='Provider bank account number (encrypted)')
+	provider_bank_name = EncryptedCharField(max_length=150, blank=True, help_text='Provider bank name (encrypted)')
 
 	def __str__(self) -> str:  # pragma: no cover
 		return f"Invoice #{self.id} - Claim #{self.claim.id} - {self.payment_status}"
