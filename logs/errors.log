@@ -1,6 +1,0 @@
-ERROR 2025-09-18 13:04:14,222 error_tracking 15012 20404 Error tracked: ValueError: Test error for error tracking
-ERROR 2025-09-18 13:04:14,223 error_tracking 15012 20404 Error tracked: RuntimeError: Test error with request context
-ERROR 2025-09-18 13:04:22,277 error_tracking 11848 10124 Error tracked: ValueError: Test error for error tracking
-ERROR 2025-09-18 13:04:22,277 error_tracking 11848 10124 Error tracked: RuntimeError: Test error with request context
-ERROR 2025-09-18 13:04:36,831 error_tracking 25276 28652 Error tracked: ValueError: Test error for error tracking
-ERROR 2025-09-18 13:04:36,831 error_tracking 25276 28652 Error tracked: RuntimeError: Test error with request context
