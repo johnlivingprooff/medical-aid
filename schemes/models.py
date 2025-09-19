@@ -119,6 +119,23 @@ class SchemeBenefit(models.Model):
     def __str__(self) -> str:
         return f"{self.scheme} - {self.benefit_type}"
 
+    @property
+    def is_currently_active(self):
+        """Check if benefit is currently active based on dates"""
+        from django.utils import timezone
+        today = timezone.now().date()
+
+        if not self.is_active:
+            return False
+
+        if self.effective_date and today < self.effective_date:
+            return False
+
+        if self.expiry_date and today > self.expiry_date:
+            return False
+
+        return True
+
 
 class SubscriptionTier(models.Model):
     """Defines subscription tiers for schemes (Basic, Standard, Premium)"""
