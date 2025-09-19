@@ -407,3 +407,12 @@ class SystemSettings(models.Model):
 		else:
 			return self.value
 
+	@classmethod
+	def get_setting(cls, key: str, default=None):
+		"""Retrieve a system setting by key"""
+		try:
+			setting = cls.objects.get(key=key)
+			return setting.typed_value
+		except cls.DoesNotExist:
+			return default
+
