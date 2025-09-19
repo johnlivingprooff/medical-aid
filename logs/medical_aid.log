@@ -1370,3 +1370,307 @@ INFO 2025-09-19 02:33:46,205 cache 11748 16584 System setting cache invalidated:
 INFO 2025-09-19 02:34:18,081 autoreload 16472 16844 Watching for file changes with StatReloader
 INFO 2025-09-19 02:34:23,014 autoreload 16472 16844 J:\Documents\CODE\Projects\medical-aid\accounts\models.py changed, reloading.
 INFO 2025-09-19 02:34:25,877 autoreload 26356 25984 Watching for file changes with StatReloader
+INFO 2025-09-19 02:35:19,633 basehttp 26356 26264 "GET /admin/ HTTP/1.1" 302 0
+ERROR 2025-09-19 02:35:20,638 collector 26356 21032 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 02:35:21,073 basehttp 26356 26264 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 17308
+INFO 2025-09-19 02:35:21,113 basehttp 26356 21032 "GET /admin/ HTTP/1.1" 302 0
+INFO 2025-09-19 02:35:21,586 basehttp 26356 21032 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 17307
+INFO 2025-09-19 02:35:24,807 basehttp 26356 17992 "GET /static/admin/css/login.css HTTP/1.1" 200 958
+INFO 2025-09-19 02:35:34,396 basehttp 26356 12944 "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+INFO 2025-09-19 02:35:35,584 basehttp 26356 12944 "GET /admin/ HTTP/1.1" 200 29372
+INFO 2025-09-19 02:35:43,739 basehttp 26356 12944 "GET /admin/billing/billingcycle/ HTTP/1.1" 200 30590
+INFO 2025-09-19 02:35:43,804 basehttp 26356 12944 "GET /static/admin/css/changelists.css HTTP/1.1" 200 6811
+INFO 2025-09-19 02:35:43,855 basehttp 26356 2252 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+INFO 2025-09-19 02:35:43,868 basehttp 26356 2252 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2025-09-19 02:35:43,883 basehttp 26356 2252 "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+INFO 2025-09-19 02:35:43,899 basehttp 26356 2252 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9042
+INFO 2025-09-19 02:35:43,910 basehttp 26356 2252 "GET /static/admin/js/actions.js HTTP/1.1" 200 8067
+INFO 2025-09-19 02:35:43,923 basehttp 26356 2252 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2025-09-19 02:35:43,932 basehttp 26356 2252 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2025-09-19 02:35:43,958 basehttp 26356 2252 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+INFO 2025-09-19 02:35:43,969 basehttp 26356 2252 "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+INFO 2025-09-19 02:35:43,978 basehttp 26356 2252 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+WARNING 2025-09-19 02:35:44,021 model_factory 26356 12944 Response to request with pk 87b39520-7e80-424c-940d-fe2da65780db has content type text/javascript but was unable to parse it
+INFO 2025-09-19 02:35:44,107 basehttp 26356 12944 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2025-09-19 02:35:44,155 basehttp 26356 12944 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+INFO 2025-09-19 02:35:44,188 basehttp 26356 2252 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+INFO 2025-09-19 02:35:51,736 basehttp 26356 2252 "GET /admin/billing/billingsettings/ HTTP/1.1" 200 28159
+INFO 2025-09-19 02:36:17,165 basehttp 26356 2252 "GET /api/accounts/me/ HTTP/1.1" 200 122
+ERROR 2025-09-19 02:36:18,385 collector 26356 2252 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+ERROR 2025-09-19 02:36:18,577 collector 26356 22412 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 02:36:19,697 basehttp 26356 12944 "GET /api/core/dashboard/activity/ HTTP/1.1" 200 722
+WARNING 2025-09-19 02:36:19,763 log 26356 22412 Forbidden: /api/alerts/
+WARNING 2025-09-19 02:36:19,815 basehttp 26356 22412 "GET /api/alerts/ HTTP/1.1" 403 63
+ERROR 2025-09-19 02:36:19,850 collector 26356 22412 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+INFO 2025-09-19 02:36:21,282 basehttp 26356 2252 "GET /api/core/dashboard/stats/ HTTP/1.1" 200 442
+INFO 2025-09-19 02:36:21,603 basehttp 26356 12944 "GET /api/core/dashboard/activity/ HTTP/1.1" 200 722
+WARNING 2025-09-19 02:36:22,331 log 26356 22412 Forbidden: /api/alerts/
+WARNING 2025-09-19 02:36:22,340 basehttp 26356 22412 "GET /api/alerts/ HTTP/1.1" 403 63
+INFO 2025-09-19 02:36:22,623 basehttp 26356 2252 "GET /api/core/dashboard/stats/ HTTP/1.1" 200 442
+ERROR 2025-09-19 02:37:18,242 collector 26356 24088 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+WARNING 2025-09-19 02:37:18,572 log 26356 2612 Forbidden: /api/core/analytics/providers/
+WARNING 2025-09-19 02:37:18,572 basehttp 26356 2612 "GET /api/core/analytics/providers/ HTTP/1.1" 403 63
+WARNING 2025-09-19 02:37:18,733 log 26356 2612 Forbidden: /api/core/analytics/providers/
+WARNING 2025-09-19 02:37:18,733 basehttp 26356 2612 "GET /api/core/analytics/providers/ HTTP/1.1" 403 63
+ERROR 2025-09-19 02:37:20,974 log 26356 24088 Internal Server Error: /api/claims/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\viewsets.py", line 124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\claims\views.py", line 231, in list
+    return super().list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 795, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 249, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 714, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\fields.py", line 1869, in to_representation
+    method = getattr(self.parent, self.method_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ClaimSerializer' object has no attribute 'get_pre_auth_status'
+ERROR 2025-09-19 02:37:21,682 basehttp 26356 24088 "GET /api/claims/?ordering=-date_submitted HTTP/1.1" 500 199622
+ERROR 2025-09-19 02:37:22,275 log 26356 2612 Internal Server Error: /api/claims/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\viewsets.py", line 124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\claims\views.py", line 231, in list
+    return super().list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 795, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 249, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 714, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\fields.py", line 1869, in to_representation
+    method = getattr(self.parent, self.method_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ClaimSerializer' object has no attribute 'get_pre_auth_status'
+ERROR 2025-09-19 02:37:22,600 basehttp 26356 2612 "GET /api/claims/?ordering=-date_submitted HTTP/1.1" 500 199619
+WARNING 2025-09-19 02:37:23,194 log 26356 2612 Forbidden: /api/core/analytics/providers/
+WARNING 2025-09-19 02:37:23,195 basehttp 26356 2612 "GET /api/core/analytics/providers/ HTTP/1.1" 403 63
+WARNING 2025-09-19 02:37:23,461 log 26356 2612 Forbidden: /api/core/analytics/providers/
+WARNING 2025-09-19 02:37:23,462 basehttp 26356 2612 "GET /api/core/analytics/providers/ HTTP/1.1" 403 63
+ERROR 2025-09-19 02:37:32,471 collector 26356 26164 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+WARNING 2025-09-19 02:37:32,828 log 26356 26164 Forbidden: /api/core/analytics/providers/
+WARNING 2025-09-19 02:37:32,833 basehttp 26356 26164 "GET /api/core/analytics/providers/ HTTP/1.1" 403 63
+ERROR 2025-09-19 02:37:32,842 collector 26356 26164 Could not enable python profiler, Another profiling tool is already active
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\silk\collector.py", line 97, in configure
+    self.local.pythonprofiler.enable()
+ValueError: Another profiling tool is already active
+ERROR 2025-09-19 02:37:32,955 log 26356 17476 Internal Server Error: /api/claims/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\viewsets.py", line 124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\claims\views.py", line 231, in list
+    return super().list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 795, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 249, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 714, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\fields.py", line 1869, in to_representation
+    method = getattr(self.parent, self.method_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ClaimSerializer' object has no attribute 'get_pre_auth_status'
+WARNING 2025-09-19 02:37:33,474 log 26356 26164 Forbidden: /api/core/analytics/providers/
+WARNING 2025-09-19 02:37:33,475 basehttp 26356 26164 "GET /api/core/analytics/providers/ HTTP/1.1" 403 63
+ERROR 2025-09-19 02:37:33,587 basehttp 26356 17476 "GET /api/claims/?ordering=-date_submitted HTTP/1.1" 500 199618
+ERROR 2025-09-19 02:37:33,955 log 26356 26164 Internal Server Error: /api/claims/
+Traceback (most recent call last):
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\viewsets.py", line 124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 188, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\django\utils\decorators.py", line 186, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\claims\views.py", line 231, in list
+    return super().list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\mixins.py", line 43, in list
+    return self.get_paginated_response(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 795, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 249, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 714, in to_representation
+    self.child.to_representation(item) for item in iterable
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\serializers.py", line 538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "J:\Documents\CODE\Projects\medical-aid\.venv\Lib\site-packages\rest_framework\fields.py", line 1869, in to_representation
+    method = getattr(self.parent, self.method_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ClaimSerializer' object has no attribute 'get_pre_auth_status'
+ERROR 2025-09-19 02:37:34,276 basehttp 26356 26164 "GET /api/claims/?ordering=-date_submitted HTTP/1.1" 500 199617
