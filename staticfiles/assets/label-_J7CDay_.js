@@ -1,0 +1,1 @@
+import{j as o}from"./ui-vendor-BwlLg9O9.js";import{i as r}from"./index-DvB6HgzU.js";function a({className:t,...e}){return o.jsx("label",{className:r("text-sm font-medium text-foreground",t),...e})}export{a as L};
