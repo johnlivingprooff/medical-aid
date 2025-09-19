@@ -101,6 +101,69 @@ class ClaimSerializer(serializers.ModelSerializer):
         fraud_alerts = FraudAlert.objects.filter(claim=obj).order_by('-created_at')
         return FraudAlertSerializer(fraud_alerts, many=True, context=self.context).data
 
+    def get_pre_auth_status(self, obj):
+        """Get pre-authorization status for this claim"""
+        if not obj.preauth_number:
+            return {
+                'has_preauth': False,
+                'status': 'NOT_REQUIRED',
+                'message': 'No pre-authorization required for this claim'
+            }
+        
+        # Check if pre-authorization exists and is valid
+        try:
+            from .models import PreAuthorizationApproval
+            preauth = PreAuthorizationApproval.objects.filter(
+                request__preauth_number=obj.preauth_number,
+                is_active=True
+            ).first()
+            
+            if not preauth:
+                return {
+                    'has_preauth': True,
+                    'status': 'NOT_FOUND',
+                    'message': 'Pre-authorization request not found',
+                    'preauth_number': obj.preauth_number
+                }
+            
+            # Check if pre-authorization is expired
+            if preauth.expires_at and preauth.expires_at < timezone.now():
+                return {
+                    'has_preauth': True,
+                    'status': 'EXPIRED',
+                    'message': 'Pre-authorization has expired',
+                    'preauth_number': obj.preauth_number,
+                    'expires_at': preauth.expires_at
+                }
+            
+            # Check if claim amount exceeds approved amount
+            if obj.cost > preauth.approved_amount:
+                return {
+                    'has_preauth': True,
+                    'status': 'EXCEEDED',
+                    'message': f'Claim amount ({obj.cost}) exceeds approved amount ({preauth.approved_amount})',
+                    'preauth_number': obj.preauth_number,
+                    'approved_amount': preauth.approved_amount,
+                    'claim_amount': obj.cost
+                }
+            
+            return {
+                'has_preauth': True,
+                'status': 'VALID',
+                'message': 'Pre-authorization is valid and covers this claim',
+                'preauth_number': obj.preauth_number,
+                'approved_amount': preauth.approved_amount,
+                'expires_at': preauth.expires_at
+            }
+            
+        except Exception as e:
+            return {
+                'has_preauth': True,
+                'status': 'ERROR',
+                'message': f'Error checking pre-authorization: {str(e)}',
+                'preauth_number': obj.preauth_number
+            }
+
     def get_subscription_context(self, obj):
         """Get subscription context for this claim"""
         try:

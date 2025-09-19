@@ -348,8 +348,8 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_SEND_SENT_EVENT = True
 
 # Django Silk Configuration
-SILKY_PYTHON_PROFILER = True
-SILKY_PYTHON_PROFILER_BINARY = True
+SILKY_PYTHON_PROFILER = False  # Disabled to avoid conflicts with other profiling tools
+SILKY_PYTHON_PROFILER_BINARY = False
 SILKY_AUTHENTICATION = True  # Require authentication to view profiles
 SILKY_AUTHORISATION = True   # Require superuser to view profiles
 SILKY_MAX_RECORDED_REQUESTS = 10000  # Maximum number of requests to record
