@@ -12,3 +12,6 @@ dist/*
 *.cypython-*
 *.pyc
 .github/
+# Silk profiling files
+silk_profiles/
+*.prof
