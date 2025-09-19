@@ -16,3 +16,4 @@ dist/*
 silk_profiles/
 *.prof
 logs
+*.log
