@@ -15,6 +15,7 @@ const Reports = lazy(() => import('@/pages/reports'))
 const Alerts = lazy(() => import('@/pages/alerts'))
 const Settings = lazy(() => import('@/pages/settings'))
 const Admin = lazy(() => import('@/pages/admin'))
+const SubscriptionTiersAdmin = lazy(() => import('@/pages/subscription-tiers-admin'))
 const Login = lazy(() => import('@/pages/login'))
 
 // Loading component for Suspense fallback
@@ -47,6 +48,7 @@ export function AppRoutes() {
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/settings" element={<RoleRoute allow={["ADMIN"]}><Settings /></RoleRoute>} />
           <Route path="/admin" element={<RoleRoute allow={["ADMIN"]}><Admin /></RoleRoute>} />
+          <Route path="/admin/subscription-tiers" element={<RoleRoute allow={["ADMIN"]}><SubscriptionTiersAdmin /></RoleRoute>} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/" replace />} />

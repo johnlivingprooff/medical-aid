@@ -177,11 +177,31 @@ class SubscriptionTier(models.Model):
     def __str__(self) -> str:
         return f"{self.scheme.name} - {self.name}"
 
-    def get_price(self, billing_period='MONTHLY'):
-        """Get price based on billing period"""
-        if billing_period == 'YEARLY':
-            return self.yearly_price
-        return self.monthly_price
+    def clean(self):
+        """Validate subscription tier data"""
+        from django.core.exceptions import ValidationError
+        
+        # Validate price consistency - yearly should be at least 10x monthly (allowing for discounts)
+        if self.yearly_price < (self.monthly_price * 10):
+            raise ValidationError({
+                'yearly_price': 'Yearly price should be at least 10 times the monthly price (allowing for annual discounts).'
+            })
+        
+        # Validate that yearly price is not less than monthly price
+        if self.yearly_price < self.monthly_price:
+            raise ValidationError({
+                'yearly_price': 'Yearly price cannot be less than monthly price.'
+            })
+        
+        # Validate max_coverage_per_year is reasonable
+        if self.max_coverage_per_year and self.max_coverage_per_year < self.monthly_price:
+            raise ValidationError({
+                'max_coverage_per_year': 'Maximum annual coverage should be higher than monthly subscription cost.'
+            })
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
 
 class MemberSubscription(models.Model):

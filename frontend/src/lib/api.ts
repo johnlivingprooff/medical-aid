@@ -83,7 +83,7 @@ export async function globalSearch(query: string, entityType: string = 'all', li
 // Subscription API functions
 export const subscriptionApi = {
   // Benefit Categories
-  getBenefitCategories: () => api.get<import('../types/api').SubscriptionTierListResponse>('/api/schemes/benefit-categories/'),
+  getBenefitCategories: () => api.get<import('../types/api').BenefitCategoryListResponse>('/api/schemes/benefit-categories/'),
   createBenefitCategory: (data: Partial<import('../types/models').BenefitCategory>) =>
     api.post<import('../types/models').BenefitCategory>('/api/schemes/benefit-categories/', data),
   updateBenefitCategory: (id: number, data: Partial<import('../types/models').BenefitCategory>) =>

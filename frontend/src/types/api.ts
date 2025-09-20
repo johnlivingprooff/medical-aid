@@ -79,6 +79,13 @@ export type MemberSubscriptionListResponse = {
   previous?: string;
 };
 
+export type BenefitCategoryListResponse = {
+  results: import('./models').BenefitCategory[];
+  count: number;
+  next?: string;
+  previous?: string;
+};
+
 export type SubscriptionUsageResponse = import('./models').SubscriptionUsageStats;
 
 export type SubscriptionAnalyticsResponse = import('./models').SubscriptionAnalytics;

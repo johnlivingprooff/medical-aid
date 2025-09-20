@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/components/auth/auth-context'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Database, AlertTriangle, Activity } from 'lucide-react'
+import { Users, Database, AlertTriangle, Activity, Settings } from 'lucide-react'
 
 interface AdminStats {
   total_users: number
@@ -33,6 +34,7 @@ interface AdminStats {
 
 export default function Admin() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -278,6 +280,24 @@ export default function Admin() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-medium mb-2">System Management</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Subscription Tiers</p>
+                  <p className="text-xs text-muted-foreground">Manage subscription tiers and pricing</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => navigate('/admin/subscription-tiers')}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <hr />
+          
           <div>
             <h4 className="font-medium mb-2">Data Management</h4>
             <div className="space-y-2">

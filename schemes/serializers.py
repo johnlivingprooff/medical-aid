@@ -33,6 +33,33 @@ class SubscriptionTierSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['scheme_name']
 
+    def validate(self, data):
+        """Validate subscription tier data"""
+        monthly_price = data.get('monthly_price')
+        yearly_price = data.get('yearly_price')
+        max_coverage_per_year = data.get('max_coverage_per_year')
+        
+        if monthly_price and yearly_price:
+            # Yearly price should be reasonable (at least 10x monthly, allowing for annual discounts)
+            min_yearly = monthly_price * 10
+            if yearly_price < min_yearly:
+                raise serializers.ValidationError({
+                    'yearly_price': f'Yearly price should be at least {min_yearly} (10x monthly price to allow for annual discounts).'
+                })
+            
+            # Yearly price should not be less than monthly
+            if yearly_price < monthly_price:
+                raise serializers.ValidationError({
+                    'yearly_price': 'Yearly price cannot be less than monthly price.'
+                })
+        
+        if max_coverage_per_year and monthly_price and max_coverage_per_year < monthly_price:
+            raise serializers.ValidationError({
+                'max_coverage_per_year': 'Maximum annual coverage should be higher than monthly subscription cost.'
+            })
+        
+        return data
+
 
 class MemberSubscriptionSerializer(serializers.ModelSerializer):
     patient_detail = serializers.SerializerMethodField()
