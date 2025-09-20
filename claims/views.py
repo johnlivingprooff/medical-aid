@@ -306,7 +306,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
 				if benefit.coverage_limit_count is not None:
 					used_count = usage_data['claim_count'] or 0
 					remaining_count = max(benefit.coverage_limit_count - used_count, 0)
-				emit_low_balance_alerts(claim, benefit, remaining_after, remaining_count)
+				
+				# Try to get subscription for additional checks
+				subscription = getattr(claim.patient, 'member_subscription', None)
+				emit_low_balance_alerts(claim, benefit, subscription, remaining_after, remaining_count)
 			emit_fraud_alert_if_needed(claim)
 		else:
 			claim.status = Claim.Status.REJECTED

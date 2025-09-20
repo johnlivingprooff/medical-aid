@@ -393,25 +393,68 @@ def validate_and_process_claim(claim: Claim) -> Tuple[bool, float, str]:
     return True, payable, "OK"
 
 
-def emit_low_balance_alerts(claim: Claim, benefit: SchemeBenefit, remaining_after: float, remaining_count: int | None):
-    """Emit alerts for low benefit balance or usage limits"""
-    # Check yearly coverage threshold (10% remaining)
-    if benefit.coverage_amount is not None:
-        threshold_amount = float(benefit.coverage_amount) * 0.1
-        if remaining_after <= threshold_amount:
+def emit_low_balance_alerts(claim: Claim, benefit: SchemeBenefit = None, subscription: MemberSubscription = None, remaining_after: float = None, remaining_count: int | None = None):
+    """Emit alerts for low balance on both benefit-specific and subscription-wide limits"""
+
+    # Check benefit-specific limits
+    if benefit:
+        # Check benefit coverage threshold (10% remaining)
+        if benefit.coverage_amount is not None and remaining_after is not None:
+            threshold_amount = float(benefit.coverage_amount) * 0.1
+            if remaining_after <= threshold_amount:
+                Alert.objects.create(
+                    type=Alert.Type.LOW_BALANCE,
+                    patient=claim.patient,
+                    message=f"Low balance for {benefit.benefit_type.name} benefit: remaining ${remaining_after:.2f}",
+                )
+
+        # Check benefit usage limit threshold
+        if remaining_count is not None and remaining_count <= 1 and benefit.coverage_limit_count is not None:
             Alert.objects.create(
                 type=Alert.Type.LOW_BALANCE,
                 patient=claim.patient,
-                message=f"Low balance for {benefit.benefit_type.name} benefit: remaining ${remaining_after:.2f}",
+                message=f"Benefit usage limit nearly exhausted for {benefit.benefit_type.name} (only {remaining_count} left)",
             )
 
-    # Check benefit usage limit threshold
-    if remaining_count is not None and remaining_count <= 1 and benefit.coverage_limit_count is not None:
-        Alert.objects.create(
-            type=Alert.Type.LOW_BALANCE,
-            patient=claim.patient,
-            message=f"Benefit usage limit nearly exhausted for {benefit.benefit_type.name} (only {remaining_count} left)",
-        )
+    # Check subscription-wide limits
+    if subscription:
+        tier = subscription.tier
+
+        # Check yearly coverage threshold (10% remaining)
+        if tier.max_coverage_per_year:
+            yearly_usage = Claim.objects.filter(
+                patient=claim.patient,
+                status__in=[Claim.Status.APPROVED],
+                date_submitted__gte=claim.date_submitted.replace(month=1, day=1),
+                date_submitted__lte=claim.date_submitted
+            ).aggregate(total=Sum('cost'))['total'] or Decimal('0.00')
+
+            remaining_yearly = float(tier.max_coverage_per_year) - float(yearly_usage)
+            threshold_amount = float(tier.max_coverage_per_year) * 0.1
+            if remaining_yearly <= threshold_amount:
+                Alert.objects.create(
+                    type=Alert.Type.LOW_BALANCE,
+                    patient=claim.patient,
+                    message=f"Low yearly coverage for {tier.name} subscription: remaining ${remaining_yearly:.2f}",
+                )
+
+        # Check monthly claim limit threshold
+        if tier.max_claims_per_month:
+            current_month_start = claim.date_submitted.replace(day=1)
+            monthly_claims = Claim.objects.filter(
+                patient=claim.patient,
+                status__in=[Claim.Status.APPROVED],
+                date_submitted__gte=current_month_start,
+                date_submitted__lte=claim.date_submitted
+            ).count()
+
+            remaining_monthly = tier.max_claims_per_month - monthly_claims
+            if remaining_monthly <= 1:
+                Alert.objects.create(
+                    type=Alert.Type.LOW_BALANCE,
+                    patient=claim.patient,
+                    message=f"Monthly claim limit nearly exhausted for {tier.name} subscription (only {remaining_monthly} left)",
+                )
 
 
 def emit_fraud_alert_if_needed(claim: Claim):
