@@ -119,10 +119,11 @@ class SchemeBenefitSerializer(serializers.ModelSerializer):
 
 class SchemeCategorySerializer(serializers.ModelSerializer):
     benefits = SchemeBenefitSerializer(many=True, read_only=True)
+    subscription_tiers = SubscriptionTierSerializer(many=True, read_only=True)
 
     class Meta:
         model = SchemeCategory
-        fields = ['id', 'name', 'description', 'price', 'benefits']
+        fields = ['id', 'name', 'description', 'price', 'benefits', 'subscription_tiers']
 
 
 # Billing Serializers

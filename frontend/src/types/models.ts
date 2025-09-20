@@ -61,6 +61,7 @@ export interface SchemeCategory {
   description: string;
   price: number;
   benefits?: SchemeBenefit[];
+  subscription_tiers?: SubscriptionTier[];
 }
 
 export interface BenefitType {
