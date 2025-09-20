@@ -258,6 +258,18 @@ class MemberSubscription(models.Model):
             return None
         return max(0, self.tier.max_coverage_per_year - self.coverage_used_this_year)
 
+    def can_access_benefit(self, benefit_type):
+        """Check if member can access a specific benefit type"""
+        if not self.is_active():
+            return False
+
+        # Check if the benefit type is covered by the subscription's scheme
+        return SchemeBenefit.objects.filter(
+            scheme=self.tier.scheme,
+            benefit_type=benefit_type,
+            is_active=True
+        ).exists()
+
 
 class PaymentMethod(models.Model):
     """Payment method for subscriptions"""

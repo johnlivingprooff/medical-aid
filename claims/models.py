@@ -47,16 +47,6 @@ class Patient(models.Model):
 	emergency_contact = EncryptedCharField(max_length=150, blank=True, help_text="Emergency contact name (encrypted)")
 	emergency_phone = EncryptedCharField(max_length=150, blank=True, help_text="Emergency contact phone (encrypted)")
 
-	# Subscription relationship (added for Phase 5)
-	subscription = models.OneToOneField(
-		MemberSubscription,
-		null=True,
-		blank=True,
-		on_delete=models.SET_NULL,
-		related_name='patient_subscription',
-		help_text="Patient's subscription tier"
-	)
-
 	def __str__(self) -> str:  # pragma: no cover
 		return f"{self.user.username} - {self.scheme.name}"
 

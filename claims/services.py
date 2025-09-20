@@ -311,10 +311,10 @@ def validate_and_process_claim(claim: Claim) -> Tuple[bool, float, str]:
     service_type: BenefitType = claim.service_type
 
     # Check if patient has an active subscription
-    if not hasattr(patient, 'subscription') or not patient.subscription:
+    if not hasattr(patient, 'member_subscription') or not patient.member_subscription:
         return False, 0.0, "Patient does not have an active subscription"
 
-    subscription = patient.subscription
+    subscription = patient.member_subscription
     if not subscription.is_active:
         return False, 0.0, f"Patient's subscription is {subscription.get_status_display().lower()}"
 
@@ -707,6 +707,10 @@ class FraudDetectionEngine:
     def _detect_patient_pattern(self, claim: Claim) -> Optional[Dict]:
         """Detect suspicious patient patterns"""
         from .models import FraudAlert
+
+        # Check if date_of_service is available
+        if not claim.date_of_service:
+            return None  # Cannot perform date-based analysis without service date
 
         # Check if patient has claims with multiple providers on same day
         day_start = claim.date_of_service
