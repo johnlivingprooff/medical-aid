@@ -8,7 +8,7 @@ from .models import Patient, Claim, Invoice
 from .models import PreAuthorizationRequest, PreAuthorizationApproval, PreAuthorizationRule, FraudAlert
 from .serializers import PatientSerializer, ClaimSerializer, InvoiceSerializer
 from .serializers import PreAuthorizationRequestSerializer, PreAuthorizationApprovalSerializer, PreAuthorizationRuleSerializer, FraudAlertSerializer
-from .services import validate_and_process_claim_enhanced, emit_low_balance_alerts, emit_fraud_alert_if_needed
+from .services import validate_and_process_claim_enhanced, validate_and_process_claim_for_approval, emit_low_balance_alerts, emit_fraud_alert_if_needed
 from schemes.models import SchemeBenefit, BenefitType
 from core.models import MemberMessage, MemberDocument
 from backend.pagination import OptimizedPagination
@@ -312,11 +312,16 @@ class ClaimViewSet(viewsets.ModelViewSet):
 				emit_low_balance_alerts(claim, benefit, subscription, remaining_after, remaining_count)
 			emit_fraud_alert_if_needed(claim)
 		else:
-			claim.status = Claim.Status.REJECTED
-			claim.coverage_checked = True
-			claim.rejection_reason = reason
-			claim.rejection_date = claim.date_submitted
-			claim.processed_by = self.request.user
+			# Check if the validation failure is due to missing pre-authorization
+			if "Pre-authorization required" in reason:
+				claim.status = Claim.Status.PENDING
+				claim.coverage_checked = False  # Not fully processed yet
+			else:
+				claim.status = Claim.Status.REJECTED
+				claim.coverage_checked = True
+				claim.rejection_reason = reason
+				claim.rejection_date = claim.date_submitted
+				claim.processed_by = self.request.user
 			claim.save(update_fields=['status', 'coverage_checked', 'rejection_reason', 'rejection_date', 'processed_by'])
 
 	def create(self, request, *args, **kwargs):
@@ -380,7 +385,7 @@ class ClaimViewSet(viewsets.ModelViewSet):
 			return Response({'detail': f'Cannot approve claim with status: {claim.status}'}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Validate claim coverage before approval
-		approved, payable, reason, validation_details = validate_and_process_claim_enhanced(claim)
+		approved, payable, reason, validation_details = validate_and_process_claim_for_approval(claim)
 		if not approved:
 			return Response({
 				'detail': 'Claim validation failed',
@@ -444,7 +449,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
 			remaining_count = None
 			if benefit.coverage_limit_count is not None:
 				remaining_count = max(benefit.coverage_limit_count - approved_qs.count(), 0)
-			emit_low_balance_alerts(claim, benefit, remaining_after, remaining_count)
+			
+			# Try to get subscription for additional checks
+			subscription = getattr(claim.patient, 'member_subscription', None)
+			emit_low_balance_alerts(claim, benefit, subscription, remaining_after, remaining_count)
 		emit_fraud_alert_if_needed(claim)
 		
 		serializer = self.get_serializer(claim)

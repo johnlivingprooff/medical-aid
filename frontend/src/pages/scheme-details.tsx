@@ -47,7 +47,7 @@ export default function SchemeDetails() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Scheme Price</CardTitle>
@@ -57,7 +57,7 @@ export default function SchemeDetails() {
             <div className="text-2xl font-semibold">{formatCurrency(scheme.price || 0)}</div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Card>
         <CardHeader>
@@ -232,7 +232,7 @@ export default function SchemeDetails() {
 
                           {tier.benefit_categories?.length > 0 && (
                             <div className="pt-2 border-t">
-                              <div className="text-xs text-muted-foreground mb-1">Includes:</div>
+                              <div className="mb-1 text-xs text-muted-foreground">Includes:</div>
                               <div className="flex flex-wrap gap-1">
                                 {tier.benefit_categories.slice(0, 3).map((category) => (
                                   <span key={category.id} className="inline-flex items-center rounded px-1.5 py-0.5 text-xs bg-muted text-muted-foreground">

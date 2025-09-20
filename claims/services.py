@@ -305,6 +305,12 @@ def validate_and_process_claim_enhanced(claim: Claim) -> Tuple[bool, float, str,
     return engine.validate_claim_comprehensive(claim)
 
 
+def validate_and_process_claim_for_approval(claim: Claim) -> Tuple[bool, float, str, Dict]:
+    """Enhanced claim validation for approval - skips pre-authorization checks"""
+    engine = ClaimsValidationEngine()
+    return engine.validate_claim_for_approval(claim)
+
+
 def validate_and_process_claim(claim: Claim) -> Tuple[bool, float, str]:
     """Enhanced claim validation with subscription-based benefit access"""
     patient: Patient = claim.patient
@@ -924,6 +930,54 @@ class ClaimsValidationEngine:
 
         return True, payable_details['payable_amount'], "Validation successful", payable_details
 
+    def validate_claim_for_approval(self, claim: Claim) -> Tuple[bool, float, str, Dict]:
+        """
+        Comprehensive claim validation for approval - skips pre-authorization checks
+        Returns: (is_valid, payable_amount, message, details_dict)
+        """
+        self.validation_errors = []
+        self.warnings = []
+
+        patient = claim.patient
+        service_type = claim.service_type
+
+        # Basic validations
+        if not self._validate_patient_eligibility(patient):
+            return False, 0.0, "; ".join(self.validation_errors), {}
+
+        if not self._validate_service_coverage(claim):
+            return False, 0.0, "; ".join(self.validation_errors), {}
+
+        # Advanced validations (skip pre-authorization for approval)
+        if not self._validate_waiting_periods(claim):
+            return False, 0.0, "; ".join(self.validation_errors), {}
+
+        if not self._validate_network_restrictions(claim):
+            return False, 0.0, "; ".join(self.validation_errors), {}
+
+        if not self._validate_age_restrictions(claim):
+            return False, 0.0, "; ".join(self.validation_errors), {}
+
+        # Calculate payable amount with detailed breakdown
+        payable_details = self._calculate_payable_amount_detailed(claim)
+
+        if payable_details['payable_amount'] <= 0:
+            return False, 0.0, "No payable amount after applying all rules", payable_details
+
+        # Fraud detection
+        fraud_score = self._calculate_fraud_score(claim)
+        fraud_engine = FraudDetectionEngine()
+        fraud_alerts = fraud_engine.detect_fraud_patterns(claim)
+
+        if fraud_score > 0.8:
+            self.warnings.append(f"High fraud risk detected (score: {fraud_score:.2f})")
+
+        payable_details['fraud_score'] = fraud_score
+        payable_details['fraud_alerts'] = fraud_alerts
+        payable_details['warnings'] = self.warnings
+
+        return True, payable_details['payable_amount'], "Validation successful", payable_details
+
     def _validate_patient_eligibility(self, patient: Patient) -> bool:
         """Validate patient eligibility for claims"""
         if patient.status != Patient.Status.ACTIVE:
@@ -1145,10 +1199,3 @@ class ClaimsValidationEngine:
         # Placeholder - in real implementation, this would check against provider network table
         # For now, assume all providers are in-network
         return True
-
-
-# Enhanced validation function that uses the new engine
-def validate_and_process_claim_enhanced(claim: Claim) -> Tuple[bool, float, str, Dict]:
-    """Enhanced claim validation using the new validation engine"""
-    engine = ClaimsValidationEngine()
-    return engine.validate_claim_comprehensive(claim)
