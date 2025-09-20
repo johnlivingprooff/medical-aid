@@ -393,26 +393,24 @@ def validate_and_process_claim(claim: Claim) -> Tuple[bool, float, str]:
     return True, payable, "OK"
 
 
-def emit_low_balance_alerts(claim: Claim, subscription: MemberSubscription, remaining_after: float, remaining_count: int | None):
-    """Emit alerts for low subscription balance or usage limits"""
-    tier = subscription.tier
-
+def emit_low_balance_alerts(claim: Claim, benefit: SchemeBenefit, remaining_after: float, remaining_count: int | None):
+    """Emit alerts for low benefit balance or usage limits"""
     # Check yearly coverage threshold (10% remaining)
-    if tier.max_coverage_per_year:
-        threshold_amount = float(tier.max_coverage_per_year) * 0.1
+    if benefit.coverage_amount is not None:
+        threshold_amount = float(benefit.coverage_amount) * 0.1
         if remaining_after <= threshold_amount:
             Alert.objects.create(
                 type=Alert.Type.LOW_BALANCE,
                 patient=claim.patient,
-                message=f"Low balance for {tier.name} subscription: remaining ${remaining_after:.2f}",
+                message=f"Low balance for {benefit.benefit_type.name} benefit: remaining ${remaining_after:.2f}",
             )
 
-    # Check monthly claim limit threshold
-    if remaining_count is not None and remaining_count <= 1 and tier.max_claims_per_month:
+    # Check benefit usage limit threshold
+    if remaining_count is not None and remaining_count <= 1 and benefit.coverage_limit_count is not None:
         Alert.objects.create(
             type=Alert.Type.LOW_BALANCE,
             patient=claim.patient,
-            message=f"Monthly claim limit nearly exhausted for {tier.name} (only {remaining_count} left)",
+            message=f"Benefit usage limit nearly exhausted for {benefit.benefit_type.name} (only {remaining_count} left)",
         )
 
 
