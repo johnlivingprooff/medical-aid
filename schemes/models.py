@@ -662,3 +662,7 @@ class BillingHistory(models.Model):
 
     def __str__(self):
         return f"{self.subscription} - {self.get_action_display()} - {self.timestamp.date()}"
+
+
+    # Import audit logging for scheme operations
+    from .models_audit import SchemeAuditLog

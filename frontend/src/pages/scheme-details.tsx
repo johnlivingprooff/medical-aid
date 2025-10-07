@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,23 @@ export default function SchemeDetails() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showEdit, setShowEdit] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  // Deletion modal state
+  const [deleteStep, setDeleteStep] = useState<'impact' | 'confirm' | 'deleting' | 'done'>('impact')
+  const [deletionImpact, setDeletionImpact] = useState<any>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [confirmationText, setConfirmationText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  // Fetch deletion impact when modal opens
+  useEffect(() => {
+    if (showDeleteModal && scheme && deleteStep === 'impact') {
+      setDeleteError(null)
+      api.get(`/api/schemes/categories/${scheme.id}/deletion-impact/`)
+        .then(setDeletionImpact)
+        .catch((e: any) => setDeleteError(e.message || 'Failed to load impact'))
+    }
+  }, [showDeleteModal, scheme, deleteStep])
 
   useEffect(() => {
     if (!id) return
@@ -32,6 +50,8 @@ export default function SchemeDetails() {
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading…</div>
   if (error) return <div className="text-sm text-destructive">{error}</div>
+  // TODO: Replace with actual user context or prop
+  const userRole = (window as any).user?.role || 'ADMIN' // fallback for demo
   if (!scheme) return null
 
   return (
@@ -290,6 +310,97 @@ export default function SchemeDetails() {
           </div>
         </CardContent>
       </Card>
+  {/* Danger Zone: Scheme Deletion (Admin Only) */}
+  {userRole === 'ADMIN' && (
+    <Card className="mt-8 border-destructive bg-destructive/10">
+      <CardHeader>
+        <CardTitle className="text-destructive">Danger Zone</CardTitle>
+        <CardDescription>Deleting a scheme is irreversible. All associated benefits, subscriptions, and claims will be affected. This action is restricted to administrators only.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
+            Delete Scheme
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )}
+  {/* Deletion Confirmation Modal */}
+  {showDeleteModal && (
+    <div className="fixed inset-0 z-50 grid p-4 place-items-center bg-black/40" onClick={() => setShowDeleteModal(false)}>
+      <Card className="w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <CardHeader>
+          <CardTitle className="text-destructive">Delete Scheme</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {deleteStep === 'impact' && (
+            <>
+              <div className="text-sm text-muted-foreground">This action is irreversible. Please review the impact below before proceeding.</div>
+              {deleteError ? (
+                <div className="text-sm text-destructive">{deleteError}</div>
+              ) : deletionImpact ? (
+                <div className="space-y-2">
+                  <div className="font-medium">Scheme: {deletionImpact.scheme?.name}</div>
+                  <div className="text-xs text-muted-foreground">{deletionImpact.scheme?.description}</div>
+                  <div className="mt-2 text-sm">
+                    <span className="font-semibold">Impact:</span>
+                    <pre className="p-2 text-xs whitespace-pre-wrap rounded bg-muted">{JSON.stringify(deletionImpact.impact, null, 2)}</pre>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm">Loading impact…</div>
+              )}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                <Button variant="destructive" disabled={!deletionImpact || !!deleteError} onClick={() => setDeleteStep('confirm')}>Continue</Button>
+              </div>
+            </>
+          )}
+          {deleteStep === 'confirm' && (
+            <>
+              <div className="text-sm">To confirm deletion, type <span className="px-1 font-mono rounded bg-muted">delete {scheme.name}</span> below:</div>
+              <Input
+                value={confirmationText as string}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmationText(e.target.value as string)}
+                placeholder={`delete ${scheme.name}`}
+                className="mt-2"
+                autoFocus
+              />
+              {deleteError && <div className="mt-2 text-sm text-destructive">{deleteError}</div>}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  disabled={confirmationText.trim() !== `delete ${scheme.name}` || deleting}
+                  onClick={async () => {
+                    setDeleting(true)
+                    setDeleteError(null)
+                    try {
+                      const res = await api.post(`/api/schemes/categories/${scheme.id}/delete-scheme/`, { confirmation_text: confirmationText })
+                      setDeleteStep('done')
+                    } catch (e: any) {
+                      setDeleteError(e.message || 'Deletion failed')
+                    } finally {
+                      setDeleting(false)
+                    }
+                  }}
+                >Delete</Button>
+              </div>
+            </>
+          )}
+          {deleteStep === 'done' && (
+            <>
+              <div className="text-sm font-medium text-success">Scheme deleted successfully.</div>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => { setShowDeleteModal(false); navigate('/schemes') }}>Close</Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )}
   <ManageSchemesModal open={showEdit} onOpenChange={setShowEdit} schemeId={scheme.id} />
     </div>
   )

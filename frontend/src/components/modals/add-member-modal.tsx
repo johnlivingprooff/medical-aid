@@ -21,6 +21,9 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
   const [password, setPassword] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [gender, setGender] = useState<'M' | 'F' | 'O' | ''>('')
+  const [phone, setPhone] = useState('')
+  const [emergencyContact, setEmergencyContact] = useState('')
+  const [emergencyPhone, setEmergencyPhone] = useState('')
   const [scheme, setScheme] = useState<number | ''>('')
   const [schemes, setSchemes] = useState<Array<{ id: number; name: string }>>([])
   const [subscriptionTiers, setSubscriptionTiers] = useState<SubscriptionTier[]>([])
@@ -55,6 +58,14 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
       .catch(() => setSubscriptionTiers([]))
   }, [scheme])
 
+  // Auto-generate username from first and last name
+  useEffect(() => {
+    if (firstName && lastName) {
+      const generatedUsername = `${firstName.toLowerCase().replace(/\s+/g, '')}_${lastName.toLowerCase().replace(/\s+/g, '')}`
+      setUsername(generatedUsername)
+    }
+  }, [firstName, lastName])
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -75,6 +86,9 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
         date_of_birth: dateOfBirth,
         gender,
         scheme,
+        phone,
+        emergency_contact: emergencyContact,
+        emergency_phone: emergencyPhone,
         diagnoses: '', investigations: '', treatments: '',
       })
 
@@ -100,7 +114,7 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
         })
       }
       onOpenChange(false)
-      setUsername(''); setEmail(''); setFirstName(''); setLastName(''); setPassword(''); setDateOfBirth(''); setGender(''); setScheme(''); setSelectedTier(''); setSelectedTier('')
+      setUsername(''); setEmail(''); setFirstName(''); setLastName(''); setPassword(''); setDateOfBirth(''); setGender(''); setPhone(''); setEmergencyContact(''); setEmergencyPhone(''); setScheme(''); setSelectedTier(''); setSelectedTier('')
     } catch (err: any) {
       setError(err.message || 'Failed to add member')
     } finally {
@@ -147,27 +161,31 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
           <form onSubmit={submit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
                 <Label htmlFor="first">First name</Label>
-                <Input id="first" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <Input id="first" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="last">Last name</Label>
-                <Input id="last" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <Input id="last" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password (optional)</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Auto-generated if empty" />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+1234567890" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emergency-contact">Emergency Contact Name</Label>
+                <Input id="emergency-contact" value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} required placeholder="Full name" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="emergency-phone">Emergency Contact Phone</Label>
+              <Input id="emergency-phone" type="tel" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} required placeholder="+1234567890" />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">

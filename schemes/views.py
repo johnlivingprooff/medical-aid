@@ -19,6 +19,9 @@ from rest_framework.decorators import action
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Sum, F
+from django.core.exceptions import ValidationError
+from .services_deletion import SchemeDeletionService
+from .models_audit import SchemeAuditLog
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from claims.models import Patient, Claim
@@ -262,6 +265,64 @@ class SchemeCategoryViewSet(viewsets.ModelViewSet):
 		return Response(data)
 
 
+	@action(detail=True, methods=['get'], url_path='deletion-impact')
+	def deletion_impact(self, request, pk=None):
+		"""Get deletion impact assessment for a scheme"""
+		scheme = self.get_object()
+		# Only admins can check deletion impact
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			impact_data = deletion_service.validate_deletion_eligibility(scheme)
+			return Response({
+				'scheme': {
+					'id': scheme.id,
+					'name': scheme.name,
+					'description': scheme.description
+				},
+				'impact': impact_data
+			})
+		except Exception as e:
+			return Response(
+				{'error': f'Failed to assess deletion impact: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='delete-scheme')
+	def delete_scheme(self, request, pk=None):
+		"""Securely delete a scheme with confirmation"""
+		scheme = self.get_object()
+		# Only admins can delete schemes
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		# Get confirmation text from request
+		confirmation_text = request.data.get('confirmation_text', '').strip()
+		if not confirmation_text:
+			return Response(
+				{'error': 'confirmation_text is required'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			result = deletion_service.perform_safe_deletion(scheme, confirmation_text)
+			return Response(result, status=status.HTTP_200_OK)
+		except ValidationError as e:
+			return Response(
+				{'error': str(e)},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		except Exception as e:
+			return Response(
+				{'error': f'Deletion failed: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
 class SchemeBenefitViewSet(viewsets.ModelViewSet):
 	queryset = SchemeBenefit.objects.select_related('scheme').all()
 	serializer_class = SchemeBenefitSerializer

@@ -4,8 +4,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
-import { X } from 'lucide-react'
+import { X, Edit, Trash2 } from 'lucide-react'
 import type { SchemeCategory, BenefitType, SchemeBenefit } from '@/types/models'
+import { EditBenefitModal } from './edit-benefit-modal'
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; schemeId?: number }
 
@@ -26,6 +27,11 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
   const [coveragePeriod, setCoveragePeriod] = useState('YEARLY')
   const [savingBenefit, setSavingBenefit] = useState(false)
   const [benefitError, setBenefitError] = useState<string | null>(null)
+  
+  // Edit benefit modal state
+  const [editBenefitModalOpen, setEditBenefitModalOpen] = useState(false)
+  const [benefitToEdit, setBenefitToEdit] = useState<SchemeBenefit | null>(null)
+  const [deletingBenefitId, setDeletingBenefitId] = useState<number | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -97,9 +103,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
         coverage_limit_count: coverageLimitCount ? Number(coverageLimitCount) : 1,
         coverage_period: coveragePeriod,
       })
-      // refresh scheme to get benefits list
-      const fresh = await api.get<any>(`/api/schemes/categories/${currentScheme.id}/`)
-      setBenefits((fresh.benefits ?? []) as SchemeBenefit[])
+      await refreshBenefits()
       // reset fields for next add
       setBenefitType('')
       setCoverageAmount('')
@@ -108,6 +112,41 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
     } catch (e: any) {
       setBenefitError(e.message || 'Failed to add benefit')
     } finally { setSavingBenefit(false) }
+  }
+
+  async function refreshBenefits() {
+    if (!currentScheme) return
+    try {
+      const fresh = await api.get<any>(`/api/schemes/categories/${currentScheme.id}/`)
+      setBenefits((fresh.benefits ?? []) as SchemeBenefit[])
+    } catch (e: any) {
+      setBenefitError('Failed to refresh benefits')
+    }
+  }
+
+  function handleEditBenefit(benefit: SchemeBenefit) {
+    setBenefitToEdit(benefit)
+    setEditBenefitModalOpen(true)
+  }
+
+  async function handleDeleteBenefit(benefitId: number) {
+    if (!confirm('Are you sure you want to delete this benefit?')) return
+    
+    setDeletingBenefitId(benefitId)
+    try {
+      await api.delete(`/api/schemes/benefits/${benefitId}/`)
+      await refreshBenefits()
+    } catch (e: any) {
+      setBenefitError(e.message || 'Failed to delete benefit')
+    } finally {
+      setDeletingBenefitId(null)
+    }
+  }
+
+  function handleBenefitSaved() {
+    refreshBenefits()
+    setEditBenefitModalOpen(false)
+    setBenefitToEdit(null)
   }
 
   if (!open) return null
@@ -253,9 +292,35 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
                   <div className="grid grid-cols-1 gap-2">
                     {benefits.map(b => (
                       <div key={b.id} className="flex items-center justify-between p-2 text-sm border rounded">
-                        <div>
+                        <div className="flex-1">
                           <div className="font-medium">{b.benefit_type_detail?.name}</div>
-                          <div className="text-xs text-muted-foreground">{b.coverage_period} • {b.coverage_limit_count ?? 'No count limit'} • {b.coverage_amount != null ? `${b.coverage_amount} MWK` : 'No amount limit'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {b.coverage_period} • {b.coverage_limit_count ?? 'No count limit'} • {b.coverage_amount != null ? `${b.coverage_amount} MWK` : 'No amount limit'}
+                            {b.deductible_amount > 0 && ` • Deductible: ${b.deductible_amount} MWK`}
+                            {b.copayment_percentage > 0 && ` • Copay: ${b.copayment_percentage}%`}
+                            {b.requires_preauth && ' • Pre-auth required'}
+                            {!b.is_active && ' • Inactive'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 ml-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-muted"
+                            onClick={() => handleEditBenefit(b)}
+                            disabled={deletingBenefitId === b.id}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDeleteBenefit(b.id)}
+                            disabled={deletingBenefitId === b.id}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -266,6 +331,13 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
           )}
         </CardContent>
       </Card>
+      
+      <EditBenefitModal
+        open={editBenefitModalOpen}
+        onOpenChange={setEditBenefitModalOpen}
+        benefit={benefitToEdit}
+        onSave={handleBenefitSaved}
+      />
     </div>
   )
 }

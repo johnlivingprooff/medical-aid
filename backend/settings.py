@@ -134,20 +134,21 @@ except:
 
 if REDIS_AVAILABLE:
     CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 20,
-                    'decode_responses': True,
+            'default': {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'CONNECTION_POOL_KWARGS': {
+                        'max_connections': 20,
+                        'decode_responses': True,
+                    },
+                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                    'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
                 },
-                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-            },
-            'KEY_PREFIX': 'medical_aid',
-            'TIMEOUT': 300,  # 5 minutes default
-        }
+                'KEY_PREFIX': 'medical_aid',
+                'TIMEOUT': 300,  # 5 minutes default
+            }
     }
 else:
     CACHES = {

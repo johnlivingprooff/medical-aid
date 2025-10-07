@@ -36,6 +36,24 @@ class PatientSerializer(serializers.ModelSerializer):
             'first_name', 'last_name', 'age', 'is_dependent', 'diagnoses', 'investigations', 'treatments'
         ]
 
+    def validate_phone(self, value):
+        """Validate phone number is provided for new patients"""
+        if not value and not self.instance:  # Only require for new patients (create)
+            raise serializers.ValidationError("Phone number is required.")
+        return value
+
+    def validate_emergency_contact(self, value):
+        """Validate emergency contact is provided for new patients"""
+        if not value and not self.instance:  # Only require for new patients (create)
+            raise serializers.ValidationError("Emergency contact name is required.")
+        return value
+
+    def validate_emergency_phone(self, value):
+        """Validate emergency phone is provided for new patients"""
+        if not value and not self.instance:  # Only require for new patients (create)
+            raise serializers.ValidationError("Emergency contact phone is required.")
+        return value
+
     def get_last_claim_date(self, obj):
         latest = (
             Claim.objects.filter(patient=obj).order_by('-date_submitted').values_list('date_submitted', flat=True).first()
