@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { CreditCard, TrendingUp, AlertTriangle, CheckCircle, Clock, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -64,11 +63,11 @@ export function SubscriptionCoverageCard({ patientId, member, className }: Subsc
   }
 
   const loadAvailableTiers = async () => {
-    if (!member?.scheme_id) return
+    if (!member?.scheme) return
     
     try {
       const tiersResponse = await subscriptionApi.getSubscriptionTiers({ 
-        scheme: member.scheme_id, 
+        scheme: member.scheme, 
         is_active: true 
       })
       setAvailableTiers(tiersResponse.results || [])
@@ -119,10 +118,10 @@ export function SubscriptionCoverageCard({ patientId, member, className }: Subsc
   }, [patientId])
 
   useEffect(() => {
-    if (showSetupDialog && member?.scheme_id) {
+    if (member?.scheme) {
       loadAvailableTiers()
     }
-  }, [showSetupDialog, member?.scheme_id])
+  }, [member?.scheme])
 
   if (loading) {
     return (
@@ -196,36 +195,37 @@ export function SubscriptionCoverageCard({ patientId, member, className }: Subsc
                   
                   <div>
                     <Label htmlFor="tier-select">Select Subscription Tier</Label>
-                    <Select value={selectedTier?.toString() || ""} onValueChange={(value) => setSelectedTier(parseInt(value))}>
-                      <SelectTrigger id="tier-select">
-                        <SelectValue placeholder="Choose a tier..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableTiers.map((tier) => (
-                          <SelectItem key={tier.id} value={tier.id.toString()}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{tier.name}</span>
-                              <span className="text-sm text-muted-foreground">
-                                {formatCurrency(tier.monthly_price)}/month
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select
+                      id="tier-select"
+                      value={selectedTier?.toString() || ""}
+                      onChange={(e) => setSelectedTier(e.target.value ? parseInt(e.target.value) : null)}
+                      className="flex w-full h-10 px-3 py-2 text-sm border rounded-md border-input bg-background ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Choose a tier...</option>
+                      {availableTiers.length === 0 ? (
+                        <option disabled>No tiers available</option>
+                      ) : (
+                        availableTiers.map((tier) => (
+                          <option key={tier.id} value={tier.id.toString()}>
+                            {tier.name} - {formatCurrency(tier.monthly_price)}/month
+                          </option>
+                        ))
+                      )}
+                    </select>
                   </div>
 
                   <div>
                     <Label htmlFor="type-select">Subscription Type</Label>
-                    <Select value={subscriptionType} onValueChange={(value: 'MONTHLY' | 'YEARLY') => setSubscriptionType(value)}>
-                      <SelectTrigger id="type-select">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="MONTHLY">Monthly</SelectItem>
-                        <SelectItem value="YEARLY">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      id="type-select"
+                      value={subscriptionType}
+                      onChange={(e) => setSubscriptionType(e.target.value as 'MONTHLY' | 'YEARLY')}
+                      className="flex w-full h-10 px-3 py-2 text-sm border rounded-md border-input bg-background ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Choose subscription type...</option>
+                      <option value="MONTHLY">Monthly</option>
+                      <option value="YEARLY">Yearly</option>
+                    </select>
                   </div>
 
                   <div className="flex justify-end gap-2">
