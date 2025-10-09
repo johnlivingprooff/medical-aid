@@ -21,12 +21,21 @@ export function SubscriptionManagement({ patientId, className }: SubscriptionMan
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!patientId) return
+    if (!patientId) {
+      setCurrentSubscription(null)
+      setAvailableTiers([])
+      setError(null)
+      setLoading(false)
+      return
+    }
 
     const loadData = async () => {
       try {
         setLoading(true)
         setError(null)
+        // Reset state when patientId changes
+        setCurrentSubscription(null)
+        setAvailableTiers([])
 
         // Load current subscription
         const subscriptionResponse = await subscriptionApi.getMemberSubscriptions({ patient: patientId })

@@ -1,3 +1,11 @@
+from rest_framework import serializers
+from .models import UserPreferences
+class UserPreferencesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPreferences
+        fields = [
+            'accent_color', 'logo_url', 'notifications_enabled', 'email_alerts', 'language', 'timezone', 'updated_at', 'created_at'
+        ]
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import ProviderProfile, ProviderNetworkMembership, CredentialingDocument
@@ -62,6 +70,9 @@ class ProviderNetworkMembershipSerializer(serializers.ModelSerializer):
         read_only_fields = ['credentialed_at']
 
 
+
+
+# Restore CredentialingDocumentSerializer
 class CredentialingDocumentSerializer(serializers.ModelSerializer):
     uploaded_by_username = serializers.CharField(source='uploaded_by.username', read_only=True)
 
@@ -69,3 +80,24 @@ class CredentialingDocumentSerializer(serializers.ModelSerializer):
         model = CredentialingDocument
         fields = ['id', 'membership', 'uploaded_by', 'uploaded_by_username', 'file', 'doc_type', 'notes', 'status', 'created_at']
         read_only_fields = ['uploaded_by', 'created_at']
+
+# Serializer for updating user settings
+class UserSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'email', 'mfa_enabled', 'mfa_required'
+        ]
+        extra_kwargs = {
+            'email': {'required': False},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
+            'mfa_enabled': {'required': False},
+            'mfa_required': {'required': False},
+        }
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

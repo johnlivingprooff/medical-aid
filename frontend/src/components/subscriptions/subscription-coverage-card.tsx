@@ -7,6 +7,7 @@ import { subscriptionApi } from '@/lib/api'
 import type { MemberSubscription, SubscriptionUsageStats } from '@/types/models'
 import { formatCurrency } from '@/lib/currency'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 interface SubscriptionCoverageCardProps {
   patientId?: number;
@@ -18,37 +19,49 @@ export function SubscriptionCoverageCard({ patientId, className }: SubscriptionC
   const [usageStats, setUsageStats] = useState<SubscriptionUsageStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
+  const [upgrading, setUpgrading] = useState(false)
+
+  const loadSubscriptionData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      // Reset state when patientId changes
+      setSubscription(null)
+      setUsageStats(null)
+
+      // Get patient's subscription
+      const subscriptionsResponse = await subscriptionApi.getMemberSubscriptions({
+        patient: patientId,
+        status: 'ACTIVE'
+      })
+
+      if (subscriptionsResponse.results && subscriptionsResponse.results.length > 0) {
+        const activeSubscription = subscriptionsResponse.results[0]
+        setSubscription(activeSubscription)
+
+        // Get usage statistics
+        const usageResponse = await subscriptionApi.getSubscriptionUsage(activeSubscription.id)
+        setUsageStats(usageResponse)
+      } else {
+        setSubscription(null)
+        setUsageStats(null)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load subscription data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    if (!patientId) return
-
-    const loadSubscriptionData = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        // Get patient's subscription
-        const subscriptionsResponse = await subscriptionApi.getMemberSubscriptions({
-          patient: patientId,
-          status: 'ACTIVE'
-        })
-
-        if (subscriptionsResponse.results && subscriptionsResponse.results.length > 0) {
-          const activeSubscription = subscriptionsResponse.results[0]
-          setSubscription(activeSubscription)
-
-          // Get usage statistics
-          const usageResponse = await subscriptionApi.getSubscriptionUsage(activeSubscription.id)
-          setUsageStats(usageResponse)
-        } else {
-          setSubscription(null)
-          setUsageStats(null)
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load subscription data')
-      } finally {
-        setLoading(false)
-      }
+    if (!patientId) {
+      setSubscription(null)
+      setUsageStats(null)
+      setError(null)
+      setLoading(false)
+      return
     }
 
     loadSubscriptionData()
@@ -222,16 +235,257 @@ export function SubscriptionCoverageCard({ patientId, className }: SubscriptionC
 
         {/* Quick Actions */}
         <div className="flex gap-2 pt-4 border-t">
-          <Button variant="outline" size="sm" className="flex-1">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            View Details
-          </Button>
-          <Button variant="outline" size="sm" className="flex-1">
-            <CreditCard className="w-4 h-4 mr-2" />
-            Upgrade
-          </Button>
+          <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="flex-1">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                View Details
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Subscription Details</DialogTitle>
+              </DialogHeader>
+              <SubscriptionDetailsContent subscription={subscription} usageStats={usageStats} />
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="flex-1" disabled={upgrading}>
+                <CreditCard className="w-4 h-4 mr-2" />
+                {upgrading ? 'Processing...' : 'Upgrade'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Upgrade Subscription</DialogTitle>
+              </DialogHeader>
+              <SubscriptionUpgradeContent 
+                subscription={subscription} 
+                patientId={patientId} 
+                onUpgradeSuccess={() => {
+                  setShowUpgradeDialog(false)
+                  // Reload subscription data
+                  if (patientId) {
+                    loadSubscriptionData()
+                  }
+                }}
+                upgrading={upgrading}
+                setUpgrading={setUpgrading}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+// Subscription Details Modal Content
+function SubscriptionDetailsContent({ subscription, usageStats }: { 
+  subscription: MemberSubscription | null, 
+  usageStats: SubscriptionUsageStats | null 
+}) {
+  if (!subscription || !usageStats) {
+    return <div className="p-4 text-center text-muted-foreground">No subscription data available</div>
+  }
+
+  const coverageUsed = usageStats.coverage_used_this_year || 0
+  const coverageLimit = usageStats.max_coverage_per_year || 0
+  const utilization = coverageLimit ? (coverageUsed / coverageLimit) * 100 : 0
+
+  return (
+    <div className="space-y-6">
+      {/* Subscription Overview */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <h4 className="font-medium mb-2">Plan Details</h4>
+          <div className="space-y-1 text-sm">
+            <div>Tier: <span className="font-medium">{subscription.tier_detail.name}</span></div>
+            <div>Type: <span className="font-medium">{subscription.subscription_type}</span></div>
+            <div>Status: <Badge variant="success">{subscription.status}</Badge></div>
+          </div>
+        </div>
+        <div>
+          <h4 className="font-medium mb-2">Billing</h4>
+          <div className="space-y-1 text-sm">
+            <div>Monthly: <span className="font-medium">{formatCurrency(subscription.tier_detail.monthly_price)}</span></div>
+            <div>Yearly: <span className="font-medium">{formatCurrency(subscription.tier_detail.yearly_price)}</span></div>
+            <div>Start Date: <span className="font-medium">{new Date(subscription.start_date).toLocaleDateString()}</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Usage Statistics */}
+      <div>
+        <h4 className="font-medium mb-3">Usage Statistics</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center p-4 bg-muted rounded">
+            <div className="text-2xl font-bold text-primary">{formatCurrency(coverageUsed)}</div>
+            <div className="text-sm text-muted-foreground">Used This Year</div>
+          </div>
+          <div className="text-center p-4 bg-muted rounded">
+            <div className="text-2xl font-bold text-success">{formatCurrency(coverageLimit - coverageUsed)}</div>
+            <div className="text-sm text-muted-foreground">Remaining</div>
+          </div>
+          <div className="text-center p-4 bg-muted rounded">
+            <div className="text-2xl font-bold">{utilization.toFixed(1)}%</div>
+            <div className="text-sm text-muted-foreground">Utilization</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Coverage Breakdown */}
+      <div>
+        <h4 className="font-medium mb-3">Coverage Details</h4>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span>Annual Coverage Limit</span>
+            <span className="font-medium">{formatCurrency(coverageLimit)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Monthly Claims Limit</span>
+            <span className="font-medium">{usageStats.max_claims_per_month || 'Unlimited'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Claims This Month</span>
+            <span className="font-medium">{usageStats.claims_this_month}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Subscription Upgrade Modal Content
+function SubscriptionUpgradeContent({ 
+  subscription, 
+  patientId, 
+  onUpgradeSuccess, 
+  upgrading, 
+  setUpgrading 
+}: { 
+  subscription: MemberSubscription | null, 
+  patientId: number | undefined,
+  onUpgradeSuccess: () => void,
+  upgrading: boolean,
+  setUpgrading: (upgrading: boolean) => void
+}) {
+  const [availableTiers, setAvailableTiers] = useState<any[]>([])
+  const [selectedTier, setSelectedTier] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadTiers = async () => {
+      if (!subscription) return
+      
+      try {
+        setLoading(true)
+        const tiersResponse = await subscriptionApi.getSubscriptionTiers({ 
+          scheme: subscription.tier_detail.scheme,
+          is_active: true 
+        })
+        
+        // Filter out current tier and lower tiers
+        const upgradeTiers = tiersResponse.results.filter((tier: any) => 
+          tier.monthly_price > subscription.tier_detail.monthly_price
+        )
+        setAvailableTiers(upgradeTiers)
+      } catch (error) {
+        console.error('Failed to load upgrade tiers:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTiers()
+  }, [subscription])
+
+  const handleUpgrade = async () => {
+    if (!selectedTier || !subscription) return
+    
+    try {
+      setUpgrading(true)
+      await subscriptionApi.upgradeSubscription(subscription.id, {
+        new_tier_id: selectedTier
+      })
+      onUpgradeSuccess()
+    } catch (error) {
+      console.error('Upgrade failed:', error)
+    } finally {
+      setUpgrading(false)
+    }
+  }
+
+  if (!subscription) {
+    return <div className="p-4 text-center text-muted-foreground">No subscription to upgrade</div>
+  }
+
+  if (loading) {
+    return <div className="p-4 text-center">Loading upgrade options...</div>
+  }
+
+  if (availableTiers.length === 0) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        <p>You're already on the highest tier available!</p>
+        <p className="text-sm mt-2">Current plan: <span className="font-medium">{subscription.tier_detail.name}</span></p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h4 className="font-medium mb-2">Current Plan</h4>
+        <div className="p-3 bg-muted rounded">
+          <div className="font-medium">{subscription.tier_detail.name}</div>
+          <div className="text-sm text-muted-foreground">
+            {formatCurrency(subscription.tier_detail.monthly_price)}/month
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-medium mb-2">Available Upgrades</h4>
+        <div className="space-y-2">
+          {availableTiers.map((tier: any) => (
+            <label
+              key={tier.id}
+              className={`flex items-center space-x-3 p-3 rounded border cursor-pointer ${
+                selectedTier === tier.id ? 'border-primary bg-primary/5' : 'border-gray-200'
+              }`}
+            >
+              <input
+                type="radio"
+                name="upgrade-tier"
+                value={tier.id}
+                checked={selectedTier === tier.id}
+                onChange={() => setSelectedTier(tier.id)}
+                className="text-primary"
+              />
+              <div className="flex-1">
+                <div className="font-medium">{tier.name}</div>
+                <div className="text-sm text-muted-foreground">
+                  {formatCurrency(tier.monthly_price)}/month • 
+                  {formatCurrency(tier.max_coverage_per_year)} annual coverage
+                </div>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2 pt-4">
+        <Button 
+          onClick={handleUpgrade} 
+          disabled={!selectedTier || upgrading}
+          className="flex-1"
+        >
+          {upgrading ? 'Processing...' : 'Confirm Upgrade'}
+        </Button>
+      </div>
+    </div>
   )
 }

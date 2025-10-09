@@ -14,6 +14,7 @@ const Analytics = lazy(() => import('@/pages/analytics'))
 const Reports = lazy(() => import('@/pages/reports'))
 const Alerts = lazy(() => import('@/pages/alerts'))
 const Settings = lazy(() => import('@/pages/settings'))
+const Help = lazy(() => import('@/pages/help'))
 const Admin = lazy(() => import('@/pages/admin'))
 const SubscriptionTiersAdmin = lazy(() => import('@/pages/subscription-tiers-admin'))
 const Login = lazy(() => import('@/pages/login'))
@@ -46,7 +47,8 @@ export function AppRoutes() {
           <Route path="/analytics" element={<RoleRoute allow={["ADMIN"]}><Analytics /></RoleRoute>} />
           <Route path="/reports" element={<RoleRoute allow={["ADMIN"]}><Reports /></RoleRoute>} />
           <Route path="/alerts" element={<Alerts />} />
-          <Route path="/settings" element={<RoleRoute allow={["ADMIN"]}><Settings /></RoleRoute>} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<Help />} />
           <Route path="/admin" element={<RoleRoute allow={["ADMIN"]}><Admin /></RoleRoute>} />
           <Route path="/admin/subscription-tiers" element={<RoleRoute allow={["ADMIN"]}><SubscriptionTiersAdmin /></RoleRoute>} />
         </Route>

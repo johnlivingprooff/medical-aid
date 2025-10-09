@@ -71,6 +71,18 @@ class SubscriptionTierViewSet(viewsets.ModelViewSet):
     filterset_fields = ['scheme', 'tier_type', 'is_active']
     search_fields = ['name', 'description', 'scheme__name']
     pagination_class = OptimizedPagination
+    ordering_fields = ['sort_order', 'monthly_price', 'name']
+
+    def get_queryset(self):
+        """Filter tiers based on scheme active status"""
+        queryset = super().get_queryset()
+        
+        # By default, only show tiers for active schemes
+        show_inactive_schemes = self.request.query_params.get('show_inactive_schemes', 'false').lower() == 'true'
+        if not show_inactive_schemes:
+            queryset = queryset.filter(scheme__is_active=True)
+            
+        return queryset
 
     @method_decorator(cache_page(600))  # Cache for 10 minutes
     def list(self, request, *args, **kwargs):
@@ -79,7 +91,6 @@ class SubscriptionTierViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(600))  # Cache for 10 minutes
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
-    ordering_fields = ['sort_order', 'monthly_price', 'name']
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -212,9 +223,27 @@ class SchemeCategoryViewSet(viewsets.ModelViewSet):
 	queryset = SchemeCategory.objects.all()
 	serializer_class = SchemeCategorySerializer
 	permission_classes = [permissions.IsAuthenticated]
-	filterset_fields = ['name']
+	filterset_fields = ['name', 'is_active']
 	search_fields = ['name', 'description']
-	ordering_fields = ['name', 'id']
+	ordering_fields = ['name', 'id', 'created_at', 'updated_at']
+
+	def get_queryset(self):
+		"""Filter schemes based on active status and user preferences"""
+		queryset = super().get_queryset()
+		
+		# Check for active/inactive filter in query params
+		show_inactive = self.request.query_params.get('show_inactive', 'false').lower() == 'true'
+		active_only = self.request.query_params.get('active_only', 'false').lower() == 'true'
+		
+		if active_only:
+			# Show only active schemes
+			queryset = queryset.filter(is_active=True)
+		elif not show_inactive:
+			# Default behavior: show active schemes unless explicitly requested
+			queryset = queryset.filter(is_active=True)
+		# If show_inactive=true, return all schemes (active and inactive)
+		
+		return queryset.order_by('-created_at')
 
 	def get_permissions(self):
 		if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -264,9 +293,321 @@ class SchemeCategoryViewSet(viewsets.ModelViewSet):
 		data['members'] = members
 		return Response(data)
 
+	@action(detail=True, methods=['get'], url_path='benefit-types')
+	def benefit_types(self, request, pk=None):
+		"""Return available benefit types for this scheme"""
+		scheme = self.get_object()
+		
+		# Get benefit types available in this scheme through SchemeBenefit
+		from .models import SchemeBenefit, BenefitType
+		from .serializers import BenefitTypeSerializer
+		
+		benefit_types = BenefitType.objects.filter(
+			scheme_benefits__scheme=scheme
+		).distinct()
+		
+		serializer = BenefitTypeSerializer(benefit_types, many=True)
+		return Response(serializer.data)
+
 
 	@action(detail=True, methods=['get'], url_path='deletion-impact')
 	def deletion_impact(self, request, pk=None):
+		"""Get deletion impact assessment for a scheme"""
+		scheme = self.get_object()
+		# Only admins can check deletion impact
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		# Get deletion mode from query params
+		mode = request.query_params.get('mode', 'deactivate')
+		if mode not in ['deactivate', 'cascade']:
+			return Response(
+				{'error': 'Invalid mode. Must be "deactivate" or "cascade"'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			impact_data = deletion_service.validate_deletion_eligibility(scheme, mode)
+			return Response({
+				'scheme': {
+					'id': scheme.id,
+					'name': scheme.name,
+					'description': scheme.description,
+					'is_active': scheme.is_active
+				},
+				'mode': mode,
+				'impact': impact_data
+			})
+		except Exception as e:
+			return Response(
+				{'error': f'Failed to assess deletion impact: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='deactivate-scheme')
+	def deactivate_scheme(self, request, pk=None):
+		"""Deactivate a scheme (soft delete) - preserves all data"""
+		scheme = self.get_object()
+		# Only admins can deactivate schemes
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		# Get parameters
+		confirmation_text = request.data.get('confirmation_text', '').strip()
+		reason = request.data.get('reason', '').strip()
+		
+		if not confirmation_text:
+			return Response(
+				{'error': 'confirmation_text is required'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			result = deletion_service.perform_scheme_deactivation(scheme, confirmation_text, reason)
+			return Response(result, status=status.HTTP_200_OK)
+		except ValidationError as e:
+			return Response(
+				{'error': str(e)},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		except Exception as e:
+			return Response(
+				{'error': f'Deactivation failed: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='cascade-delete-scheme')
+	def cascade_delete_scheme(self, request, pk=None):
+		"""Cascade delete a scheme (hard delete) - removes all related data"""
+		scheme = self.get_object()
+		# Only admins can cascade delete schemes
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		# Get confirmation text
+		confirmation_text = request.data.get('confirmation_text', '').strip()
+		if not confirmation_text:
+			return Response(
+				{'error': 'confirmation_text is required'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			result = deletion_service.perform_cascade_deletion(scheme, confirmation_text)
+			return Response(result, status=status.HTTP_200_OK)
+		except ValidationError as e:
+			return Response(
+				{'error': str(e)},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		except Exception as e:
+			return Response(
+				{'error': f'Cascade deletion failed: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='reactivate-scheme')
+	def reactivate_scheme(self, request, pk=None):
+		"""Reactivate a deactivated scheme"""
+		scheme = self.get_object()
+		# Only admins can reactivate schemes
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		if scheme.is_active:
+			return Response(
+				{'error': 'Scheme is already active'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			scheme.reactivate(user=request.user)
+			
+			# Log reactivation
+			SchemeAuditLog.log_scheme_action(
+				user=request.user,
+				action=SchemeAuditLog.ActionType.UPDATED,
+				scheme=scheme,
+				request=request,
+				status=SchemeAuditLog.Status.SUCCESS,
+				reason=f"Scheme reactivated by {request.user.username}"
+			)
+			
+			return Response({
+				'success': True,
+				'message': f'Scheme "{scheme.name}" has been reactivated',
+			}, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response(
+				{'error': f'Reactivation failed: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['get'], url_path='deletion-impact')
+	def deletion_impact(self, request, pk=None):
+		"""Get deletion impact assessment for a scheme"""
+		scheme = self.get_object()
+		# Only admins can check deletion impact
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		# Get deletion mode from query params
+		mode = request.query_params.get('mode', 'deactivate')
+		if mode not in ['deactivate', 'cascade']:
+			return Response(
+				{'error': 'Invalid mode. Must be "deactivate" or "cascade"'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			impact_data = deletion_service.validate_deletion_eligibility(scheme, mode)
+			return Response({
+				'scheme': {
+					'id': scheme.id,
+					'name': scheme.name,
+					'description': scheme.description,
+					'is_active': scheme.is_active
+				},
+				'mode': mode,
+				'impact': impact_data
+			})
+		except Exception as e:
+			return Response(
+				{'error': f'Failed to assess deletion impact: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='deactivate-scheme')
+	def deactivate_scheme(self, request, pk=None):
+		"""Deactivate a scheme (soft delete) - preserves all data"""
+		scheme = self.get_object()
+		# Only admins can deactivate schemes
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		# Get parameters
+		confirmation_text = request.data.get('confirmation_text', '').strip()
+		reason = request.data.get('reason', '').strip()
+		
+		if not confirmation_text:
+			return Response(
+				{'error': 'confirmation_text is required'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			result = deletion_service.perform_scheme_deactivation(scheme, confirmation_text, reason)
+			return Response(result, status=status.HTTP_200_OK)
+		except ValidationError as e:
+			return Response(
+				{'error': str(e)},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		except Exception as e:
+			return Response(
+				{'error': f'Deactivation failed: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='cascade-delete-scheme')
+	def cascade_delete_scheme(self, request, pk=None):
+		"""Cascade delete a scheme (hard delete) - removes all related data"""
+		scheme = self.get_object()
+		# Only admins can cascade delete schemes
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		# Get confirmation text
+		confirmation_text = request.data.get('confirmation_text', '').strip()
+		if not confirmation_text:
+			return Response(
+				{'error': 'confirmation_text is required'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			deletion_service = SchemeDeletionService(user=request.user, request=request)
+			result = deletion_service.perform_cascade_deletion(scheme, confirmation_text)
+			return Response(result, status=status.HTTP_200_OK)
+		except ValidationError as e:
+			return Response(
+				{'error': str(e)},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		except Exception as e:
+			return Response(
+				{'error': f'Cascade deletion failed: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='reactivate-scheme')
+	def reactivate_scheme(self, request, pk=None):
+		"""Reactivate a deactivated scheme"""
+		scheme = self.get_object()
+		# Only admins can reactivate schemes
+		if not (request.user and request.user.is_authenticated and request.user.role == 'ADMIN'):
+			return Response(
+				{'error': 'Admin access required'},
+				status=status.HTTP_403_FORBIDDEN
+			)
+		
+		if scheme.is_active:
+			return Response(
+				{'error': 'Scheme is already active'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+		
+		try:
+			scheme.reactivate(user=request.user)
+			
+			# Log reactivation
+			SchemeAuditLog.log_scheme_action(
+				user=request.user,
+				action=SchemeAuditLog.ActionType.UPDATED,
+				scheme=scheme,
+				request=request,
+				status=SchemeAuditLog.Status.SUCCESS,
+				reason=f"Scheme reactivated by {request.user.username}"
+			)
+			
+			return Response({
+				'success': True,
+				'message': f'Scheme "{scheme.name}" has been reactivated',
+			}, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response(
+				{'error': f'Reactivation failed: {str(e)}'},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+	@action(detail=True, methods=['post'], url_path='delete-scheme')
+	def delete_scheme_legacy(self, request, pk=None):
 		"""Get deletion impact assessment for a scheme"""
 		scheme = self.get_object()
 		# Only admins can check deletion impact

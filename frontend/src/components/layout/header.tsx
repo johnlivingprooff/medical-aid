@@ -130,8 +130,8 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Help</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/help')}>Help</DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={onLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

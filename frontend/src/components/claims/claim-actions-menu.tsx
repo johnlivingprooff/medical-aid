@@ -138,10 +138,20 @@ export function ClaimActionsMenu({ claim, userRole, userId, onClaimUpdate }: Cla
     } catch (error: any) {
       const message = error.response?.data?.detail || error.message || 'Failed to approve claim'
       showToast(message, 'error')
-      
+
       // Show additional details if available
       if (error.response?.data?.reason) {
         showToast(`Reason: ${error.response.data.reason}`, 'error')
+      }
+      if (error.response?.data?.validation_details) {
+        const details = error.response.data.validation_details
+        if (typeof details === 'string') {
+          showToast(`Details: ${details}`, 'error')
+        } else if (Array.isArray(details)) {
+          showToast(`Details: ${details.join('; ')}`, 'error')
+        } else if (typeof details === 'object') {
+          showToast(`Details: ${Object.values(details).join('; ')}`, 'error')
+        }
       }
     } finally {
       setLoading(false)

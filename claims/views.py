@@ -203,6 +203,61 @@ class PatientViewSet(viewsets.ModelViewSet):
 		)
 		return Response({'id': doc.id, 'file': getattr(doc.file, 'url', '')}, status=status.HTTP_201_CREATED)
 
+	@action(detail=True, methods=['get'], url_path='can-add-dependent')
+	def can_add_dependent(self, request, pk=None):
+		"""Check if a member can add more dependents based on subscription limits"""
+		patient = self.get_object()
+		
+		# Get current dependent count
+		current_dependents = patient.dependents.count()
+		
+		# Get subscription limits - first try to get active subscription
+		from billing.models import MemberSubscription
+		try:
+			subscription = MemberSubscription.objects.select_related('tier').get(
+				patient=patient,
+				status='ACTIVE'
+			)
+			max_allowed = subscription.tier.max_dependents
+			tier_name = subscription.tier.name
+		except MemberSubscription.DoesNotExist:
+			# Fallback: If no subscription, check if this is a principal member or dependent
+			if patient.relationship == 'PRINCIPAL':
+				# Principal without subscription - use scheme default or unlimited
+				max_allowed = 0  # No dependents allowed without subscription
+				tier_name = "No subscription"
+			else:
+				# This is a dependent, can't add dependents
+				return Response({
+					'can_add': False,
+					'current_count': 0,
+					'max_allowed': 0,
+					'remaining': 0,
+					'reason': 'Dependent members cannot add their own dependents',
+					'tier_name': 'N/A'
+				})
+		
+		# Calculate if more dependents can be added
+		can_add = current_dependents < max_allowed if max_allowed > 0 else False
+		remaining = max(max_allowed - current_dependents, 0) if max_allowed > 0 else 0
+		
+		# Determine reason if cannot add
+		reason = None
+		if not can_add:
+			if max_allowed == 0:
+				reason = f"No dependents allowed on {tier_name} tier"
+			else:
+				reason = f"Maximum {max_allowed} dependents already reached"
+		
+		return Response({
+			'can_add': can_add,
+			'current_count': current_dependents,
+			'max_allowed': max_allowed,
+			'remaining': remaining,
+			'reason': reason,
+			'tier_name': tier_name
+		})
+
 
 class ClaimViewSet(viewsets.ModelViewSet):
 	queryset = Claim.objects.select_related(
@@ -401,6 +456,20 @@ class ClaimViewSet(viewsets.ModelViewSet):
 		claim.processed_date = timezone.now()
 		claim.processed_by = user
 		claim.save(update_fields=['status', 'coverage_checked', 'processed_date', 'processed_by'])
+		
+		# Update subscription usage tracking
+		subscription = getattr(claim.patient, 'member_subscription', None)
+		if subscription and subscription.is_active():
+			from decimal import Decimal
+			# Add the approved claim amount to the subscription's yearly usage
+			claim_amount = Decimal(str(claim.cost))
+			subscription.coverage_used_this_year = (subscription.coverage_used_this_year or Decimal('0.00')) + claim_amount
+			
+			# Increment monthly claims count
+			subscription.claims_this_month = (subscription.claims_this_month or 0) + 1
+			
+			# Save the updated subscription
+			subscription.save(update_fields=['coverage_used_this_year', 'claims_this_month'])
 		
 		# Create invoice if approved
 		from decimal import Decimal

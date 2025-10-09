@@ -146,6 +146,9 @@ class SubscriptionService:
         Returns:
             Dictionary with usage statistics
         """
+        # Recalculate usage to ensure accuracy
+        subscription.recalculate_usage()
+        
         return {
             'claims_this_month': subscription.claims_this_month,
             'max_claims_per_month': subscription.tier.max_claims_per_month,

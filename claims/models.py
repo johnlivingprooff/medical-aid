@@ -29,7 +29,9 @@ class Patient(models.Model):
 	date_of_birth = EncryptedDateField(help_text="Patient's date of birth (encrypted for privacy)")
 	gender = models.CharField(max_length=1, choices=Gender.choices)
 	status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+	# Scheme relationship - PROTECT prevents accidental deletion, CASCADE would be handled by service layer
 	scheme = models.ForeignKey(SchemeCategory, on_delete=models.PROTECT, related_name='patients')
+	# NOTE: For cascade deletion, we'll handle this at the service level to maintain data integrity
 	
 	# Medical Aid specific fields
 	enrollment_date = models.DateField(null=True, blank=True, help_text="Date of enrollment in the scheme")

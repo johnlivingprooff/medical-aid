@@ -21,7 +21,7 @@ export function QuickActions() {
         <Button variant="secondary" onClick={() => setShowClaim(true)}><ClipboardList className="w-4 h-4 mr-2" /> Submit Claim</Button>
       )}
       {role === 'ADMIN' && (
-        <Button variant="ghost" onClick={() => setShowSchemes(true)}><Users className="w-4 h-4 mr-2" /> Manage Schemes</Button>
+        <Button variant="ghost" onClick={() => setShowSchemes(true)}><Users className="w-4 h-4 mr-2" /> Create Scheme</Button>
       )}
       {/* <Button variant="secondary"><FileText className="w-4 h-4 mr-2" /> Generate Report</Button> */}
       {/* <Button variant="ghost"><Bell className="w-4 h-4 mr-2" /> Bulk Notifications</Button> */}

@@ -36,9 +36,8 @@ export default function Settings() {
   const [systemSaving, setSystemSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [systemError, setSystemError] = useState<string | null>(null)
+  const [systemSuccess, setSystemSuccess] = useState<string | null>(null)
   const [formData, setFormData] = useState({
-    accent_color: '#2E7DFF',
-    logo_url: '/logo.svg',
     notifications_enabled: true,
     email_alerts: true,
     language: 'en',
@@ -104,16 +103,9 @@ export default function Settings() {
     try {
       setSaving(true)
       setError(null)
-
-      // In a real implementation, you'd call:
-      // await api.patch('/api/user/settings/', formData)
-
-      // For now, just simulate saving
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // Update local settings
+      // Use correct endpoint for user settings
+      await api.patch('/api/accounts/user/settings/', formData)
       setSettings({ ...settings!, ...formData })
-
     } catch (error) {
       console.error('Error saving settings:', error)
       setError('Failed to save settings')
@@ -134,23 +126,37 @@ export default function Settings() {
     try {
       setSystemSaving(true)
       setSystemError(null)
-
-      // Prepare settings data for bulk update
-      const settingsToUpdate = systemSettings.map(setting => ({
-        key: setting.key,
-        value: systemFormData[setting.key] || setting.value,
-        value_type: setting.value_type,
-        description: setting.description
-      }))
-
-      await api.post('/api/core/settings/bulk_update/', settingsToUpdate)
-
-      // Refresh system settings
-      const updatedResponse = await api.get('/api/core/settings/')
-      const responseData = updatedResponse as any
-      const updatedSettings = responseData.results || updatedResponse
-      setSystemSettings(updatedSettings)
-
+      setSystemSuccess(null)
+      // Only send changed settings to backend with minimal payload
+      const settingsToUpdate = systemSettings.map(setting => {
+        const newValue = systemFormData[setting.key]
+        if (newValue !== undefined && newValue !== setting.value) {
+          return {
+            key: setting.key,
+            value: newValue
+            // Don't send value_type or description to avoid validation issues
+          }
+        }
+        return null
+      }).filter(Boolean)
+      if (settingsToUpdate.length > 0) {
+        await api.post('/api/core/settings/bulk_update/', settingsToUpdate)
+        const updatedResponse = await api.get('/api/core/settings/')
+        const responseData = updatedResponse as any
+        const updatedSettings = responseData.results || updatedResponse
+        setSystemSettings(updatedSettings)
+        
+        // Update form data to reflect the new values from backend
+        const updatedFormData: Record<string, string> = {}
+        updatedSettings.forEach((setting: any) => {
+          updatedFormData[setting.key] = setting.value
+        })
+        setSystemFormData(updatedFormData)
+        setSystemSuccess('System settings saved successfully')
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSystemSuccess(null), 3000)
+      }
     } catch (error) {
       console.error('Error saving system settings:', error)
       setSystemError('Failed to save system settings')
@@ -198,32 +204,7 @@ export default function Settings() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Appearance</CardTitle>
-        </CardHeader>
-        <CardContent className="grid max-w-xl grid-cols-1 gap-4">
-          <div>
-            <Label htmlFor="accent">Accent Color</Label>
-            <Input
-              id="accent"
-              type="color"
-              value={formData.accent_color}
-              onChange={(e) => handleInputChange('accent_color', e.target.value)}
-              placeholder="#2E7DFF"
-            />
-          </div>
-          <div>
-            <Label htmlFor="logo">Logo URL</Label>
-            <Input
-              id="logo"
-              value={formData.logo_url}
-              onChange={(e) => handleInputChange('logo_url', e.target.value)}
-              placeholder="/logo.svg"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Appearance settings removed: Accent Color and Logo URL are not required for most users */}
 
       <Card>
         <CardHeader>
@@ -298,25 +279,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Profile Information</CardTitle>
-        </CardHeader>
-        <CardContent className="grid max-w-xl grid-cols-1 gap-4">
-          <div>
-            <Label>Username</Label>
-            <Input value={user?.username || ''} disabled />
-          </div>
-          <div>
-            <Label>Email</Label>
-            <Input value="user@example.com" disabled />
-          </div>
-          <div>
-            <Label>Role</Label>
-            <Input value={user?.role || ''} disabled />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Profile Information section removed: already shown elsewhere in the app, not editable here */}
 
       {/* System Settings - Only for Admin users */}
       {user?.role === 'ADMIN' && (
@@ -325,6 +288,14 @@ export default function Settings() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center text-destructive">{systemError}</div>
+              </CardContent>
+            </Card>
+          )}
+
+          {systemSuccess && (
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center text-green-600">{systemSuccess}</div>
               </CardContent>
             </Card>
           )}

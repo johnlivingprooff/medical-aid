@@ -232,3 +232,37 @@ class CredentialingDocumentViewSet(viewsets.ModelViewSet):
 		headers = self.get_success_headers(serializer.data)
 		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+# PATCH /api/user/settings/ endpoint
+from .serializers import UserSettingsSerializer, UserPreferencesSerializer
+from .models import UserPreferences
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+
+class UserSettingsView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def patch(self, request, *args, **kwargs):
+		user = request.user
+		# Patch basic user fields
+		user_serializer = UserSettingsSerializer(user, data=request.data, partial=True)
+		user_valid = user_serializer.is_valid()
+		if user_valid:
+			user_serializer.save()
+		# Patch preferences
+		prefs_data = {k: v for k, v in request.data.items() if k in [
+			'accent_color', 'logo_url', 'notifications_enabled', 'email_alerts', 'language', 'timezone']}
+		if prefs_data:
+			prefs, _ = UserPreferences.objects.get_or_create(user=user)
+			prefs_serializer = UserPreferencesSerializer(prefs, data=prefs_data, partial=True)
+			if prefs_serializer.is_valid():
+				prefs_serializer.save()
+			else:
+				return Response({'user': user_serializer.data, 'preferences': prefs_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+		if user_valid:
+			# Return both user and preferences
+			prefs = getattr(user, 'preferences', None)
+			prefs_data = UserPreferencesSerializer(prefs).data if prefs else None
+			return Response({'user': user_serializer.data, 'preferences': prefs_data}, status=status.HTTP_200_OK)
+		return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

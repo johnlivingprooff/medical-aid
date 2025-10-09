@@ -3,10 +3,13 @@ import { Table, Tbody, Td, Th, Thead, Tr } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { UserPlus } from 'lucide-react'
+import { UserPlus, Users, ArrowRight } from 'lucide-react'
 import { Mail } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '@/components/auth/auth-context'
 import { AddMemberModal } from '@/components/modals/add-member-modal'
+import { AddDependentModal } from '@/components/modals/add-dependent-modal'
+import { ChangeSchemeModal } from '@/components/modals/change-scheme-modal'
 import { formatCurrency } from '@/lib/currency'
 import { api } from '@/lib/api'
 import { Button as UIButton } from '@/components/ui/button'
@@ -33,92 +36,15 @@ function MemberClaimsHistory({ memberId }: { memberId: number }) {
       .finally(() => setLoading(false))
   }, [memberId])
 
-  if (loading) return <Skeleton className="w-full h-24" />
-  if (error) return <div className="text-xs text-destructive">{error}</div>
-  if (!claims.length) return <div className="text-xs text-muted-foreground">No claims found.</div>
-
-  return (
-    <div className="space-y-2">
-      <div className="mb-1 font-medium">Recent Claims with Subscription Context</div>
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Date</Th>
-            <Th>Service</Th>
-            <Th>Cost</Th>
-            <Th>Status</Th>
-            <Th>Subscription Tier</Th>
-            <Th>Utilization</Th>
-            <Th>Remaining</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {claims.slice(0, 5).map((c) => {
-            const subscription = c.subscription_context
-            const utilization = subscription?.utilization_info
-            
-            return (
-              <Tr key={c.id}>
-                <Td>{c.date_of_service ? new Date(c.date_of_service).toLocaleDateString() : '—'}</Td>
-                <Td>{c.service_type_name || '—'}</Td>
-                <Td>{formatCurrency(c.cost)}</Td>
-                <Td><Badge variant={
-                  c.status === 'APPROVED' ? 'success' :
-                  c.status === 'PENDING' ? 'warning' :
-                  c.status === 'REJECTED' ? 'destructive' : 'outline'
-                }>{c.status}</Badge></Td>
-                <Td>
-                  {subscription?.has_subscription ? (
-                    <div className="text-xs">
-                      <div className="font-medium">{subscription.tier_name}</div>
-                      <div className="text-muted-foreground">Level {subscription.tier_level}</div>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">No subscription</span>
-                  )}
-                </Td>
-                <Td>
-                  {utilization ? (
-                    <div className="space-y-1">
-                      <div className="text-xs">
-                        {formatCurrency(utilization.used_amount)} / {formatCurrency(utilization.benefit_limit)}
-                      </div>
-                      <div className="w-16 h-1.5 bg-muted rounded">
-                        <div 
-                          className={`h-1.5 rounded ${
-                            utilization.utilization_percentage > 90 ? 'bg-destructive' :
-                            utilization.utilization_percentage > 70 ? 'bg-warning' : 'bg-success'
-                          }`}
-                          style={{ width: `${Math.min(utilization.utilization_percentage, 100)}%` }}
-                        />
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {utilization.utilization_percentage.toFixed(1)}%
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </Td>
-                <Td>
-                  {utilization ? (
-                    <div className="text-xs">
-                      <div className="font-medium">{formatCurrency(utilization.remaining_amount)}</div>
-                      {utilization.remaining_amount < (utilization.benefit_limit * 0.1) && (
-                        <div className="text-destructive">Low balance</div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </Td>
-              </Tr>
-            )
-          })}
-        </Tbody>
-      </Table>
-    </div>
-  )
+  // Table removed as per user request. Future implementation:
+  // - Show recent claims with subscription context, including:
+  //   - Date, service, cost, status, subscription tier, utilization, remaining
+  //   - Visual indicators for utilization and low balance
+  //   - Integration with backend claim and subscription APIs
+  //   - Filtering, sorting, and pagination for claims
+  //   - Role-based access and context-aware rendering
+  // Uncomment and implement when feature is required.
+  return null;
 }
 
 function MemberBenefitUtilization({ memberId }: { memberId: number }) {
@@ -212,7 +138,12 @@ function MemberCommunication({ member }: { member: any }) {
 }
 
 export default function Members() {
+  const { user } = useAuth()
   const [showAdd, setShowAdd] = useState(false)
+  const [showAddDependent, setShowAddDependent] = useState(false)
+  const [showChangeScheme, setShowChangeScheme] = useState(false)
+  const [memberForDependent, setMemberForDependent] = useState<any | null>(null)
+  const [memberForSchemeChange, setMemberForSchemeChange] = useState<any | null>(null)
   const [members, setMembers] = useState<any[]>([])
   const [next, setNext] = useState<string | null>(null)
   const [prev, setPrev] = useState<string | null>(null)
@@ -222,6 +153,14 @@ export default function Members() {
   const [search, setSearch] = useState<string>(() => localStorage.getItem('members:search') || '')
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [balances, setBalances] = useState<Record<number, number | null>>({})
+  const [dependentEligibility, setDependentEligibility] = useState<Record<number, {
+    can_add: boolean;
+    current_count: number;
+    max_allowed: number;
+    remaining: number;
+    reason?: string;
+    tier_name: string;
+  } | null>>({})
   const [editing, setEditing] = useState<{ id: number; first_name?: string; last_name?: string } | null>(null)
   const [selectedMember, setSelectedMember] = useState<any | null>(null)
 
@@ -240,6 +179,7 @@ export default function Members() {
         // Load balances for all members
         if (results.length > 0) {
           loadAllBalances(results)
+          loadAllDependentEligibility(results)
         }
       })
       .catch((e) => { if (!mounted) return; setError(e.message || 'Failed to load members') })
@@ -272,43 +212,88 @@ export default function Members() {
 
   async function loadAllBalances(memberList: any[]) {
     // Set loading state for all members
-    const loadingBalances: Record<number, number | null> = {}
-    memberList.forEach(member => {
-      if (balances[member.id] === undefined) {
-        loadingBalances[member.id] = null // null indicates loading
+    const loadingState = memberList.reduce((acc: any, member: any) => {
+      acc[member.id] = null
+      return acc
+    }, {})
+    setBalances(loadingState)
+    
+    // Load balances for all members in parallel
+    const balancePromises = memberList.map(async (member: any) => {
+      try {
+        const res = await api.get<any>(`/api/patients/${member.id}/coverage-balance/`)
+        const totalRemaining = (res.balances || [])
+          .map((b: any) => (typeof b.remaining_amount === 'number' ? b.remaining_amount : 0))
+          .reduce((a: number, b: number) => a + b, 0)
+        return { id: member.id, balance: totalRemaining }
+      } catch {
+        return { id: member.id, balance: 0 }
       }
     })
-    if (Object.keys(loadingBalances).length > 0) {
-      setBalances((prev) => ({ ...prev, ...loadingBalances }))
-    }
+    
+    const results = await Promise.all(balancePromises)
+    const balanceMap = results.reduce((acc: any, { id, balance }: any) => {
+      acc[id] = balance
+      return acc
+    }, {})
+    setBalances(balanceMap)
+  }
 
-    const balancePromises = memberList.map(async (member) => {
-      if (balances[member.id] === undefined) {
-        try {
-          const res = await api.get<any>(`/api/patients/${member.id}/coverage-balance/`)
-          const totalRemaining = (res.balances || [])
-            .map((b: any) => (typeof b.remaining_amount === 'number' ? b.remaining_amount : 0))
-            .reduce((a: number, b: number) => a + b, 0)
-          return { memberId: member.id, balance: totalRemaining }
-        } catch {
-          return { memberId: member.id, balance: 0 }
+  async function checkDependentEligibility(memberId: number) {
+    if (dependentEligibility[memberId] !== undefined) return
+    setDependentEligibility((prev) => ({ ...prev, [memberId]: null })) // Set loading state
+    try {
+      const res = await api.get<any>(`/api/patients/${memberId}/can-add-dependent/`)
+      setDependentEligibility((prev) => ({ ...prev, [memberId]: res }))
+    } catch {
+      setDependentEligibility((prev) => ({ ...prev, [memberId]: {
+        can_add: false,
+        current_count: 0,
+        max_allowed: 0,
+        remaining: 0,
+        reason: 'Failed to check eligibility',
+        tier_name: 'Unknown'
+      }}))
+    }
+  }
+
+  async function loadAllDependentEligibility(memberList: any[]) {
+    // Only check for principal members
+    const principalMembers = memberList.filter((m: any) => m.relationship === 'PRINCIPAL')
+    
+    // Set loading state
+    const loadingState = principalMembers.reduce((acc: any, member: any) => {
+      acc[member.id] = null
+      return acc
+    }, {})
+    setDependentEligibility(loadingState)
+    
+    // Load eligibility for all principal members in parallel
+    const eligibilityPromises = principalMembers.map(async (member: any) => {
+      try {
+        const res = await api.get<any>(`/api/patients/${member.id}/can-add-dependent/`)
+        return { id: member.id, eligibility: res }
+      } catch {
+        return { 
+          id: member.id, 
+          eligibility: {
+            can_add: false,
+            current_count: 0,
+            max_allowed: 0,
+            remaining: 0,
+            reason: 'Failed to check eligibility',
+            tier_name: 'Unknown'
+          }
         }
       }
-      return null
     })
-
-    const results = await Promise.all(balancePromises)
-    const newBalances: Record<number, number> = {}
     
-    results.forEach((result) => {
-      if (result) {
-        newBalances[result.memberId] = result.balance
-      }
-    })
-
-    if (Object.keys(newBalances).length > 0) {
-      setBalances((prev) => ({ ...prev, ...newBalances }))
-    }
+    const results = await Promise.all(eligibilityPromises)
+    const eligibilityMap = results.reduce((acc: any, { id, eligibility }: any) => {
+      acc[id] = eligibility
+      return acc
+    }, {})
+    setDependentEligibility(eligibilityMap)
   }
 
   function toggleMenu(id: number) {
@@ -335,8 +320,8 @@ export default function Members() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle className="text-base">Members</CardTitle>
           </CardHeader>
@@ -346,12 +331,10 @@ export default function Members() {
         <Thead>
                   <Tr>
           <Th><button onClick={() => setOrdering(ordering === 'user__username' ? '-user__username' : 'user__username')}>Member</button></Th>
-          <Th><button onClick={() => setOrdering(ordering === 'member_id' ? '-member_id' : 'member_id')}>Member ID</button></Th>
-          <Th><button onClick={() => setOrdering(ordering === 'scheme__name' ? '-scheme__name' : 'scheme__name')}>Scheme</button></Th>
+          {/* <Th><button onClick={() => setOrdering(ordering === 'member_id' ? '-member_id' : 'member_id')}>Member ID</button></Th> */}
           <Th><button onClick={() => setOrdering(ordering === 'user__date_joined' ? '-user__date_joined' : 'user__date_joined')}>Subscription start</button></Th>
           <Th>Next renewal</Th>
                     <Th>Status</Th>
-                    <Th>Benefit balance</Th>
                     <Th>Last claim</Th>
                     <Th></Th>
                   </Tr>
@@ -367,18 +350,10 @@ export default function Members() {
                       onClick={() => setSelectedMember(m)}
                     >
                       <Td>{m.user_username}</Td>
-                      <Td>{m.member_id}</Td>
-                      <Td>{m.scheme_name}</Td>
+                      {/* <Td>{m.member_id}</Td> */}
                       <Td>{m.user_date_joined ? new Date(m.user_date_joined).toLocaleDateString() : '—'}</Td>
                       <Td>{m.next_renewal ? new Date(m.next_renewal).toLocaleDateString() : '—'}</Td>
                       <Td><Badge variant={m.status === 'ACTIVE' ? 'success' : m.status === 'SUSPENDED' ? 'warning' : 'info'}>{m.status?.charAt(0) + m.status?.slice(1).toLowerCase()}</Badge></Td>
-                      <Td title="Sum of remaining amounts across benefits">
-                        {balances[m.id] === null ? (
-                          <span className="text-xs text-muted-foreground">Loading…</span>
-                        ) : (
-                          formatCurrency(balances[m.id] || 0)
-                        )}
-                      </Td>
                       <Td>{m.last_claim_date ? new Date(m.last_claim_date).toLocaleDateString() : '—'}</Td>
                       <Td>
                         <DropdownMenu>
@@ -388,6 +363,39 @@ export default function Members() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => { patchMember(m.id, { status: m.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' }) }}>Toggle Status</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name })}>Edit Details</DropdownMenuItem>
+                            {/* Only show Add Dependent for principal members */}
+                            {m.relationship === 'PRINCIPAL' && (
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  // Check eligibility first
+                                  const eligibility = dependentEligibility[m.id]
+                                  if (eligibility?.can_add) {
+                                    setMemberForDependent(m)
+                                    setShowAddDependent(true)
+                                  }
+                                }}
+                                disabled={dependentEligibility[m.id] === null || !dependentEligibility[m.id]?.can_add}
+                                className={!dependentEligibility[m.id]?.can_add ? 'opacity-50 cursor-not-allowed' : ''}
+                              >
+                                <Users className="mr-2 h-4 w-4" />
+                                {dependentEligibility[m.id] === null ? 'Checking...' : 
+                                 dependentEligibility[m.id]?.can_add ? 
+                                   `Add Dependent (${dependentEligibility[m.id]?.remaining} remaining)` : 
+                                   dependentEligibility[m.id]?.reason || 'Cannot add dependent'}
+                              </DropdownMenuItem>
+                            )}
+                            {/* Only show Change Scheme for admin users */}
+                            {user?.role === 'ADMIN' && (
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setMemberForSchemeChange(m)
+                                  setShowChangeScheme(true)
+                                }}
+                              >
+                                <ArrowRight className="mr-2 h-4 w-4" />
+                                Change Scheme
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </Td>
@@ -462,12 +470,12 @@ export default function Members() {
                     <div className="text-xs text-muted-foreground">Balance not available</div>
                   )}
                 </div>
-                <SubscriptionCoverageCard patientId={selectedMember.id} />
-                <BenefitUtilizationTracking patientId={selectedMember.id} />
-                <SubscriptionManagement patientId={selectedMember.id} />
-                <MemberBenefitUtilization memberId={selectedMember.id} />
-                <MemberClaimsHistory memberId={selectedMember.id} />
-                <MemberCommunication member={selectedMember} />
+                <SubscriptionCoverageCard key={`coverage-${selectedMember.id}`} patientId={selectedMember.id} />
+                <BenefitUtilizationTracking key={`utilization-${selectedMember.id}`} patientId={selectedMember.id} />
+                <SubscriptionManagement key={`management-${selectedMember.id}`} patientId={selectedMember.id} />
+                <MemberBenefitUtilization key={`benefits-${selectedMember.id}`} memberId={selectedMember.id} />
+                <MemberClaimsHistory key={`claims-${selectedMember.id}`} memberId={selectedMember.id} />
+                <MemberCommunication key={`communication-${selectedMember.id}`} member={selectedMember} />
                 <div className="text-xs underline cursor-pointer text-accent">View full profile</div>
               </>
             ) : (
@@ -479,6 +487,44 @@ export default function Members() {
         </Card>
       </div>
   <AddMemberModal open={showAdd} onOpenChange={setShowAdd} />
+  <AddDependentModal 
+    open={showAddDependent} 
+    onOpenChange={setShowAddDependent}
+    principalMember={memberForDependent}
+    onSuccess={() => {
+      setShowAddDependent(false)
+      setMemberForDependent(null)
+      // Refresh the members list
+      const url = `/api/patients/?ordering=${encodeURIComponent(ordering)}${search ? `&search=${encodeURIComponent(search)}` : ''}`
+      api.get<any>(url).then((resp: any) => {
+        const results = resp.results ?? resp
+        setMembers(results)
+        if (results.length > 0) {
+          loadAllBalances(results)
+          loadAllDependentEligibility(results) // Also refresh eligibility
+        }
+      })
+    }}
+  />
+  <ChangeSchemeModal
+    open={showChangeScheme}
+    onOpenChange={setShowChangeScheme}
+    member={memberForSchemeChange}
+    onSuccess={() => {
+      setShowChangeScheme(false)
+      setMemberForSchemeChange(null)
+      // Refresh the members list
+      const url = `/api/patients/?ordering=${encodeURIComponent(ordering)}${search ? `&search=${encodeURIComponent(search)}` : ''}`
+      api.get<any>(url).then((resp: any) => {
+        const results = resp.results ?? resp
+        setMembers(results)
+        if (results.length > 0) {
+          loadAllBalances(results)
+          loadAllDependentEligibility(results)
+        }
+      })
+    }}
+  />
     </div>
   )
 }

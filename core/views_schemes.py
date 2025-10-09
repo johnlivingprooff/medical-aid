@@ -17,7 +17,12 @@ class SchemesOverviewView(APIView):
         now = timezone.now()
         window_start = now - timedelta(days=30)
 
-        schemes = list(SchemeCategory.objects.all().values('id', 'name', 'description', 'price'))
+        # Filter schemes based on active status
+        show_inactive = request.GET.get('show_inactive', 'false').lower() == 'true'
+        if show_inactive:
+            schemes = list(SchemeCategory.objects.all().values('id', 'name', 'description', 'price', 'is_active'))
+        else:
+            schemes = list(SchemeCategory.objects.filter(is_active=True).values('id', 'name', 'description', 'price', 'is_active'))
 
         # Members per scheme
         members = (
@@ -82,6 +87,7 @@ class SchemesOverviewView(APIView):
                 'name': s['name'],
                 'description': s.get('description') or '',
                 'price': float(s.get('price') or 0.0),
+                'is_active': s.get('is_active', True),
                 'members_count': members_count,
                 'total_amount_30d': total_amount,
                 'total_claims_30d': total_claims,

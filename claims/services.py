@@ -342,9 +342,10 @@ def validate_and_process_claim(claim: Claim) -> Tuple[bool, float, str]:
     days_since_subscription = (service_date - enrollment_date).days
 
     # Check if pre-authorization is required based on subscription rules
-    # For now, use a simple rule: pre-auth required for claims over $1000
-    preauth_threshold = 1000.00
-    if float(claim.cost) >= preauth_threshold and not claim.preauth_number:
+    # Use system setting for pre-auth threshold with fallback to 1000.00
+    from core.models import SystemSettings
+    preauth_threshold = SystemSettings.get_setting('PREAUTH_THRESHOLD', Decimal('1000.00'))
+    if float(claim.cost) >= float(preauth_threshold) and not claim.preauth_number:
         return False, 0.0, f"Pre-authorization required for claims over ${preauth_threshold}"
 
     # Check subscription limits

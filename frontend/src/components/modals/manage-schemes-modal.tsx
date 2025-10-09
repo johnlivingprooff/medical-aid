@@ -4,9 +4,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
-import { X, Edit, Trash2 } from 'lucide-react'
+import { X, Edit, Trash2, Plus } from 'lucide-react'
 import type { SchemeCategory, BenefitType, SchemeBenefit } from '@/types/models'
 import { EditBenefitModal } from './edit-benefit-modal'
+import { AddBenefitModal } from './add-benefit-modal'
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void; schemeId?: number }
 
@@ -19,18 +20,10 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
   const [currentScheme, setCurrentScheme] = useState<SchemeCategory | null>(null)
   const [benefits, setBenefits] = useState<SchemeBenefit[]>([])
 
-  const [benefitTypes, setBenefitTypes] = useState<BenefitType[]>([])
-  const [benefitType, setBenefitType] = useState<number | ''>('')
-  const [newTypeName, setNewTypeName] = useState('')
-  const [coverageAmount, setCoverageAmount] = useState('')
-  const [coverageLimitCount, setCoverageLimitCount] = useState('')
-  const [coveragePeriod, setCoveragePeriod] = useState('YEARLY')
-  const [savingBenefit, setSavingBenefit] = useState(false)
-  const [benefitError, setBenefitError] = useState<string | null>(null)
-  
-  // Edit benefit modal state
+  // Modal states
   const [editBenefitModalOpen, setEditBenefitModalOpen] = useState(false)
   const [benefitToEdit, setBenefitToEdit] = useState<SchemeBenefit | null>(null)
+  const [addBenefitModalOpen, setAddBenefitModalOpen] = useState(false)
   const [deletingBenefitId, setDeletingBenefitId] = useState<number | null>(null)
 
   useEffect(() => {
@@ -40,17 +33,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
     setDescription('')
     setCurrentScheme(null)
     setBenefits([])
-    setBenefitType('')
-    setNewTypeName('')
-    setCoverageAmount('')
-    setCoverageLimitCount('')
-    setCoveragePeriod('YEARLY')
     setError(null)
-    setBenefitError(null)
-    // load benefit types
-    api.get<BenefitType[]>('/api/schemes/benefit-types/')
-      .then((resp: any) => setBenefitTypes(resp.results ?? resp))
-      .catch(() => setBenefitTypes([]))
 
     // if a schemeId is provided, pre-load that scheme and its benefits
     if (schemeId) {
@@ -78,49 +61,13 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
     } finally { setCreating(false) }
   }
 
-  async function ensureBenefitType(): Promise<number> {
-    if (benefitType) return benefitType as number
-    if (!newTypeName.trim()) throw new Error('Select a benefit type or enter a new one')
-    const created = await api.post<BenefitType>('/api/schemes/benefit-types/', { name: newTypeName.trim() })
-    // update list and select it
-    setBenefitTypes([created, ...benefitTypes])
-    setNewTypeName('')
-    setBenefitType(created.id)
-    return created.id
-  }
-
-  async function addBenefit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!currentScheme) return
-    setSavingBenefit(true)
-    setBenefitError(null)
-    try {
-      const btId = await ensureBenefitType()
-      await api.post('/api/schemes/benefits/', {
-        scheme: currentScheme.id,
-        benefit_type: btId,
-        coverage_amount: coverageAmount ? Number(coverageAmount) : null,
-        coverage_limit_count: coverageLimitCount ? Number(coverageLimitCount) : 1,
-        coverage_period: coveragePeriod,
-      })
-      await refreshBenefits()
-      // reset fields for next add
-      setBenefitType('')
-      setCoverageAmount('')
-      setCoverageLimitCount('')
-      setCoveragePeriod('YEARLY')
-    } catch (e: any) {
-      setBenefitError(e.message || 'Failed to add benefit')
-    } finally { setSavingBenefit(false) }
-  }
-
   async function refreshBenefits() {
     if (!currentScheme) return
     try {
       const fresh = await api.get<any>(`/api/schemes/categories/${currentScheme.id}/`)
       setBenefits((fresh.benefits ?? []) as SchemeBenefit[])
     } catch (e: any) {
-      setBenefitError('Failed to refresh benefits')
+      console.error('Failed to refresh benefits:', e)
     }
   }
 
@@ -137,7 +84,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
       await api.delete(`/api/schemes/benefits/${benefitId}/`)
       await refreshBenefits()
     } catch (e: any) {
-      setBenefitError(e.message || 'Failed to delete benefit')
+      console.error('Failed to delete benefit:', e)
     } finally {
       setDeletingBenefitId(null)
     }
@@ -147,6 +94,11 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
     refreshBenefits()
     setEditBenefitModalOpen(false)
     setBenefitToEdit(null)
+  }
+
+  function handleBenefitAdded() {
+    refreshBenefits()
+    setAddBenefitModalOpen(false)
   }
 
   if (!open) return null
@@ -191,104 +143,23 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
 
           {currentScheme && (
             <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">Adding benefits to <span className="font-medium text-foreground">{currentScheme.name}</span></div>
-
-              <form onSubmit={addBenefit} className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-                <div className="space-y-1">
-                  <Label>Benefit</Label>
-                    
-                  <select
-                    className="w-full px-3 text-sm border rounded-md h-9 bg-background"
-                    value={benefitType === '' ? (newTypeName ? 'new' : '') : benefitType}
-                    onChange={(e) => {
-                      if (e.target.value === 'new') {
-                        setBenefitType('');
-                      } else {
-                        setBenefitType(e.target.value ? Number(e.target.value) : '');
-                        setNewTypeName('');
-                      }
-                    }}
-                  >
-                    <option value="">Select benefit type…</option>
-                    {benefitTypes.map((bt) => (
-                      <option key={bt.id} value={bt.id}>
-                        {bt.name}
-                      </option>
-                    ))}
-                    <option value="new">+ Add new benefit type…</option>
-                  </select>
-                  {benefitType === '' && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <div className="relative">
-                        <Input
-                          placeholder="Enter new type name"
-                          value={newTypeName}
-                          onChange={(e) => setNewTypeName(e.target.value)}
-                          style={{
-                            width: `${Math.max(12, newTypeName.length * 0.75 + 2)}ch`,
-                            minWidth: '12ch',
-                            maxWidth: '100%',
-                            transition: 'width 0.2s',
-                          }}
-                        />
-                        {/* Hidden span for accurate width calculation */}
-                        <span
-                          style={{
-                            position: 'absolute',
-                            visibility: 'hidden',
-                            whiteSpace: 'pre',
-                            fontSize: 'inherit',
-                            fontFamily: 'inherit',
-                            padding: 0,
-                            margin: 0,
-                          }}
-                          aria-hidden="true"
-                        >
-                          {newTypeName || 'Enter new type name'}
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={async () => {
-                          try {
-                            await ensureBenefitType();
-                          } catch (e) {}
-                        }}
-                        disabled={!newTypeName.trim()}
-                      >
-                        Add Benefit Type
-                      </Button>
-                    </div>
-                  )}
-
-
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Managing benefits for <span className="font-medium text-foreground">{currentScheme.name}</span>
                 </div>
-                <div className="space-y-1">
-                  <Label>Amount (MWK)</Label>
-                  <Input value={coverageAmount} onChange={(e) => setCoverageAmount(e.target.value)} placeholder="e.g. 500000" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Limit count</Label>
-                  <Input value={coverageLimitCount} onChange={(e) => setCoverageLimitCount(e.target.value)} placeholder="e.g. 12 (default: 1)" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Period</Label>
-                  <select className="w-full px-3 text-sm border rounded-md h-9 bg-background" value={coveragePeriod} onChange={(e) => setCoveragePeriod(e.target.value)}>
-                    <option value="PER_VISIT">Per Visit</option>
-                    <option value="MONTHLY">Monthly</option>
-                    <option value="YEARLY">Yearly</option>
-                  </select>
-                </div>
-                <div className="flex items-end justify-end gap-2">
-                  <Button type="submit" disabled={savingBenefit}>{savingBenefit ? 'Adding…' : 'Add Benefit'}</Button>
-                </div>
-                {benefitError && <div className="text-sm sm:col-span-5 text-destructive">{benefitError}</div>}
-              </form>
+                <Button
+                  type="button"
+                  onClick={() => setAddBenefitModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Benefit
+                </Button>
+              </div>
 
               {benefits.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium">Benefits added</div>
+                  <div className="text-sm font-medium">Current Benefits</div>
                   <div className="grid grid-cols-1 gap-2">
                     {benefits.map(b => (
                       <div key={b.id} className="flex items-center justify-between p-2 text-sm border rounded">
@@ -337,6 +208,13 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
         onOpenChange={setEditBenefitModalOpen}
         benefit={benefitToEdit}
         onSave={handleBenefitSaved}
+      />
+      
+      <AddBenefitModal
+        open={addBenefitModalOpen}
+        onOpenChange={setAddBenefitModalOpen}
+        scheme={currentScheme}
+        onSave={handleBenefitAdded}
       />
     </div>
   )

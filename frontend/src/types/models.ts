@@ -60,6 +60,7 @@ export interface SchemeCategory {
   name: string;
   description: string;
   price: number;
+  is_active: boolean;
   benefits?: SchemeBenefit[];
   subscription_tiers?: SubscriptionTier[];
 }

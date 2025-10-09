@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
 import { Button } from '@/components/ui/button'
 import { ManageSchemesModal } from '@/components/modals/manage-schemes-modal'
-import type { SchemeBenefit, SubscriptionTier } from '@/types/models'
+import { AddSubscriptionTierModal } from '@/components/modals/add-subscription-tier-modal'
+import { EditSubscriptionTierModal } from '@/components/modals/edit-subscription-tier-modal'
+import { Plus, Edit } from 'lucide-react'
+import type { SchemeBenefit, SubscriptionTier, SchemeCategory } from '@/types/models'
 
 type Member = { id: number; username: string; joined: string; next_renewal: string; amount_spent_12m: number }
-type Scheme = { id: number; name: string; description?: string; price: number; members: Member[]; benefits: SchemeBenefit[]; subscription_tiers: SubscriptionTier[] }
+type Scheme = { id: number; name: string; description?: string; price: number; is_active: boolean; members: Member[]; benefits: SchemeBenefit[]; subscription_tiers: SubscriptionTier[] }
 
 export default function SchemeDetails() {
   const { id } = useParams()
@@ -19,33 +23,39 @@ export default function SchemeDetails() {
   const [error, setError] = useState<string | null>(null)
   const [showEdit, setShowEdit] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showAddSubscriptionTier, setShowAddSubscriptionTier] = useState(false)
+  const [editingTier, setEditingTier] = useState<SubscriptionTier | null>(null)
   // Deletion modal state
-  const [deleteStep, setDeleteStep] = useState<'impact' | 'confirm' | 'deleting' | 'done'>('impact')
+  const [deleteStep, setDeleteStep] = useState<'choose' | 'deactivate_impact' | 'cascade_impact' | 'deactivate_confirm' | 'cascade_confirm' | 'deleting' | 'done'>('choose')
+  const [deletionMode, setDeletionMode] = useState<'deactivate' | 'cascade' | null>(null)
   const [deletionImpact, setDeletionImpact] = useState<any>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [confirmationText, setConfirmationText] = useState('')
+  const [deactivationReason, setDeactivationReason] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  // Fetch deletion impact when modal opens
+  // Fetch deletion impact when modal opens and mode is selected
   useEffect(() => {
-    if (showDeleteModal && scheme && deleteStep === 'impact') {
+    if (showDeleteModal && scheme && deletionMode && (deleteStep === 'deactivate_impact' || deleteStep === 'cascade_impact')) {
       setDeleteError(null)
-      api.get(`/api/schemes/categories/${scheme.id}/deletion-impact/`)
+      api.get(`/api/schemes/categories/${scheme.id}/deletion-impact/?mode=${deletionMode}`)
         .then(setDeletionImpact)
         .catch((e: any) => setDeleteError(e.message || 'Failed to load impact'))
     }
-  }, [showDeleteModal, scheme, deleteStep])
+  }, [showDeleteModal, scheme, deletionMode, deleteStep])
 
-  useEffect(() => {
+  function refreshScheme() {
     if (!id) return
-    let mounted = true
     setLoading(true)
     setError(null)
     api.get<Scheme>(`/api/schemes/categories/${id}/details/`)
-      .then((data) => { if (mounted) setScheme(data) })
-      .catch((e: any) => { if (mounted) setError(e.message || 'Failed to load scheme') })
-      .finally(() => { if (mounted) setLoading(false) })
-    return () => { mounted = false }
+      .then(setScheme)
+      .catch((e: any) => setError(e.message || 'Failed to load scheme'))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    refreshScheme()
   }, [id])
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading…</div>
@@ -58,7 +68,10 @@ export default function SchemeDetails() {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h1>{scheme.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1>{scheme.name}</h1>
+            {!scheme.is_active && <Badge variant="outline">Inactive</Badge>}
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">{scheme.description || 'No description'}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -174,8 +187,23 @@ export default function SchemeDetails() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Subscription Tiers</CardTitle>
-          <CardDescription>Available subscription options for this scheme</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Subscription Tiers</CardTitle>
+              <CardDescription>Available subscription options for this scheme</CardDescription>
+            </div>
+            {userRole === 'ADMIN' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddSubscriptionTier(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Tier
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -213,14 +241,26 @@ export default function SchemeDetails() {
                                 </span>
                               )}
                             </div>
-                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              tier.tier_type === 'PREMIUM' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
-                              tier.tier_type === 'ENTERPRISE' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                              tier.tier_type === 'STANDARD' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                              'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-                            }`}>
-                              {tier.tier_type}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                tier.tier_type === 'PREMIUM' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
+                                tier.tier_type === 'ENTERPRISE' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                                tier.tier_type === 'STANDARD' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                              }`}>
+                                {tier.tier_type}
+                              </span>
+                              {userRole === 'ADMIN' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-6 h-6 p-0 hover:bg-muted"
+                                  onClick={() => setEditingTier(tier)}
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
 
                           {tier.description && (
@@ -276,6 +316,17 @@ export default function SchemeDetails() {
             ) : (
               <div className="py-8 text-center text-muted-foreground">
                 <div className="text-sm">No subscription tiers configured for this scheme.</div>
+                {userRole === 'ADMIN' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddSubscriptionTier(true)}
+                    className="flex items-center gap-2 mt-3"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add First Subscription Tier
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -329,41 +380,245 @@ export default function SchemeDetails() {
   {/* Deletion Confirmation Modal */}
   {showDeleteModal && (
     <div className="fixed inset-0 z-50 grid p-4 place-items-center bg-black/40" onClick={() => setShowDeleteModal(false)}>
-      <Card className="w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <CardHeader>
+      <Card className="w-full max-w-md max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <CardHeader className="flex-shrink-0">
           <CardTitle className="text-destructive">Delete Scheme</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {deleteStep === 'impact' && (
+        <CardContent className="space-y-4 overflow-y-auto flex-1">
+          {deleteStep === 'choose' && (
             <>
-              <div className="text-sm text-muted-foreground">This action is irreversible. Please review the impact below before proceeding.</div>
-              {deleteError ? (
-                <div className="text-sm text-destructive">{deleteError}</div>
-              ) : deletionImpact ? (
-                <div className="space-y-2">
-                  <div className="font-medium">Scheme: {deletionImpact.scheme?.name}</div>
-                  <div className="text-xs text-muted-foreground">{deletionImpact.scheme?.description}</div>
-                  <div className="mt-2 text-sm">
-                    <span className="font-semibold">Impact:</span>
-                    <pre className="p-2 text-xs whitespace-pre-wrap rounded bg-muted">{JSON.stringify(deletionImpact.impact, null, 2)}</pre>
+              <div className="text-sm text-muted-foreground">Choose how you want to handle this scheme:</div>
+              
+              <div className="space-y-4">
+                {/* Deactivation Option */}
+                <div 
+                  className="p-4 border-2 border-blue-500 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                  onClick={() => {
+                    setDeletionMode('deactivate')
+                    setDeleteStep('deactivate_impact')
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-blue-500 flex-shrink-0 mt-0.5"></div>
+                    <div>
+                      <div className="font-semibold text-blue-900">Deactivate Scheme (Recommended)</div>
+                      <div className="text-sm text-blue-700 mt-1">
+                        Safely disable the scheme while preserving all historical data:
+                      </div>
+                      <ul className="text-xs text-blue-600 mt-2 list-disc list-inside space-y-1">
+                        <li>All member records and claims history preserved</li>
+                        <li>Billing and subscription history maintained</li>
+                        <li>Compliance and audit requirements satisfied</li>
+                        <li>Can be reactivated later if needed</li>
+                        <li>No data loss - completely reversible</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="text-sm">Loading impact…</div>
-              )}
-              <div className="flex justify-end gap-2 mt-4">
+
+                {/* Cascade Delete Option */}
+                <div 
+                  className="p-4 border-2 border-red-500 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                  onClick={() => {
+                    setDeletionMode('cascade')
+                    setDeleteStep('cascade_impact')
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-red-500 flex-shrink-0 mt-0.5"></div>
+                    <div>
+                      <div className="font-semibold text-red-900">Permanent Deletion (Dangerous)</div>
+                      <div className="text-sm text-red-700 mt-1">
+                        ⚠️ Permanently remove scheme and ALL related data:
+                      </div>
+                      <ul className="text-xs text-red-600 mt-2 list-disc list-inside space-y-1">
+                        <li>Deletes ALL member records permanently</li>
+                        <li>Removes ALL claims and billing history</li>
+                        <li>Destroys financial and audit records</li>
+                        <li>Cannot be undone or recovered</li>
+                        <li>May violate compliance requirements</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 mt-6">
                 <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-                <Button variant="destructive" disabled={!deletionImpact || !!deleteError} onClick={() => setDeleteStep('confirm')}>Continue</Button>
               </div>
             </>
           )}
-          {deleteStep === 'confirm' && (
+          
+          {(deleteStep === 'deactivate_impact' || deleteStep === 'cascade_impact') && (
             <>
-              <div className="text-sm">To confirm deletion, type <span className="px-1 font-mono rounded bg-muted">delete {scheme.name}</span> below:</div>
+              <div className="flex items-center gap-2 mb-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteStep('choose')
+                    setDeletionMode(null)
+                    setDeletionImpact(null)
+                  }}
+                >
+                  ← Back to Options
+                </Button>
+                <div className="text-sm font-medium">
+                  {deletionMode === 'deactivate' ? 'Deactivation' : 'Permanent Deletion'} Impact Assessment
+                </div>
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                {deletionMode === 'deactivate' 
+                  ? 'Review the impact of deactivating this scheme. All data will be preserved.'
+                  : '⚠️ This action will PERMANENTLY DELETE all data. Review carefully before proceeding.'
+                }
+              </div>
+              
+              {deleteError ? (
+                <div className="text-sm text-destructive">{deleteError}</div>
+              ) : deletionImpact ? (
+                <div className="space-y-4">
+                  <div className="font-medium">Scheme: {deletionImpact.scheme?.name}</div>
+                  <div className="text-xs text-muted-foreground">{deletionImpact.scheme?.description}</div>
+                  
+                  {deletionMode === 'cascade' && deletionImpact.impact?.data_loss_warning && (
+                    <div className="p-3 border-2 border-red-500 bg-red-50 rounded text-sm">
+                      <div className="font-bold text-red-900">{deletionImpact.impact.data_loss_warning}</div>
+                      {deletionImpact.impact.will_be_deleted?.length > 0 && (
+                        <ul className="mt-2 list-disc list-inside text-red-700">
+                          {deletionImpact.impact.will_be_deleted.map((item: string, idx: number) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                  
+                  {deletionMode === 'deactivate' && deletionImpact.impact?.preservation_notice && (
+                    <div className="p-3 border-2 border-green-500 bg-green-50 rounded text-sm">
+                      <div className="font-bold text-green-900">Data Preservation</div>
+                      <div className="text-green-700">{deletionImpact.impact.preservation_notice}</div>
+                    </div>
+                  )}
+                  
+                  {/* Blocking Factors */}
+                  {deletionImpact.impact?.blocking_factors?.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="font-semibold text-destructive">
+                        {deletionMode === 'deactivate' ? 'Deactivation Blocked:' : 'Deletion Blocked:'}
+                      </div>
+                      {deletionImpact.impact.blocking_factors.map((factor: any, idx: number) => (
+                        <div key={idx} className="p-2 border-l-4 border-destructive bg-destructive/5 text-sm">
+                          <div className="font-medium">{factor.message}</div>
+                          {factor.action && <div className="text-xs text-muted-foreground mt-1">{factor.action}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Warnings for Deactivation */}
+                  {deletionMode === 'deactivate' && deletionImpact.impact?.warnings?.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="font-semibold text-yellow-700">Important Notes:</div>
+                      {deletionImpact.impact.warnings.map((warning: any, idx: number) => (
+                        <div key={idx} className="p-2 border-l-4 border-yellow-500 bg-yellow-50 text-sm">
+                          <div className="font-medium">{warning.message}</div>
+                          {warning.action && <div className="text-xs text-muted-foreground mt-1">{warning.action}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Technical Details */}
+                  <div className="mt-2 text-sm">
+                    <span className="font-semibold">Technical Details:</span>
+                    <div className="mt-1 max-h-32 overflow-y-auto border rounded">
+                      <pre className="p-2 text-xs whitespace-pre-wrap bg-muted">{JSON.stringify(deletionImpact.impact, null, 2)}</pre>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm">Loading impact assessment…</div>
+              )}
+              
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                <Button 
+                  variant={deletionMode === 'deactivate' ? 'default' : 'destructive'} 
+                  disabled={!deletionImpact || !!deleteError || !deletionImpact.impact?.can_delete} 
+                  onClick={() => setDeleteStep(deletionMode === 'deactivate' ? 'deactivate_confirm' : 'cascade_confirm')}
+                >
+                  Continue to Confirmation
+                </Button>
+              </div>
+            </>
+          )}
+          
+          {deleteStep === 'deactivate_confirm' && (
+            <>
+              <div className="text-sm">
+                To confirm deactivation, type <span className="px-1 font-mono rounded bg-muted">deactivate {scheme.name}</span> below:
+              </div>
               <Input
-                value={confirmationText as string}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmationText(e.target.value as string)}
-                placeholder={`delete ${scheme.name}`}
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value)}
+                placeholder={`deactivate ${scheme.name}`}
+                className="mt-2"
+                autoFocus
+              />
+              <div className="mt-4">
+                <label className="block text-sm font-medium mb-2">Reason for deactivation (optional):</label>
+                <Input
+                  value={deactivationReason}
+                  onChange={(e) => setDeactivationReason(e.target.value)}
+                  placeholder="e.g., Scheme no longer offered, migrating to new scheme..."
+                />
+              </div>
+              {deleteError && <div className="mt-2 text-sm text-destructive">{deleteError}</div>}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                <Button
+                  variant="default"
+                  disabled={confirmationText.trim() !== `deactivate ${scheme.name}` || deleting}
+                  onClick={async () => {
+                    setDeleting(true)
+                    setDeleteError(null)
+                    try {
+                      const res = await api.post(`/api/schemes/categories/${scheme.id}/deactivate-scheme/`, { 
+                        confirmation_text: confirmationText,
+                        reason: deactivationReason
+                      })
+                      setDeleteStep('done')
+                    } catch (e: any) {
+                      setDeleteError(e.message || 'Deactivation failed')
+                    } finally {
+                      setDeleting(false)
+                    }
+                  }}
+                >
+                  {deleting ? 'Deactivating...' : 'Deactivate Scheme'}
+                </Button>
+              </div>
+            </>
+          )}
+          
+          {deleteStep === 'cascade_confirm' && (
+            <>
+              <div className="p-4 border-2 border-red-500 bg-red-50 rounded mb-4">
+                <div className="font-bold text-red-900">⚠️ FINAL WARNING</div>
+                <div className="text-sm text-red-700 mt-1">
+                  This action will PERMANENTLY DELETE all data associated with this scheme. 
+                  This cannot be undone and may violate compliance requirements.
+                </div>
+              </div>
+              <div className="text-sm">
+                To confirm permanent deletion, type <span className="px-1 font-mono rounded bg-muted">CASCADE DELETE {scheme.name}</span> below:
+              </div>
+              <Input
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value)}
+                placeholder={`CASCADE DELETE ${scheme.name}`}
                 className="mt-2"
                 autoFocus
               />
@@ -372,12 +627,14 @@ export default function SchemeDetails() {
                 <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
                 <Button
                   variant="destructive"
-                  disabled={confirmationText.trim() !== `delete ${scheme.name}` || deleting}
+                  disabled={confirmationText.trim() !== `CASCADE DELETE ${scheme.name}` || deleting}
                   onClick={async () => {
                     setDeleting(true)
                     setDeleteError(null)
                     try {
-                      const res = await api.post(`/api/schemes/categories/${scheme.id}/delete-scheme/`, { confirmation_text: confirmationText })
+                      const res = await api.post(`/api/schemes/categories/${scheme.id}/cascade-delete-scheme/`, { 
+                        confirmation_text: confirmationText 
+                      })
                       setDeleteStep('done')
                     } catch (e: any) {
                       setDeleteError(e.message || 'Deletion failed')
@@ -385,13 +642,18 @@ export default function SchemeDetails() {
                       setDeleting(false)
                     }
                   }}
-                >Delete</Button>
+                >
+                  {deleting ? 'Deleting...' : 'PERMANENTLY DELETE'}
+                </Button>
               </div>
             </>
           )}
+          
           {deleteStep === 'done' && (
             <>
-              <div className="text-sm font-medium text-success">Scheme deleted successfully.</div>
+              <div className="text-sm font-medium text-success">
+                Scheme {deletionMode === 'deactivate' ? 'deactivated' : 'deleted'} successfully.
+              </div>
               <div className="flex justify-end gap-2 mt-4">
                 <Button variant="outline" onClick={() => { setShowDeleteModal(false); navigate('/schemes') }}>Close</Button>
               </div>
@@ -402,6 +664,19 @@ export default function SchemeDetails() {
     </div>
   )}
   <ManageSchemesModal open={showEdit} onOpenChange={setShowEdit} schemeId={scheme.id} />
+  <AddSubscriptionTierModal 
+    open={showAddSubscriptionTier} 
+    onOpenChange={setShowAddSubscriptionTier} 
+    scheme={scheme} 
+    onSave={refreshScheme}
+  />
+  <EditSubscriptionTierModal
+    open={!!editingTier}
+    onOpenChange={(open) => !open && setEditingTier(null)}
+    tier={editingTier}
+    scheme={scheme}
+    onSave={refreshScheme}
+  />
     </div>
   )
 }

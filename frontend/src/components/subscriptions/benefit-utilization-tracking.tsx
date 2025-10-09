@@ -21,12 +21,21 @@ export function BenefitUtilizationTracking({ patientId, className }: BenefitUtil
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!patientId) return
+    if (!patientId) {
+      setSubscription(null)
+      setUsageStats(null)
+      setError(null)
+      setLoading(false)
+      return
+    }
 
     const loadData = async () => {
       try {
         setLoading(true)
         setError(null)
+        // Reset state when patientId changes
+        setSubscription(null)
+        setUsageStats(null)
 
         // Load subscription data
         const subscriptionResponse = await subscriptionApi.getMemberSubscriptions({ patient: patientId })

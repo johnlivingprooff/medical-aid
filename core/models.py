@@ -50,16 +50,17 @@ class MemberMessage(models.Model):
 			self.save(update_fields=['read_at'])
 
 
+
+# Move SettingKey outside SystemSettings for global accessibility
+class SettingKey(models.TextChoices):
+	PREAUTH_THRESHOLD = 'PREAUTH_THRESHOLD', 'Pre-authorization Threshold'
+	DEFAULT_WAITING_PERIOD = 'DEFAULT_WAITING_PERIOD', 'Default Waiting Period (days)'
+	MAX_CLAIM_AMOUNT = 'MAX_CLAIM_AMOUNT', 'Maximum Claim Amount'
+	AUTO_APPROVAL_ENABLED = 'AUTO_APPROVAL_ENABLED', 'Auto-approval Enabled'
+	FRAUD_DETECTION_ENABLED = 'FRAUD_DETECTION_ENABLED', 'Fraud Detection Enabled'
+
 class SystemSettings(models.Model):
 	"""System-wide configuration settings"""
-	
-	class SettingKey(models.TextChoices):
-		PREAUTH_THRESHOLD = 'PREAUTH_THRESHOLD', 'Pre-authorization Threshold'
-		DEFAULT_WAITING_PERIOD = 'DEFAULT_WAITING_PERIOD', 'Default Waiting Period (days)'
-		MAX_CLAIM_AMOUNT = 'MAX_CLAIM_AMOUNT', 'Maximum Claim Amount'
-		AUTO_APPROVAL_ENABLED = 'AUTO_APPROVAL_ENABLED', 'Auto-approval Enabled'
-		FRAUD_DETECTION_ENABLED = 'FRAUD_DETECTION_ENABLED', 'Fraud Detection Enabled'
-	
 	key = models.CharField(max_length=50, choices=SettingKey.choices, unique=True)
 	value = models.CharField(max_length=255, help_text='Setting value as string')
 	value_type = models.CharField(max_length=20, choices=[
@@ -72,7 +73,7 @@ class SystemSettings(models.Model):
 	updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
 	updated_at = models.DateTimeField(auto_now=True)
 	created_at = models.DateTimeField(auto_now_add=True)
-	
+    
 	class Meta:
 		verbose_name = 'System Setting'
 		verbose_name_plural = 'System Settings'

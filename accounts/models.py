@@ -1,3 +1,17 @@
+from django.db import models
+class UserPreferences(models.Model):
+	user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='preferences')
+	accent_color = models.CharField(max_length=16, default='#2E7DFF')
+	logo_url = models.CharField(max_length=255, blank=True, default='')
+	notifications_enabled = models.BooleanField(default=True)
+	email_alerts = models.BooleanField(default=True)
+	language = models.CharField(max_length=8, default='en')
+	timezone = models.CharField(max_length=32, default='UTC')
+	updated_at = models.DateTimeField(auto_now=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return f"Preferences for {self.user.username}"
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from core.encryption import EncryptedCharField

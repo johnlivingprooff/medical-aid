@@ -19,7 +19,8 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
 	
 	def validate_key(self, value):
 		"""Validate that the key is a valid choice"""
-		valid_keys = [choice[0] for choice in SystemSettings.SettingKey.choices]
+		from .models import SettingKey
+		valid_keys = [choice[0] for choice in SettingKey.choices]
 		if value not in valid_keys:
 			raise serializers.ValidationError(f"Invalid setting key. Valid keys: {valid_keys}")
 		return value

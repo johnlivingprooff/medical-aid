@@ -150,7 +150,7 @@ class SchemeCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SchemeCategory
-        fields = ['id', 'name', 'description', 'price', 'benefits', 'subscription_tiers']
+        fields = ['id', 'name', 'description', 'price', 'is_active', 'benefits', 'subscription_tiers']
 
 
 # Billing Serializers

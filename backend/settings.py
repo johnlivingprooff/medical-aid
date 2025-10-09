@@ -141,10 +141,9 @@ if REDIS_AVAILABLE:
                     'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                     'CONNECTION_POOL_KWARGS': {
                         'max_connections': 20,
-                        'decode_responses': True,
+                        'decode_responses': False,  # Changed to False for binary data
                     },
-                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-                    'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+                    'SERIALIZER': 'django_redis.serializers.pickle.PickleSerializer',
                 },
                 'KEY_PREFIX': 'medical_aid',
                 'TIMEOUT': 300,  # 5 minutes default

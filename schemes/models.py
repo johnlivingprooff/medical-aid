@@ -3,14 +3,58 @@ from django.utils import timezone
 from decimal import Decimal
 from datetime import timedelta
 
+# Import audit logging for scheme operations first
+from .models_audit import SchemeAuditLog
+
 
 class SchemeCategory(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    # Soft deletion and status fields
+    is_active = models.BooleanField(default=True, help_text="Whether this scheme is active and accepting new members")
+    deactivated_date = models.DateTimeField(null=True, blank=True, help_text="When the scheme was deactivated")
+    deactivated_by = models.ForeignKey(
+        'accounts.User', 
+        null=True, 
+        blank=True, 
+        on_delete=models.SET_NULL, 
+        related_name='deactivated_schemes',
+        help_text="User who deactivated this scheme"
+    )
+    deactivation_reason = models.TextField(blank=True, help_text="Reason for deactivation")
+    
+    # Metadata
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_active']),
+            models.Index(fields=['is_active', 'created_at']),
+            models.Index(fields=['deactivated_date']),
+        ]
 
     def __str__(self) -> str:
-        return self.name
+        status = " (Inactive)" if not self.is_active else ""
+        return f"{self.name}{status}"
+    
+    def deactivate(self, user, reason=""):
+        """Soft delete the scheme"""
+        self.is_active = False
+        self.deactivated_date = timezone.now()
+        self.deactivated_by = user
+        self.deactivation_reason = reason
+        self.save()
+    
+    def reactivate(self, user):
+        """Reactivate a deactivated scheme"""
+        self.is_active = True
+        self.deactivated_date = None
+        self.deactivated_by = None
+        self.deactivation_reason = ""
+        self.save()
 
 
 class BenefitCategory(models.Model):
@@ -277,6 +321,42 @@ class MemberSubscription(models.Model):
         if not self.tier.max_coverage_per_year:
             return None
         return max(0, self.tier.max_coverage_per_year - self.coverage_used_this_year)
+
+    def recalculate_usage(self):
+        """Recalculate usage statistics from actual claims"""
+        from claims.models import Claim
+        from django.utils import timezone
+        from datetime import datetime
+        from django.db.models import Sum
+        
+        # Calculate yearly usage
+        current_year = timezone.now().year
+        year_start = datetime(current_year, 1, 1, tzinfo=timezone.get_current_timezone())
+        
+        yearly_claims = Claim.objects.filter(
+            patient=self.patient,
+            status=Claim.Status.APPROVED,
+            date_submitted__gte=year_start
+        )
+        
+        yearly_total = yearly_claims.aggregate(total=Sum('cost'))['total'] or 0
+        self.coverage_used_this_year = yearly_total
+        
+        # Calculate monthly usage
+        current_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        monthly_claims_count = yearly_claims.filter(
+            date_submitted__gte=current_month_start
+        ).count()
+        
+        self.claims_this_month = monthly_claims_count
+        
+        # Save the updated values
+        self.save(update_fields=['coverage_used_this_year', 'claims_this_month'])
+        
+        return {
+            'yearly_usage': float(yearly_total),
+            'monthly_claims': monthly_claims_count
+        }
 
     def can_access_benefit(self, benefit_type):
         """Check if member can access a specific benefit type"""
@@ -662,7 +742,3 @@ class BillingHistory(models.Model):
 
     def __str__(self):
         return f"{self.subscription} - {self.get_action_display()} - {self.timestamp.date()}"
-
-
-    # Import audit logging for scheme operations
-    from .models_audit import SchemeAuditLog

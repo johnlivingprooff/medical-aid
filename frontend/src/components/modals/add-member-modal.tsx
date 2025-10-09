@@ -20,6 +20,8 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
   const [lastName, setLastName] = useState('')
   const [password, setPassword] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
+  const [enrollmentDate, setEnrollmentDate] = useState('')
+  const [benefitYearStart, setBenefitYearStart] = useState('')
   const [gender, setGender] = useState<'M' | 'F' | 'O' | ''>('')
   const [phone, setPhone] = useState('')
   const [emergencyContact, setEmergencyContact] = useState('')
@@ -38,6 +40,10 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
     api.get<{ id: number; name: string }[]>('/api/schemes/categories/')
       .then((resp: any) => setSchemes(resp.results ?? resp))
       .catch(() => setSchemes([]))
+
+    // Prefill enrollment date with today
+    const today = new Date().toISOString().split('T')[0]
+    setEnrollmentDate(today)
   }, [open])
 
   useEffect(() => {
@@ -84,6 +90,8 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
       const patient = await api.post<any>('/api/patients/', {
         user: user.id,
         date_of_birth: dateOfBirth,
+        enrollment_date: enrollmentDate || undefined,
+        benefit_year_start: benefitYearStart || undefined,
         gender,
         scheme,
         phone,
@@ -114,7 +122,7 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
         })
       }
       onOpenChange(false)
-      setUsername(''); setEmail(''); setFirstName(''); setLastName(''); setPassword(''); setDateOfBirth(''); setGender(''); setPhone(''); setEmergencyContact(''); setEmergencyPhone(''); setScheme(''); setSelectedTier(''); setSelectedTier('')
+  setUsername(''); setEmail(''); setFirstName(''); setLastName(''); setPassword(''); setDateOfBirth(''); setEnrollmentDate(''); setBenefitYearStart(''); setGender(''); setPhone(''); setEmergencyContact(''); setEmergencyPhone(''); setScheme(''); setSelectedTier(''); setSelectedTier('')
     } catch (err: any) {
       setError(err.message || 'Failed to add member')
     } finally {
@@ -200,6 +208,17 @@ export function AddMemberModal({ open, onOpenChange }: Props) {
                   <option value="F">Female</option>
                   <option value="O">Other</option>
                 </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="enrollment-date">Enrollment Date</Label>
+                <Input id="enrollment-date" type="date" value={enrollmentDate} onChange={(e) => setEnrollmentDate(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="benefit-year-start">Benefit Year Start Date</Label>
+                <Input id="benefit-year-start" type="date" value={benefitYearStart} onChange={(e) => setBenefitYearStart(e.target.value)} />
+                <div className="text-xs text-muted-foreground">Leave blank to default to enrollment date</div>
               </div>
             </div>
             <div className="space-y-2">

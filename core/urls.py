@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import HealthCheckView, SystemSettingsViewSet
+from .views import HealthCheckView, SystemSettingsViewSet, system_setting_keys
 from .views_dashboard import DashboardStatsView, ActivityFeedView
 from .views_providers import ProvidersAnalyticsView, ProviderDetailAnalyticsView
 from .views_schemes import SchemesOverviewView
@@ -35,6 +35,7 @@ urlpatterns = [
     path('reports/scheme-usage/', SchemeUsageReportView.as_view(), name='report-scheme-usage'),
     path('reports/disease-stats/', DiseaseStatsReportView.as_view(), name='report-disease-stats'),
     # Dashboard endpoints
+    path('settings/keys/', system_setting_keys, name='system-setting-keys'),
     path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
     path('dashboard/activity/', ActivityFeedView.as_view(), name='dashboard-activity'),
     # Provider analytics

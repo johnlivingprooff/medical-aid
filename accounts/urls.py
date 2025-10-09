@@ -22,9 +22,12 @@ router.register(r'credentialing-reviews', CredentialingReviewViewSet, basename='
 router.register(r'credentialing-templates', CredentialingTemplateViewSet, basename='credentialing-template')
 router.register(r'expiry-alerts', DocumentExpiryAlertViewSet, basename='expiry-alert')
 
+from .views import UserSettingsView
+
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('me/', MeView.as_view(), name='me'),
+    path('user/settings/', UserSettingsView.as_view(), name='user-settings'),
     path('mfa/verify/', MFAVerifyView.as_view(), name='mfa_verify'),
     path('sessions/stats/', UserSessionStatsView.as_view(), name='session_stats'),
     path('credentialing/dashboard/', CredentialingDashboardView.as_view(), name='credentialing-dashboard'),

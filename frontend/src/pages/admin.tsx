@@ -44,8 +44,6 @@ export default function Admin() {
       try {
         setLoading(true)
         setError(null)
-        
-        // Fetch real admin stats from backend
         const response = await api.get<AdminStats>('/api/core/admin/stats/')
         setStats(response)
       } catch (error: any) {
@@ -55,7 +53,6 @@ export default function Admin() {
         setLoading(false)
       }
     }
-
     if (user?.role === 'ADMIN') {
       fetchAdminStats()
     }
@@ -272,70 +269,7 @@ export default function Admin() {
       </Card>
 
       {/* Admin Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Admin Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-medium mb-2">System Management</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Subscription Tiers</p>
-                  <p className="text-xs text-muted-foreground">Manage subscription tiers and pricing</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => navigate('/admin/subscription-tiers')}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Manage
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <hr />
-          
-          <div>
-            <h4 className="font-medium mb-2">Data Management</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Export System Data</p>
-                  <p className="text-xs text-muted-foreground">Generate CSV export of all system data</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleExportData}>Export</Button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Generate Reports</p>
-                  <p className="text-xs text-muted-foreground">Create comprehensive system reports</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleGenerateReports}>Generate</Button>
-              </div>
-            </div>
-          </div>
-          
-          <hr />
-          
-          <div>
-            <h4 className="font-medium mb-2 text-destructive">Danger Zone</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Reset Demo Data</p>
-                  <p className="text-xs text-muted-foreground">Reset all demo data and rebuild analytics. Irreversible in production.</p>
-                </div>
-                <Button variant="destructive" size="sm" onClick={handleResetData}>
-                  Reset & Rebuild
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Admin Actions removed: Only keep actions that are actually functional and required for real admin users */}
 
       {error && (
         <Card>
