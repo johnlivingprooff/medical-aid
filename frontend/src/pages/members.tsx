@@ -377,7 +377,7 @@ export default function Members() {
                                 disabled={dependentEligibility[m.id] === null || !dependentEligibility[m.id]?.can_add}
                                 className={!dependentEligibility[m.id]?.can_add ? 'opacity-50 cursor-not-allowed' : ''}
                               >
-                                <Users className="mr-2 h-4 w-4" />
+                                <Users className="w-4 h-4 mr-2" />
                                 {dependentEligibility[m.id] === null ? 'Checking...' : 
                                  dependentEligibility[m.id]?.can_add ? 
                                    `Add Dependent (${dependentEligibility[m.id]?.remaining} remaining)` : 
@@ -392,7 +392,7 @@ export default function Members() {
                                   setShowChangeScheme(true)
                                 }}
                               >
-                                <ArrowRight className="mr-2 h-4 w-4" />
+                                <ArrowRight className="w-4 h-4 mr-2" />
                                 Change Scheme
                               </DropdownMenuItem>
                             )}
@@ -470,7 +470,7 @@ export default function Members() {
                     <div className="text-xs text-muted-foreground">Balance not available</div>
                   )}
                 </div>
-                <SubscriptionCoverageCard key={`coverage-${selectedMember.id}`} patientId={selectedMember.id} />
+                <SubscriptionCoverageCard key={`coverage-${selectedMember.id}`} patientId={selectedMember.id} member={selectedMember} />
                 <BenefitUtilizationTracking key={`utilization-${selectedMember.id}`} patientId={selectedMember.id} />
                 <SubscriptionManagement key={`management-${selectedMember.id}`} patientId={selectedMember.id} />
                 <MemberBenefitUtilization key={`benefits-${selectedMember.id}`} memberId={selectedMember.id} />

@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CreditCard, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { CreditCard, TrendingUp, AlertTriangle, CheckCircle, Clock, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { subscriptionApi } from '@/lib/api'
 import type { MemberSubscription, SubscriptionUsageStats } from '@/types/models'
@@ -11,17 +13,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 interface SubscriptionCoverageCardProps {
   patientId?: number;
+  member?: any; // Member object with scheme information
   className?: string;
 }
 
-export function SubscriptionCoverageCard({ patientId, className }: SubscriptionCoverageCardProps) {
+export function SubscriptionCoverageCard({ patientId, member, className }: SubscriptionCoverageCardProps) {
   const [subscription, setSubscription] = useState<MemberSubscription | null>(null)
   const [usageStats, setUsageStats] = useState<SubscriptionUsageStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showDetailsDialog, setShowDetailsDialog] = useState(false)
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
+  const [showSetupDialog, setShowSetupDialog] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
+  const [availableTiers, setAvailableTiers] = useState<any[]>([])
+  const [selectedTier, setSelectedTier] = useState<number | null>(null)
+  const [subscriptionType, setSubscriptionType] = useState<'MONTHLY' | 'YEARLY'>('MONTHLY')
+  const [settingUp, setSettingUp] = useState(false)
 
   const loadSubscriptionData = async () => {
     try {
@@ -55,6 +63,49 @@ export function SubscriptionCoverageCard({ patientId, className }: SubscriptionC
     }
   }
 
+  const loadAvailableTiers = async () => {
+    if (!member?.scheme_id) return
+    
+    try {
+      const tiersResponse = await subscriptionApi.getSubscriptionTiers({ 
+        scheme: member.scheme_id, 
+        is_active: true 
+      })
+      setAvailableTiers(tiersResponse.results || [])
+    } catch (err) {
+      console.error('Failed to load subscription tiers:', err)
+      setAvailableTiers([])
+    }
+  }
+
+  const handleSetupSubscription = async () => {
+    if (!patientId || !selectedTier) return
+    
+    try {
+      setSettingUp(true)
+      const subscriptionData = {
+        patient_id: patientId,
+        tier_id: selectedTier,
+        subscription_type: subscriptionType
+      }
+      
+      await subscriptionApi.createMemberSubscription(subscriptionData)
+      
+      // Refresh subscription data
+      await loadSubscriptionData()
+      
+      // Close dialog and reset form
+      setShowSetupDialog(false)
+      setSelectedTier(null)
+      setSubscriptionType('MONTHLY')
+    } catch (err) {
+      console.error('Failed to create subscription:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create subscription')
+    } finally {
+      setSettingUp(false)
+    }
+  }
+
   useEffect(() => {
     if (!patientId) {
       setSubscription(null)
@@ -67,16 +118,22 @@ export function SubscriptionCoverageCard({ patientId, className }: SubscriptionC
     loadSubscriptionData()
   }, [patientId])
 
+  useEffect(() => {
+    if (showSetupDialog && member?.scheme_id) {
+      loadAvailableTiers()
+    }
+  }, [showSetupDialog, member?.scheme_id])
+
   if (loading) {
     return (
       <Card className={className}>
         <CardHeader>
-          <Skeleton className="h-6 w-48" />
+          <Skeleton className="w-48 h-6" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="w-full h-4" />
+          <Skeleton className="w-3/4 h-4" />
+          <Skeleton className="w-1/2 h-4" />
         </CardContent>
       </Card>
     )
@@ -107,10 +164,88 @@ export function SubscriptionCoverageCard({ patientId, className }: SubscriptionC
             No Active Subscription
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            This member doesn't have an active subscription. Please contact support to set up a subscription.
+            This member doesn't have an active subscription.
           </p>
+          {member?.scheme_name && (
+            <div className="p-3 rounded-lg bg-muted">
+              <p className="text-sm font-medium">Current Scheme</p>
+              <p className="text-sm text-muted-foreground">{member.scheme_name}</p>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Dialog open={showSetupDialog} onOpenChange={setShowSetupDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Set Up Subscription
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Set Up Subscription</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {member?.scheme_name && (
+                    <div>
+                      <Label>Member's Scheme</Label>
+                      <p className="text-sm text-muted-foreground">{member.scheme_name}</p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <Label htmlFor="tier-select">Select Subscription Tier</Label>
+                    <Select value={selectedTier?.toString() || ""} onValueChange={(value) => setSelectedTier(parseInt(value))}>
+                      <SelectTrigger id="tier-select">
+                        <SelectValue placeholder="Choose a tier..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTiers.map((tier) => (
+                          <SelectItem key={tier.id} value={tier.id.toString()}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{tier.name}</span>
+                              <span className="text-sm text-muted-foreground">
+                                {formatCurrency(tier.monthly_price)}/month
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="type-select">Subscription Type</Label>
+                    <Select value={subscriptionType} onValueChange={(value: 'MONTHLY' | 'YEARLY') => setSubscriptionType(value)}>
+                      <SelectTrigger id="type-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MONTHLY">Monthly</SelectItem>
+                        <SelectItem value="YEARLY">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setShowSetupDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSetupSubscription} 
+                      disabled={!selectedTier || settingUp}
+                    >
+                      {settingUp ? 'Setting up...' : 'Create Subscription'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button variant="outline" size="sm">
+              Contact Support
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )
@@ -200,9 +335,9 @@ export function SubscriptionCoverageCard({ patientId, className }: SubscriptionC
                 {formatCurrency(coverageUsed)} / {formatCurrency(coverageLimit)}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full h-2 bg-gray-200 rounded-full">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="h-2 transition-all duration-300 bg-blue-600 rounded-full"
                 style={{ width: `${Math.min(coveragePercentage, 100)}%` }}
               />
             </div>
@@ -221,9 +356,9 @@ export function SubscriptionCoverageCard({ patientId, className }: SubscriptionC
                 {claimsUsed} / {claimsLimit}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full h-2 bg-gray-200 rounded-full">
               <div
-                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                className="h-2 transition-all duration-300 bg-green-600 rounded-full"
                 style={{ width: `${Math.min(claimsPercentage, 100)}%` }}
               />
             </div>
@@ -300,7 +435,7 @@ function SubscriptionDetailsContent({ subscription, usageStats }: {
       {/* Subscription Overview */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <h4 className="font-medium mb-2">Plan Details</h4>
+          <h4 className="mb-2 font-medium">Plan Details</h4>
           <div className="space-y-1 text-sm">
             <div>Tier: <span className="font-medium">{subscription.tier_detail.name}</span></div>
             <div>Type: <span className="font-medium">{subscription.subscription_type}</span></div>
@@ -308,7 +443,7 @@ function SubscriptionDetailsContent({ subscription, usageStats }: {
           </div>
         </div>
         <div>
-          <h4 className="font-medium mb-2">Billing</h4>
+          <h4 className="mb-2 font-medium">Billing</h4>
           <div className="space-y-1 text-sm">
             <div>Monthly: <span className="font-medium">{formatCurrency(subscription.tier_detail.monthly_price)}</span></div>
             <div>Yearly: <span className="font-medium">{formatCurrency(subscription.tier_detail.yearly_price)}</span></div>
@@ -319,17 +454,17 @@ function SubscriptionDetailsContent({ subscription, usageStats }: {
 
       {/* Usage Statistics */}
       <div>
-        <h4 className="font-medium mb-3">Usage Statistics</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-muted rounded">
+        <h4 className="mb-3 font-medium">Usage Statistics</h4>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="p-4 text-center rounded bg-muted">
             <div className="text-2xl font-bold text-primary">{formatCurrency(coverageUsed)}</div>
             <div className="text-sm text-muted-foreground">Used This Year</div>
           </div>
-          <div className="text-center p-4 bg-muted rounded">
+          <div className="p-4 text-center rounded bg-muted">
             <div className="text-2xl font-bold text-success">{formatCurrency(coverageLimit - coverageUsed)}</div>
             <div className="text-sm text-muted-foreground">Remaining</div>
           </div>
-          <div className="text-center p-4 bg-muted rounded">
+          <div className="p-4 text-center rounded bg-muted">
             <div className="text-2xl font-bold">{utilization.toFixed(1)}%</div>
             <div className="text-sm text-muted-foreground">Utilization</div>
           </div>
@@ -338,17 +473,17 @@ function SubscriptionDetailsContent({ subscription, usageStats }: {
 
       {/* Coverage Breakdown */}
       <div>
-        <h4 className="font-medium mb-3">Coverage Details</h4>
+        <h4 className="mb-3 font-medium">Coverage Details</h4>
         <div className="space-y-3">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <span>Annual Coverage Limit</span>
             <span className="font-medium">{formatCurrency(coverageLimit)}</span>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <span>Monthly Claims Limit</span>
             <span className="font-medium">{usageStats.max_claims_per_month || 'Unlimited'}</span>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <span>Claims This Month</span>
             <span className="font-medium">{usageStats.claims_this_month}</span>
           </div>
@@ -430,7 +565,7 @@ function SubscriptionUpgradeContent({
     return (
       <div className="p-4 text-center text-muted-foreground">
         <p>You're already on the highest tier available!</p>
-        <p className="text-sm mt-2">Current plan: <span className="font-medium">{subscription.tier_detail.name}</span></p>
+        <p className="mt-2 text-sm">Current plan: <span className="font-medium">{subscription.tier_detail.name}</span></p>
       </div>
     )
   }
@@ -438,8 +573,8 @@ function SubscriptionUpgradeContent({
   return (
     <div className="space-y-4">
       <div>
-        <h4 className="font-medium mb-2">Current Plan</h4>
-        <div className="p-3 bg-muted rounded">
+        <h4 className="mb-2 font-medium">Current Plan</h4>
+        <div className="p-3 rounded bg-muted">
           <div className="font-medium">{subscription.tier_detail.name}</div>
           <div className="text-sm text-muted-foreground">
             {formatCurrency(subscription.tier_detail.monthly_price)}/month
@@ -448,7 +583,7 @@ function SubscriptionUpgradeContent({
       </div>
 
       <div>
-        <h4 className="font-medium mb-2">Available Upgrades</h4>
+        <h4 className="mb-2 font-medium">Available Upgrades</h4>
         <div className="space-y-2">
           {availableTiers.map((tier: any) => (
             <label
