@@ -27,12 +27,12 @@ class NotificationSerializer(serializers.ModelSerializer):
             'notification_type', 'title', 'message', 'html_message',
             'channel', 'priority', 'status', 'is_read',
             'related_claim_id', 'related_membership_id', 'related_document_id',
-            'metadata', 'scheduled_for', 'sent_at', 'read_at',
-            'created_at', 'updated_at', 'time_since_created'
+            'metadata', 'scheduled_for', 'sent_at', 'delivered_at', 'read_at', 'failed_at', 'failure_reason',
+            'created_at', 'time_since_created'
         ]
         read_only_fields = [
-            'id', 'recipient_name', 'recipient_role', 'sent_at', 'read_at',
-            'created_at', 'updated_at', 'time_since_created', 'is_read'
+            'id', 'recipient_name', 'recipient_role', 'sent_at', 'delivered_at', 'read_at', 'failed_at', 'failure_reason',
+            'created_at', 'time_since_created', 'is_read'
         ]
 
     def get_time_since_created(self, obj):
@@ -110,23 +110,21 @@ class NotificationDetailSerializer(NotificationSerializer):
 
     def get_logs(self, obj):
         """Get notification logs."""
-        logs = NotificationLog.objects.filter(notification=obj).order_by('-created_at')
+        logs = NotificationLog.objects.filter(notification=obj).order_by('-timestamp')
         return NotificationLogSerializer(logs, many=True).data
 
 
 class NotificationTemplateSerializer(serializers.ModelSerializer):
     """Serializer for notification templates."""
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
 
     class Meta:
         model = NotificationTemplate
         fields = [
-            'id', 'name', 'notification_type', 'subject_template',
-            'message_template', 'html_template', 'variables',
-            'is_active', 'created_by', 'created_by_name',
-            'created_at', 'updated_at'
+            'id', 'name', 'notification_type', 'channel', 'subject_template',
+            'body_template', 'html_template', 'template_variables',
+            'is_active', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_by_name', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class NotificationPreferenceSerializer(serializers.ModelSerializer):
@@ -140,7 +138,8 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
             'email_enabled', 'sms_enabled', 'push_enabled', 'in_app_enabled',
             'claim_updates_enabled', 'credentialing_updates_enabled',
             'payment_updates_enabled', 'system_announcements_enabled',
-            'quiet_hours_start', 'quiet_hours_end', 'timezone',
+            'member_messages_enabled', 'subscription_reminders_enabled',
+            'quiet_hours_start', 'quiet_hours_end', 'digest_frequency',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user_name', 'created_at', 'updated_at']
@@ -155,9 +154,9 @@ class NotificationLogSerializer(serializers.ModelSerializer):
         model = NotificationLog
         fields = [
             'id', 'notification', 'notification_title', 'recipient_name',
-            'action', 'message', 'metadata', 'created_at'
+            'action', 'message', 'metadata', 'timestamp'
         ]
-        read_only_fields = ['id', 'notification_title', 'recipient_name', 'created_at']
+        read_only_fields = ['id', 'notification_title', 'recipient_name', 'timestamp']
 
 
 class NotificationCreateSerializer(serializers.Serializer):

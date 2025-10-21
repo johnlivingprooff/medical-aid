@@ -32,6 +32,16 @@ app.conf.beat_schedule = {
         'task': 'core.tasks.health_check',
         'schedule': 300.0,  # Every 5 minutes
     },
+    'subscription-renewal-reminders-7-days': {
+        'task': 'core.tasks.send_subscription_renewal_reminders',
+        'schedule': crontab(hour=8, minute=0),  # Daily at 8 AM
+        'args': (7,),
+    },
+    'subscription-renewal-reminders-1-day': {
+        'task': 'core.tasks.send_subscription_renewal_reminders',
+        'schedule': crontab(hour=9, minute=0),  # Daily at 9 AM
+        'args': (1,),
+    },
 }
 
 @app.task(bind=True)

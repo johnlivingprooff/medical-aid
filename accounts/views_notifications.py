@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -16,11 +17,11 @@ from django_filters import FilterSet, CharFilter, ChoiceFilter, DateTimeFilter
 
 from .models_notifications import (
     Notification, NotificationPreference, NotificationLog,
-    NotificationType, NotificationChannel
+    NotificationType, NotificationChannel, NotificationTemplate
 )
 from .serializers_notifications import (
     NotificationSerializer, NotificationDetailSerializer,
-    NotificationPreferenceSerializer, NotificationLogSerializer
+    NotificationPreferenceSerializer, NotificationLogSerializer, NotificationTemplateSerializer
 )
 from .notification_service import NotificationService
 from .permissions import IsProviderOrAdmin
@@ -190,6 +191,9 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
                 'credentialing_updates_enabled': True,
                 'payment_updates_enabled': True,
                 'system_announcements_enabled': True,
+                # Ensure new preference flags default to enabled for better UX
+                'member_messages_enabled': True,
+                'subscription_reminders_enabled': True,
             }
         )
         return obj
@@ -385,3 +389,44 @@ class NotificationDashboardViewSet(viewsets.ViewSet):
                 NotificationPreference.objects.filter(user=user).first()
             ).data if NotificationPreference.objects.filter(user=user).exists() else None
         })
+
+
+class NotificationTemplateViewSet(viewsets.ModelViewSet):
+    """Admin-only CRUD for notification templates."""
+    serializer_class = NotificationTemplateSerializer
+    permission_classes = [IsAuthenticated, IsProviderOrAdmin]
+
+    def get_queryset(self):
+        qs = NotificationTemplate.objects.all().order_by('-updated_at')
+        # Providers should not manage templates; restrict to admins
+        if self.request.user.role != 'ADMIN':
+            return NotificationTemplate.objects.none()
+        # Optional filters
+        ntype = self.request.query_params.get('notification_type')
+        channel = self.request.query_params.get('channel')
+        is_active = self.request.query_params.get('is_active')
+        if ntype:
+            qs = qs.filter(notification_type=ntype)
+        if channel:
+            qs = qs.filter(channel=channel)
+        if is_active is not None:
+            if is_active.lower() in ('true', '1'):
+                qs = qs.filter(is_active=True)
+            elif is_active.lower() in ('false', '0'):
+                qs = qs.filter(is_active=False)
+        return qs
+
+    def perform_create(self, serializer):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only admins can create templates')
+        serializer.save()
+
+    def perform_update(self, serializer):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only admins can update templates')
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if self.request.user.role != 'ADMIN':
+            raise PermissionDenied('Only admins can delete templates')
+        instance.delete()

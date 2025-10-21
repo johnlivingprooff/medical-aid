@@ -10,7 +10,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 import logging
 from datetime import datetime, time
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from accounts.models import ProviderNetworkMembership
 from claims.models import Claim
@@ -29,7 +29,7 @@ class NotificationService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def create_notification(self, recipient: User, notification_type: str,
+    def create_notification(self, recipient: Any, notification_type: str,
                           title: str, message: str, **kwargs) -> Notification:
         """
         Create a new notification.
@@ -52,12 +52,32 @@ class NotificationService:
             self.logger.info(f"Notification blocked by user preferences: {recipient.username}")
             return None
 
+        # Prepare template context and render from template when available
+        template_context = kwargs.get('template_context', {})
+        # Seed context with common defaults
+        context = {
+            **template_context,
+            **kwargs.get('metadata', {}),
+            'recipient_username': getattr(recipient, 'username', ''),
+            'recipient_first_name': getattr(recipient, 'first_name', '') or getattr(recipient, 'username', ''),
+            'recipient_full_name': getattr(recipient, 'get_full_name', lambda: '')() if hasattr(recipient, 'get_full_name') else str(getattr(recipient, 'username', '')),
+        }
+
+        rendered_title, rendered_message, rendered_html, used_template = self._render_from_template(
+            notification_type=notification_type,
+            channel=channel,
+            fallback_title=title,
+            fallback_message=message,
+            fallback_html=kwargs.get('html_message', ''),
+            context=context,
+        )
+
         # Create notification
         notification = Notification.objects.create(
             recipient=recipient,
             notification_type=notification_type,
-            title=title,
-            message=message,
+            title=rendered_title,
+            message=rendered_message,
             channel=channel,
             priority=kwargs.get('priority', 'MEDIUM'),
             related_claim_id=kwargs.get('claim_id'),
@@ -65,7 +85,8 @@ class NotificationService:
             related_document_id=kwargs.get('document_id'),
             metadata=kwargs.get('metadata', {}),
             scheduled_for=kwargs.get('scheduled_for'),
-            html_message=kwargs.get('html_message', '')
+            html_message=rendered_html,
+            template_used=used_template,
         )
 
         # Log creation
@@ -82,7 +103,34 @@ class NotificationService:
 
         return notification
 
-    def _get_user_preferences(self, user: User) -> NotificationPreference:
+    def _render_from_template(self, notification_type: str, channel: str,
+                               fallback_title: str, fallback_message: str, fallback_html: str,
+                               context: Dict[str, Any]):
+        """Render title/body/html using active NotificationTemplate if available.
+
+        Returns tuple: (title, message, html, template_or_None)
+        """
+        try:
+            template = NotificationTemplate.objects.filter(
+                notification_type=notification_type,
+                channel=channel,
+                is_active=True
+            ).first()
+
+            if not template:
+                return fallback_title, fallback_message, (fallback_html or fallback_message), None
+
+            # Render pieces with safe fallbacks
+            title = template.render_subject(context) or fallback_title
+            body = template.render_body(context) or fallback_message
+            html = template.render_html(context) or fallback_html or body
+            return title, body, html, template
+        except Exception as e:
+            # Log and fallback to provided values
+            self.logger.warning(f"Template render failed for {notification_type}: {e}")
+            return fallback_title, fallback_message, (fallback_html or fallback_message), None
+
+    def _get_user_preferences(self, user: Any) -> NotificationPreference:
         """Get or create notification preferences for a user."""
         preferences, created = NotificationPreference.objects.get_or_create(
             user=user,
@@ -95,6 +143,8 @@ class NotificationService:
                 'credentialing_updates_enabled': True,
                 'payment_updates_enabled': True,
                 'system_announcements_enabled': True,
+                'member_messages_enabled': True,
+                'subscription_reminders_enabled': True,
             }
         )
         return preferences
@@ -105,7 +155,10 @@ class NotificationService:
 
         if notification_type in [NotificationType.CLAIM_STATUS_UPDATE,
                                NotificationType.CREDENTIALING_UPDATE,
-                               NotificationType.MEMBERSHIP_EXPIRING]:
+                               NotificationType.MEMBERSHIP_EXPIRING,
+                               NotificationType.WELCOME_MEMBER,
+                               NotificationType.SUBSCRIPTION_RENEWAL_REMINDER,
+                               NotificationType.MEMBER_MESSAGE]:
             # Important notifications go to email first
             if preferences.email_enabled:
                 return NotificationChannel.EMAIL
@@ -275,7 +328,7 @@ class NotificationService:
             }
         )
 
-    def send_bulk_notification(self, recipients: List[User], notification_type: str,
+    def send_bulk_notification(self, recipients: List[Any], notification_type: str,
                              title: str, message: str, **kwargs) -> List[Notification]:
         """Send the same notification to multiple recipients."""
         notifications = []
@@ -310,7 +363,7 @@ class NotificationService:
             metadata={'announcement_type': 'system_wide'}
         )
 
-    def get_user_notifications(self, user: User, status: str = None,
+    def get_user_notifications(self, user: Any, status: str = None,
                              notification_type: str = None, limit: int = 50) -> List[Notification]:
         """Get notifications for a user with optional filtering."""
         queryset = Notification.objects.filter(recipient=user)
@@ -323,7 +376,7 @@ class NotificationService:
 
         return list(queryset.order_by('-created_at')[:limit])
 
-    def mark_notifications_read(self, user: User, notification_ids: List[int]) -> int:
+    def mark_notifications_read(self, user: Any, notification_ids: List[int]) -> int:
         """Mark multiple notifications as read."""
         updated = Notification.objects.filter(
             recipient=user,
@@ -348,7 +401,7 @@ class NotificationService:
 
         return updated
 
-    def get_notification_stats(self, user: User = None) -> Dict:
+    def get_notification_stats(self, user: Any = None) -> Dict:
         """Get notification statistics."""
         queryset = Notification.objects.all()
 
@@ -404,3 +457,39 @@ class NotificationService:
 
         self.logger.info(f"Cleaned up {deleted_count} old notifications")
         return deleted_count
+
+    # Convenience methods for common member-facing notifications
+    def send_welcome_member(self, user: Any, tier_name: str, start_date: str, end_date: str):
+        """Send a welcome email to a new member."""
+        return self.create_notification(
+            recipient=user,
+            notification_type=NotificationType.WELCOME_MEMBER,
+            title="Welcome to your medical aid subscription",
+            message=(
+                f"Hi {getattr(user, 'username', 'Member')},\n\n"
+                f"Your {tier_name} subscription is now active from {start_date} to {end_date}.\n"
+                f"You're all set to start using your benefits.\n\n"
+                f"If you have any questions, reply to this email or contact support."
+            ),
+            priority='HIGH',
+            metadata={
+                'tier': tier_name,
+                'start_date': start_date,
+                'end_date': end_date,
+            }
+        )
+
+    def send_member_message_notification(self, member_user: Any, sender_name: str, subject: str, preview: str, member_message_id: int, patient_id: int):
+        """Notify a member that they have received a message."""
+        title = subject or "New message from your medical aid"
+        return self.create_notification(
+            recipient=member_user,
+            notification_type=NotificationType.MEMBER_MESSAGE,
+            title=title,
+            message=f"You have a new message from {sender_name}:\n\n{preview}",
+            priority='HIGH',
+            metadata={
+                'member_message_id': member_message_id,
+                'patient_id': patient_id,
+            }
+        )

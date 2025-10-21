@@ -10,6 +10,8 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import SubscriptionTier, MemberSubscription, BenefitCategory
+from accounts.notification_service import NotificationService
+from accounts.models_notifications import NotificationType
 from claims.models import Patient
 
 
@@ -56,6 +58,33 @@ class SubscriptionService:
                 end_date=end_date,
                 next_payment_date=next_payment_date
             )
+
+        # Send welcome/onboarding email notification to the member
+        try:
+            svc = NotificationService()
+            user = getattr(patient, 'user', None)
+            if user:
+                svc.create_notification(
+                    recipient=user,
+                    notification_type=NotificationType.WELCOME_MEMBER,
+                    title="Welcome to your medical aid subscription",
+                    message=(
+                        f"Hi {getattr(user, 'username', 'Member')},\n\n"
+                        f"Your {tier.name} subscription is now active from {start_date} to {end_date}.\n"
+                        f"You're all set to start using your benefits.\n\n"
+                        f"If you have any questions, reply to this email or contact support."
+                    ),
+                    priority='HIGH',
+                    metadata={
+                        'subscription_id': subscription.id,
+                        'tier': tier.name,
+                        'start_date': start_date.isoformat(),
+                        'end_date': end_date.isoformat(),
+                    }
+                )
+        except Exception:
+            # Avoid raising errors in business flow due to notification failures
+            pass
 
         return subscription
 

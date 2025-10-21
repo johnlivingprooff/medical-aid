@@ -11,6 +11,8 @@ from .serializers import PreAuthorizationRequestSerializer, PreAuthorizationAppr
 from .services import validate_and_process_claim_enhanced, validate_and_process_claim_for_approval, emit_low_balance_alerts, emit_fraud_alert_if_needed
 from schemes.models import SchemeBenefit, BenefitType
 from core.models import MemberMessage, MemberDocument
+from accounts.notification_service import NotificationService
+from accounts.models_notifications import NotificationType
 from backend.pagination import OptimizedPagination
 
 
@@ -171,6 +173,26 @@ class PatientViewSet(viewsets.ModelViewSet):
 			body=body,
 			direction=MemberMessage.Direction.TO_MEMBER,
 		)
+		# Notify the member by email (respecting user preferences)
+		try:
+			member_user = getattr(patient, 'user', None)
+			if member_user:
+				nsvc = NotificationService()
+				title = subject or "New message from your medical aid"
+				preview = (body[:200] + '...') if len(body or '') > 200 else body or ''
+				nsvc.create_notification(
+					recipient=member_user,
+					notification_type=NotificationType.MEMBER_MESSAGE,
+					title=title,
+					message=f"You have a new message from {getattr(request.user, 'username', 'Support')}:\n\n{preview}",
+					priority='HIGH',
+					metadata={
+						'member_message_id': msg.id,
+						'patient_id': patient.id,
+					}
+				)
+		except Exception:
+			pass
 		return Response({'id': msg.id, 'created_at': msg.created_at}, status=status.HTTP_201_CREATED)
 
 	@action(detail=True, methods=['get', 'post'], url_path='documents')

@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 from .views_notifications import (
     NotificationViewSet, NotificationPreferenceViewSet,
     NotificationLogViewSet, NotificationManagementViewSet,
-    NotificationDashboardViewSet
+    NotificationDashboardViewSet, NotificationTemplateViewSet
 )
 
 # Create router for notification endpoints
@@ -18,6 +18,7 @@ notification_router.register(r'preferences', NotificationPreferenceViewSet, base
 notification_router.register(r'logs', NotificationLogViewSet, basename='notification-log')
 notification_router.register(r'management', NotificationManagementViewSet, basename='notification-management')
 notification_router.register(r'dashboard', NotificationDashboardViewSet, basename='notification-dashboard')
+notification_router.register(r'templates', NotificationTemplateViewSet, basename='notification-template')
 
 # URL patterns
 urlpatterns = [

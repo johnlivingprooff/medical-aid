@@ -27,6 +27,10 @@ class NotificationType(models.TextChoices):
     PAYMENT_PROCESSED = 'PAYMENT_PROCESSED', 'Payment Processed'
     SYSTEM_MAINTENANCE = 'SYSTEM_MAINTENANCE', 'System Maintenance'
     GENERAL_ANNOUNCEMENT = 'GENERAL_ANNOUNCEMENT', 'General Announcement'
+    # Member-facing additions
+    WELCOME_MEMBER = 'WELCOME_MEMBER', 'Welcome New Member'
+    SUBSCRIPTION_RENEWAL_REMINDER = 'SUBSCRIPTION_RENEWAL_REMINDER', 'Subscription Renewal Reminder'
+    MEMBER_MESSAGE = 'MEMBER_MESSAGE', 'Message to Member'
 
 
 class NotificationChannel(models.TextChoices):
@@ -239,6 +243,8 @@ class NotificationPreference(models.Model):
     credentialing_updates_enabled = models.BooleanField(default=True)
     payment_updates_enabled = models.BooleanField(default=True)
     system_announcements_enabled = models.BooleanField(default=True)
+    member_messages_enabled = models.BooleanField(default=True)
+    subscription_reminders_enabled = models.BooleanField(default=True)
 
     # Quiet hours
     quiet_hours_start = models.TimeField(null=True, blank=True, help_text='Start of quiet hours (HH:MM)')
@@ -276,6 +282,9 @@ class NotificationPreference(models.Model):
             NotificationType.PAYMENT_PROCESSED: self.payment_updates_enabled,
             NotificationType.SYSTEM_MAINTENANCE: self.system_announcements_enabled,
             NotificationType.GENERAL_ANNOUNCEMENT: self.system_announcements_enabled,
+            NotificationType.MEMBER_MESSAGE: self.member_messages_enabled,
+            NotificationType.SUBSCRIPTION_RENEWAL_REMINDER: self.subscription_reminders_enabled,
+            NotificationType.WELCOME_MEMBER: True,
         }
 
         type_enabled = type_enabled_map.get(notification_type, True)

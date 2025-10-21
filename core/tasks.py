@@ -219,3 +219,62 @@ def send_notification_email(recipient_email, subject, message):
     except Exception as e:
         logger.error(f"Failed to send email to {recipient_email}: {str(e)}")
         return f"Failed to send email: {str(e)}"
+
+
+@shared_task
+def send_subscription_renewal_reminders(days_before: int = 7):
+    """
+    Send subscription renewal reminder notifications to members whose subscriptions
+    are expiring within the specified number of days. Respects user notification preferences.
+    """
+    try:
+        from django.utils import timezone as djtz
+        target_date = djtz.now().date() + timedelta(days=days_before)
+
+        # Import here to avoid circulars
+        from schemes.models import MemberSubscription
+        from accounts.notification_service import NotificationService
+        from accounts.models_notifications import NotificationType
+
+        svc = NotificationService()
+
+        # Find active subscriptions ending on target_date
+        subs = MemberSubscription.objects.select_related('patient__user', 'tier').filter(
+            end_date=target_date,
+            status__in=['ACTIVE', 'SUSPENDED']
+        )
+
+        sent = 0
+        for sub in subs:
+            user = getattr(sub.patient, 'user', None)
+            if not user:
+                continue
+            title = "Your subscription is ending soon"
+            message = (
+                f"Hi {getattr(user, 'username', 'Member')},\n\n"
+                f"Your {sub.tier.name} subscription ends on {sub.end_date}.\n"
+                f"To avoid interruption of benefits, please renew before the expiry date.\n\n"
+                f"If you've already renewed, you can ignore this message."
+            )
+            try:
+                svc.create_notification(
+                    recipient=user,
+                    notification_type=NotificationType.SUBSCRIPTION_RENEWAL_REMINDER,
+                    title=title,
+                    message=message,
+                    priority='HIGH',
+                    metadata={
+                        'subscription_id': sub.id,
+                        'end_date': sub.end_date.isoformat(),
+                        'days_before': days_before,
+                    }
+                )
+                sent += 1
+            except Exception as e:
+                logger.warning(f"Failed to queue renewal reminder for user {getattr(user, 'id', '?')}: {e}")
+
+        logger.info(f"Subscription renewal reminders processed: {sent} sent for end_date={target_date}")
+        return {"target_date": str(target_date), "sent": sent}
+    except Exception as e:
+        logger.error(f"send_subscription_renewal_reminders failed: {str(e)}")
+        return {"error": str(e)}
