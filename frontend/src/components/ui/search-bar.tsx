@@ -26,6 +26,7 @@ export function SearchBar({
   const [entityType, setEntityType] = useState<'all' | 'schemes' | 'claims' | 'members' | 'providers' | 'services' | 'benefits'>('all')
 
   const searchRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
@@ -129,17 +130,61 @@ export function SearchBar({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Close dropdown on scroll/resize (since we use fixed positioning)
+  useEffect(() => {
+      const handleScroll = (event: Event) => {
+        // Don't close if scrolling inside the dropdown itself
+        if (dropdownRef.current && event.target && dropdownRef.current.contains(event.target as Node)) {
+          return
+        }
+      
+      if (isOpen) {
+        setIsOpen(false)
+        setSelectedIndex(-1)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleScroll)
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [isOpen])
+
+  // Global keyboard shortcut: Ctrl+/ or Cmd+/ to focus search
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // Check for Ctrl+/ (Windows/Linux) or Cmd+/ (Mac)
+      if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+        event.preventDefault()
+        inputRef.current?.focus()
+        inputRef.current?.select() // Select any existing text
+      }
+    }
+
+    document.addEventListener('keydown', handleGlobalKeyDown)
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
+
   const getEntityTypeLabel = (type: string) => {
     const labels = {
       all: 'All',
+      scheme: 'Scheme',
       schemes: 'Schemes',
+      claim: 'Claim',
       claims: 'Claims',
+      member: 'Member',
       members: 'Members',
+      provider: 'Provider',
       providers: 'Providers',
+      service_type: 'Service',
       services: 'Services',
+      benefit_type: 'Benefit',
       benefits: 'Benefits'
     }
-    return labels[type as keyof typeof labels] || type
+    return labels[type as keyof typeof labels] || type.charAt(0).toUpperCase() + type.slice(1)
   }
 
   const getResultIcon = (type: string) => {
@@ -147,7 +192,7 @@ export function SearchBar({
       case 'scheme': return '🏥'
       case 'claim': return '📋'
       case 'member': return '👤'
-      case 'provider': return '🏥'
+      case 'provider': return '👨‍⚕️'
       case 'service_type': return '⚕️'
       case 'benefit_type': return '💊'
       default: return '🔍'
@@ -158,7 +203,7 @@ export function SearchBar({
     <div ref={searchRef} className={`relative w-full max-w-md ${className}`}>
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Search className="absolute w-4 h-4 transform -translate-y-1/2 left-3 top-1/2 text-muted-foreground" />
         <input
           ref={inputRef}
           type="text"
@@ -167,25 +212,32 @@ export function SearchBar({
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          className="w-full py-2 pl-10 pr-10 text-sm border rounded-md border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
         />
+        {!query && !isLoading && (
+          <div className="absolute transform -translate-y-1/2 pointer-events-none right-3 top-1/2">
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs font-semibold text-muted-foreground bg-muted border border-border rounded">
+              Ctrl+/
+            </kbd>
+          </div>
+        )}
         {query && (
           <button
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute transform -translate-y-1/2 right-3 top-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4" />
           </button>
         )}
         {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+          <Loader2 className="absolute w-4 h-4 transform -translate-y-1/2 right-3 top-1/2 text-muted-foreground animate-spin" />
         )}
       </div>
 
       {/* Entity Type Filter */}
       {!compact && (
         <div className="flex gap-1 mt-2 text-xs">
-          {(['all', 'schemes', 'claims', 'members', 'providers', 'services'] as const).map((type) => (
+          {(['all', 'schemes', 'claims', 'members', 'providers', 'services', 'benefits'] as const).map((type) => (
             <button
               key={type}
               onClick={() => handleEntityTypeChange(type)}
@@ -199,15 +251,23 @@ export function SearchBar({
             </button>
           ))}
         </div>
-      )}      {/* Search Results Dropdown */}
+      )}      {/* Search Results Dropdown - Uses fixed positioning to break out of header overflow */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div 
+            ref={dropdownRef}
+          className="fixed bg-card border border-border rounded-md shadow-xl z-[100] max-h-96 overflow-y-auto backdrop-blur-sm"
+          style={{
+              top: `${(inputRef.current?.getBoundingClientRect().bottom ?? 0) + 4}px`,
+              left: `${inputRef.current?.getBoundingClientRect().left ?? 0}px`,
+              width: `${inputRef.current?.getBoundingClientRect().width ?? 0}px`,
+          }}
+        >
           {results.map((result, index) => (
             <button
               key={`${result.type}-${result.id}`}
               onClick={() => handleResultClick(result)}
               className={`w-full px-4 py-3 text-left hover:bg-accent hover:text-accent-foreground transition-colors border-b border-border last:border-b-0 ${
-                index === selectedIndex ? 'bg-accent text-accent-foreground' : ''
+                index === selectedIndex ? 'bg-accent text-accent-foreground' : 'bg-card'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -215,10 +275,10 @@ export function SearchBar({
                   {getResultIcon(result.type)}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">
+                  <div className="text-sm font-medium truncate">
                     {result.title}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
+                  <div className="text-xs truncate text-muted-foreground">
                     {result.subtitle}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
@@ -245,7 +305,7 @@ export function SearchBar({
             <div className="px-4 py-8 text-center text-muted-foreground">
               <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <div className="text-sm">No results found for "{query}"</div>
-              <div className="text-xs mt-1">Try adjusting your search or filter</div>
+              <div className="mt-1 text-xs">Try adjusting your search or filter</div>
             </div>
           )}
         </div>

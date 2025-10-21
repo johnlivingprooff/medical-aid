@@ -652,10 +652,11 @@ export default function Help() {
                   <h5 className="mb-2 font-medium">Quick Tips</h5>
                   <ul className="space-y-1 text-sm">
                     <li>• Use the search bar in the header to quickly find members, claims, or providers</li>
+                    <li>• Press <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">Ctrl+/</kbd> to focus the search bar from anywhere</li>
                     <li>• Most data tables can be filtered and sorted by clicking column headers</li>
                     <li>• Your role determines what actions and data you can access</li>
                     <li>• System automatically saves drafts of forms and remembers your preferences</li>
-                    <li>• Use keyboard shortcuts: Ctrl+/ to open search, Esc to close modals</li>
+                    <li>• Use keyboard shortcuts: <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">Esc</kbd> to close modals and search results</li>
                   </ul>
                 </div>
               </CardContent>

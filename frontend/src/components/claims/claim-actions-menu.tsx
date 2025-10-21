@@ -25,6 +25,7 @@ interface ClaimActionsMenuProps {
   userRole: string
   userId: number
   onClaimUpdate: (updatedClaim: Claim) => void
+  onViewDetails?: (claim: Claim) => void
 }
 
 // Simple toast function until we have a proper toast system
@@ -45,7 +46,7 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info')
   }, 3000)
 }
 
-export function ClaimActionsMenu({ claim, userRole, userId, onClaimUpdate }: ClaimActionsMenuProps) {
+export function ClaimActionsMenu({ claim, userRole, userId, onClaimUpdate, onViewDetails }: ClaimActionsMenuProps) {
   const [loading, setLoading] = useState(false)
 
   // Determine if user can perform actions on this claim
@@ -120,7 +121,8 @@ export function ClaimActionsMenu({ claim, userRole, userId, onClaimUpdate }: Cla
   }
 
   const handleViewClaim = () => {
-    // TODO: Implement claim detail modal or navigation
+    if (onViewDetails) return onViewDetails(claim)
+    // Fallback toast for legacy usage
     showToast(`View claim #${claim.id} details`, 'info')
   }
 

@@ -28,21 +28,24 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
 	def validate(self, data):
 		"""Validate the value based on value_type"""
 		value_type = data.get('value_type', self.instance.value_type if self.instance else 'string')
+		# Normalize to lowercase for comparison (model may use uppercase enum values)
+		vt = str(value_type).lower() if value_type is not None else 'string'
 		value = data.get('value')
 		
-		if value_type == 'integer':
+		if vt == 'integer':
 			try:
-				int(value)
+				int(str(value))
 			except (ValueError, TypeError):
 				raise serializers.ValidationError("Value must be a valid integer")
-		elif value_type == 'decimal':
+		elif vt == 'decimal':
 			try:
 				from decimal import Decimal
-				Decimal(value)
+				Decimal(str(value))
 			except:
 				raise serializers.ValidationError("Value must be a valid decimal number")
-		elif value_type == 'boolean':
-			if value.lower() not in ['true', 'false', '1', '0', 'yes', 'no', 'on', 'off']:
+		elif vt == 'boolean':
+			val_str = str(value).lower() if value is not None else ''
+			if val_str not in ['true', 'false', '1', '0', 'yes', 'no', 'on', 'off']:
 				raise serializers.ValidationError("Value must be a valid boolean (true/false, 1/0, yes/no, on/off)")
 		
 		return data

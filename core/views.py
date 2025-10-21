@@ -37,11 +37,11 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
 	permission_classes = [IsAuthenticated]
 	pagination_class = OptimizedPagination
 
-	@method_decorator(cache_page(600))  # Cache for 10 minutes (settings change less frequently)
+	# Do not cache settings list/retrieve: these are admin-controlled values
+	# and must reflect immediately after updates to avoid confusion.
 	def list(self, request, *args, **kwargs):
 		return super().list(request, *args, **kwargs)
 
-	@method_decorator(cache_page(600))  # Cache for 10 minutes
 	def retrieve(self, request, *args, **kwargs):
 		return super().retrieve(request, *args, **kwargs)
 	

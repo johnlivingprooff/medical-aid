@@ -75,10 +75,16 @@ export default function Settings() {
             const systemSettingsData = responseData.results || responseData
             setSystemSettings(systemSettingsData)
 
-            // Initialize system form data
+            // Initialize system form data with normalized boolean values
             const initialSystemData: Record<string, string> = {}
             systemSettingsData.forEach((setting: SystemSetting) => {
-              initialSystemData[setting.key] = setting.value
+              const vt = (setting.value_type || '').toString().toLowerCase()
+              if (vt === 'boolean') {
+                const val = (setting.value || '').toString().toLowerCase()
+                initialSystemData[setting.key] = ['true', '1', 'yes', 'on'].includes(val) ? 'true' : 'false'
+              } else {
+                initialSystemData[setting.key] = setting.value
+              }
             })
             setSystemFormData(initialSystemData)
           } catch (systemError) {
@@ -306,38 +312,40 @@ export default function Settings() {
               <p className="text-sm text-muted-foreground">Configure system-wide settings and thresholds</p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {systemSettings.map((setting) => (
+              {systemSettings.map((setting) => {
+                const normalizedType = (setting.value_type || '').toString().toLowerCase()
+                return (
                 <div key={setting.key} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor={setting.key} className="text-sm font-medium">
                       {setting.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </Label>
                     <span className="text-xs text-muted-foreground">
-                      {setting.value_type}
+                      {normalizedType}
                     </span>
                   </div>
 
-                  {setting.value_type === 'boolean' ? (
+                  {normalizedType === 'boolean' ? (
                     <div className="flex items-center space-x-2">
                       <input
                         type="checkbox"
                         id={setting.key}
-                        checked={systemFormData[setting.key]?.toLowerCase() === 'true'}
+                        checked={(systemFormData[setting.key] || '').toString().toLowerCase() === 'true'}
                         onChange={(e) => handleSystemInputChange(setting.key, e.target.checked ? 'true' : 'false')}
                         className="h-4 w-4"
                       />
                       <Label htmlFor={setting.key} className="text-sm">
-                        {systemFormData[setting.key]?.toLowerCase() === 'true' ? 'Enabled' : 'Disabled'}
+                        {(systemFormData[setting.key] || '').toString().toLowerCase() === 'true' ? 'Enabled' : 'Disabled'}
                       </Label>
                     </div>
                   ) : (
                     <Input
                       id={setting.key}
-                      type={setting.value_type === 'decimal' || setting.value_type === 'integer' ? 'number' : 'text'}
+                      type={normalizedType === 'decimal' || normalizedType === 'integer' ? 'number' : 'text'}
                       value={systemFormData[setting.key] || ''}
                       onChange={(e) => handleSystemInputChange(setting.key, e.target.value)}
                       placeholder={`Enter ${setting.key.toLowerCase().replace(/_/g, ' ')}`}
-                      step={setting.value_type === 'decimal' ? '0.01' : undefined}
+                      step={normalizedType === 'decimal' ? '0.01' : undefined}
                     />
                   )}
 
@@ -351,7 +359,7 @@ export default function Settings() {
                     </p>
                   )}
                 </div>
-              ))}
+              )})}
             </CardContent>
           </Card>
         </>

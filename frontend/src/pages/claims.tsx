@@ -10,6 +10,7 @@ import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
 import { QuickActions } from '@/components/layout/quick-actions'
 import { ClaimActionsMenu } from '@/components/claims/claim-actions-menu'
+import ClaimDetailsModal from '@/components/modals/claim-details-modal'
 import { useAuth } from '@/components/auth/auth-context'
 import type { Claim } from '@/types/models'
 
@@ -33,6 +34,8 @@ export default function Claims() {
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState({ search: '', status: '' })
   const [showClaim, setShowClaim] = useState(false)
+  const [showClaimDetails, setShowClaimDetails] = useState(false)
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null)
   
   // Data for different tabs based on user role
   const [providersData, setProvidersData] = useState<any[] | null>(null)
@@ -69,6 +72,11 @@ export default function Claims() {
         claim.id === updatedClaim.id ? updatedClaim : claim
       )
     )
+  }
+
+  const handleViewClaimDetails = (claim: Claim) => {
+    setSelectedClaim(claim)
+    setShowClaimDetails(true)
   }
 
 
@@ -232,12 +240,16 @@ export default function Claims() {
                           </Badge>
                         </Td>
                         <Td>
-                          <ClaimActionsMenu
-                            claim={c}
-                            userRole={user.role}
-                            userId={user.id}
-                            onClaimUpdate={handleClaimUpdate}
-                          />
+                          <div className="flex items-center gap-2">
+                            <button className="text-accent hover:underline" onClick={() => handleViewClaimDetails(c)}>View Details</button>
+                            <ClaimActionsMenu
+                              claim={c}
+                              userRole={user.role}
+                              userId={user.id}
+                              onClaimUpdate={handleClaimUpdate}
+                              onViewDetails={handleViewClaimDetails}
+                            />
+                          </div>
                         </Td>
                       </Tr>
                     ))}
@@ -369,6 +381,7 @@ export default function Claims() {
       <Suspense fallback={<ModalLoader />}>
         <SubmitClaimModal open={showClaim} onOpenChange={setShowClaim} />
       </Suspense>
+      <ClaimDetailsModal open={showClaimDetails} onOpenChange={setShowClaimDetails} claim={selectedClaim} />
     </div>
   )
 }

@@ -106,7 +106,7 @@ class GlobalSearchView(APIView):
 
     def _search_claims(self, query, limit, user):
         """Search claims with role-based access"""
-        base_query = Claim.objects.select_related('patient', 'patient__scheme', 'service_provider')
+        base_query = Claim.objects.select_related('patient', 'patient__scheme', 'provider')
 
         # Filter based on user role
         if user.role == 'PATIENT':
@@ -120,7 +120,7 @@ class GlobalSearchView(APIView):
             # Providers can only see claims for their facility
             provider_profile = getattr(user, 'provider_profile', None)
             if provider_profile:
-                base_query = base_query.filter(service_provider=provider_profile)
+                base_query = base_query.filter(provider=provider_profile)
             else:
                 return []
 
@@ -130,8 +130,9 @@ class GlobalSearchView(APIView):
             Q(patient__user__first_name__icontains=query) |
             Q(patient__user__last_name__icontains=query) |
             Q(patient__member_id__icontains=query) |
-            Q(diagnosis__icontains=query) |
-            Q(treatment__icontains=query)
+            Q(diagnosis_code__icontains=query) |
+            Q(procedure_code__icontains=query) |
+            Q(notes__icontains=query)
         )[:limit]
 
         return [{
@@ -142,9 +143,9 @@ class GlobalSearchView(APIView):
             'url': f'/claims/{claim.id}',
             'metadata': {
                 'status': claim.status,
-                'amount': str(claim.total_amount),
-                'date': claim.date_of_service.strftime('%Y-%m-%d'),
-                'diagnosis': claim.diagnosis[:50] + '...' if len(claim.diagnosis) > 50 else claim.diagnosis
+                'amount': str(claim.cost),
+                'date': claim.date_of_service.strftime('%Y-%m-%d') if claim.date_of_service else claim.date_submitted.strftime('%Y-%m-%d'),
+                'diagnosis_code': claim.diagnosis_code[:50] if claim.diagnosis_code else 'N/A'
             }
         } for claim in claims]
 
