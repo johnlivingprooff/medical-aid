@@ -4,6 +4,10 @@ import { globalSearch } from '@/lib/api'
 import type { SearchResult, SearchResponse } from '@/types/api'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useNavigate } from 'react-router-dom'
+import { api } from '@/lib/api'
+import type { Claim } from '@/types/models'
+import ClaimDetailsModal from '@/components/modals/claim-details-modal'
+import { useAuth } from '@/components/auth/auth-context'
 
 interface SearchBarProps {
   placeholder?: string
@@ -29,8 +33,15 @@ export function SearchBar({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const debouncedQuery = useDebounce(query, 300)
+
+  // Local modals for entity-specific handling
+  const [showClaimDetails, setShowClaimDetails] = useState(false)
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null)
+  const [showInfoModal, setShowInfoModal] = useState(false)
+  const [infoResult, setInfoResult] = useState<SearchResult | null>(null)
 
   // Perform search when debounced query changes
   useEffect(() => {
@@ -69,7 +80,7 @@ export function SearchBar({
     }
   }
 
-  const handleResultClick = (result: SearchResult) => {
+  const handleResultClick = async (result: SearchResult) => {
     setQuery('')
     setResults([])
     setIsOpen(false)
@@ -78,8 +89,39 @@ export function SearchBar({
     if (onResultClick) {
       onResultClick(result)
     } else {
-      // Use React Router navigation
-      navigate(result.url)
+      // Default behavior: route or modal based on entity type
+      if (result.type === 'claim') {
+        try {
+          const claim = await api.get<Claim>(`/api/claims/${result.id}/`)
+          setSelectedClaim(claim)
+          setShowClaimDetails(true)
+        } catch (e) {
+          console.error('Failed to load claim details', e)
+        }
+        return
+      }
+      if (result.type === 'scheme') {
+        if (user?.role === 'ADMIN') {
+          navigate(`/schemes/${result.id}`)
+        } else {
+          setInfoResult(result)
+          setShowInfoModal(true)
+        }
+        return
+      }
+      if (result.type === 'member') {
+        // Only admins can access Members route
+        if (user?.role === 'ADMIN') {
+          navigate(`/members?member=${encodeURIComponent(String(result.id))}`)
+        } else {
+          setInfoResult(result)
+          setShowInfoModal(true)
+        }
+        return
+      }
+      // For other types (provider, service_type, benefit_type), show a lightweight info modal
+      setInfoResult(result)
+      setShowInfoModal(true)
     }
   }
 
@@ -308,6 +350,42 @@ export function SearchBar({
               <div className="mt-1 text-xs">Try adjusting your search or filter</div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Claim Details Modal */}
+      <ClaimDetailsModal open={showClaimDetails} onOpenChange={setShowClaimDetails} claim={selectedClaim} />
+
+      {/* Generic Info Modal for other result types */}
+      {showInfoModal && infoResult && (
+        <div className="fixed inset-0 z-[120] grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-lg border rounded-md shadow-xl border-border bg-card">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="text-sm font-semibold">{getEntityTypeLabel(infoResult.type)} Details</div>
+              <button
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setShowInfoModal(false)}
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-4 py-4 space-y-2">
+              <div className="text-sm font-medium">{infoResult.title}</div>
+              {infoResult.subtitle && (
+                <div className="text-xs text-muted-foreground">{infoResult.subtitle}</div>
+              )}
+              {infoResult.metadata && Object.keys(infoResult.metadata).length > 0 && (
+                <div className="p-3 mt-2 rounded bg-muted">
+                  <div className="mb-1 text-xs font-medium">Additional Info</div>
+                  <pre className="text-xs break-words whitespace-pre-wrap">{JSON.stringify(infoResult.metadata, null, 2)}</pre>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end px-4 py-3 border-t border-border">
+              <button className="px-3 py-1.5 text-sm rounded border" onClick={() => setShowInfoModal(false)}>Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

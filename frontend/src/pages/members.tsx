@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { UserPlus, Users, ArrowRight } from 'lucide-react'
 import { Mail } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/components/auth/auth-context'
 import { AddMemberModal } from '@/components/modals/add-member-modal'
 import { AddDependentModal } from '@/components/modals/add-dependent-modal'
@@ -139,6 +140,7 @@ function MemberCommunication({ member }: { member: any }) {
 
 export default function Members() {
   const { user } = useAuth()
+  const location = useLocation()
   const [showAdd, setShowAdd] = useState(false)
   const [showAddDependent, setShowAddDependent] = useState(false)
   const [showChangeScheme, setShowChangeScheme] = useState(false)
@@ -186,6 +188,23 @@ export default function Members() {
       .finally(() => { if (!mounted) return; setLoading(false) })
     return () => { mounted = false }
   }, [showAdd, ordering, search])
+
+  // If navigated with ?member=<id>, auto-select that member
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const memberId = params.get('member')
+    if (!memberId) return
+    // If already in list, select it; otherwise fetch
+    const idNum = Number(memberId)
+    if (Number.isFinite(idNum)) {
+      const existing = members.find(m => m.id === idNum)
+      if (existing) {
+        setSelectedMember(existing)
+      } else {
+        api.get<any>(`/api/patients/${idNum}/`).then(setSelectedMember).catch(() => {})
+      }
+    }
+  }, [location.search, members])
 
   useEffect(() => { localStorage.setItem('members:search', search) }, [search])
 
