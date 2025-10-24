@@ -343,7 +343,9 @@ export default function Members() {
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden w-64 sm:block"><Input placeholder="Search members" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-          <Button onClick={() => setShowAdd(true)}><UserPlus className="w-4 h-4 mr-2" /> Add Member</Button>
+          {user?.role === 'ADMIN' && (
+            <Button onClick={() => setShowAdd(true)}><UserPlus className="w-4 h-4 mr-2" /> Add Member</Button>
+          )}
         </div>
       </div>
 
@@ -388,8 +390,12 @@ export default function Members() {
                             <UIButton variant="ghost" className="px-2">⋮</UIButton>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { patchMember(m.id, { status: m.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' }) }}>Toggle Status</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name })}>Edit Details</DropdownMenuItem>
+                            {user?.role === 'ADMIN' && (
+                              <>
+                                <DropdownMenuItem onClick={() => { patchMember(m.id, { status: m.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' }) }}>Toggle Status</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name })}>Edit Details</DropdownMenuItem>
+                              </>
+                            )}
                             {/* Only show Add Dependent for principal members */}
                             {m.relationship === 'PRINCIPAL' && (
                               <DropdownMenuItem 
@@ -510,7 +516,7 @@ export default function Members() {
           </CardContent>
         </Card>
       </div>
-  <AddMemberModal open={showAdd} onOpenChange={setShowAdd} />
+  {user?.role === 'ADMIN' && <AddMemberModal open={showAdd} onOpenChange={setShowAdd} />}
   <AddDependentModal 
     open={showAddDependent} 
     onOpenChange={setShowAddDependent}
@@ -530,25 +536,27 @@ export default function Members() {
       })
     }}
   />
-  <ChangeSchemeModal
-    open={showChangeScheme}
-    onOpenChange={setShowChangeScheme}
-    member={memberForSchemeChange}
-    onSuccess={() => {
-      setShowChangeScheme(false)
-      setMemberForSchemeChange(null)
-      // Refresh the members list
-      const url = `/api/patients/?ordering=${encodeURIComponent(ordering)}${search ? `&search=${encodeURIComponent(search)}` : ''}`
-      api.get<any>(url).then((resp: any) => {
-        const results = resp.results ?? resp
-        setMembers(results)
-        if (results.length > 0) {
-          loadAllBalances(results)
-          loadAllDependentEligibility(results)
-        }
-      })
-    }}
-  />
+  {user?.role === 'ADMIN' && (
+    <ChangeSchemeModal
+      open={showChangeScheme}
+      onOpenChange={setShowChangeScheme}
+      member={memberForSchemeChange}
+      onSuccess={() => {
+        setShowChangeScheme(false)
+        setMemberForSchemeChange(null)
+        // Refresh the members list
+        const url = `/api/patients/?ordering=${encodeURIComponent(ordering)}${search ? `&search=${encodeURIComponent(search)}` : ''}`
+        api.get<any>(url).then((resp: any) => {
+          const results = resp.results ?? resp
+          setMembers(results)
+          if (results.length > 0) {
+            loadAllBalances(results)
+            loadAllDependentEligibility(results)
+          }
+        })
+      }}
+    />
+  )}
     </div>
   )
 }

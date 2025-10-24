@@ -756,3 +756,354 @@ export interface BillingSettings {
   created_at: string;
   updated_at: string;
 }
+
+// EDI (Electronic Data Interchange) Types
+export interface EDITransaction {
+  id: number;
+  transaction_id: string;
+  transaction_type: 'CLAIM_SUBMISSION' | 'CLAIM_STATUS' | 'PAYMENT_ADVICE' | 'ELIGIBILITY' | 'ENROLLMENT';
+  status: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'ERROR';
+  sender_id: string;
+  receiver_id: string;
+  provider?: number;
+  provider_name?: string;
+  claim?: number;
+  claim_reference?: string;
+  patient?: number;
+  patient_member_id?: string;
+  x12_content: string;
+  parsed_data?: any;
+  submitted_at: string;
+  processed_at?: string;
+  response_received_at?: string;
+  response_transaction_id?: string;
+  response_content?: string;
+  response_parsed_data?: any;
+  error_code?: string;
+  error_message?: string;
+  validation_errors?: Array<{
+    code: string;
+    message: string;
+    element: string;
+    segment?: string;
+    value?: any;
+  }>;
+  control_number?: string;
+  group_control_number?: string;
+  segment_count: number;
+}
+
+export interface EDIValidationRule {
+  id: number;
+  rule_name: string;
+  rule_type: 'REQUIRED_SEGMENT' | 'REQUIRED_ELEMENT' | 'FORMAT_VALIDATION' | 'CODE_VALIDATION' | 'CROSS_REFERENCE';
+  description: string;
+  segment_id: string;
+  element_position?: number;
+  element_name: string;
+  required: boolean;
+  min_length?: number;
+  max_length?: number;
+  valid_codes?: string[];
+  regex_pattern?: string;
+  error_code: string;
+  error_message: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Provider Network Types
+export interface ProviderNetworkStatus {
+  provider: {
+    id: number;
+    username: string;
+    facility_name: string;
+    facility_type: string;
+    city: string;
+  };
+  scheme: {
+    id: number;
+    name: string;
+    category: string;
+  };
+  network_membership: {
+    status: 'ACTIVE' | 'PENDING' | 'SUSPENDED';
+    credential_status: 'APPROVED' | 'PENDING' | 'REJECTED';
+    effective_from: string;
+    effective_to?: string;
+    notes?: string;
+  };
+  real_time_status: {
+    is_active: boolean;
+    is_credentialed: boolean;
+    days_until_expiry?: number;
+    last_activity?: string;
+    activity_status: 'ACTIVE' | 'MODERATE' | 'INACTIVE';
+  };
+  network_health: {
+    health_score: number;
+    health_status: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
+    documents: {
+      total: number;
+      approved: number;
+      pending: number;
+      rejected: number;
+      completion_rate: number;
+    };
+  };
+  performance_metrics: {
+    period_days: number;
+    claims: {
+      total: number;
+      approved: number;
+      rejected: number;
+      pending: number;
+      approval_rate: number;
+    };
+    processing?: {
+      average_days?: number;
+      claims_processed: number;
+    };
+  };
+  alerts: Array<{
+    type: string;
+    severity: 'LOW' | 'MEDIUM' | 'HIGH';
+    message: string;
+    action_required: string;
+  }>;
+}
+
+export interface ProviderNetworkDashboard {
+  timestamp: string;
+  network_overview: {
+    total_memberships: number;
+    active_memberships: number;
+    pending_memberships: number;
+    suspended_memberships: number;
+    active_rate: number;
+  };
+  credentialing_status: {
+    approved: number;
+    pending: number;
+    rejected: number;
+    completion_rate: number;
+  };
+  facility_breakdown: Record<string, number>;
+  critical_alerts: Array<{
+    type: string;
+    provider: string;
+    scheme: string;
+    days_until_expiry?: number;
+    severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  }>;
+  alerts_count: number;
+  average_health_score: number;
+}
+
+export interface ProviderDirectory {
+  id: number;
+  username: string;
+  email: string;
+  facility_name: string;
+  facility_type: 'HOSPITAL' | 'CLINIC' | 'PHARMACY' | 'LAB' | 'IMAGING';
+  phone: string;
+  address: string;
+  city: string;
+  network_memberships: Array<{
+    scheme_name: string;
+    status: 'ACTIVE' | 'PENDING' | 'SUSPENDED';
+    credential_status: 'APPROVED' | 'PENDING' | 'REJECTED';
+    effective_from: string;
+    effective_to?: string;
+  }>;
+  performance_metrics: {
+    total_claims_90d: number;
+    approved_claims_90d: number;
+    total_invoices_90d: number;
+    active_networks: number;
+    approval_rate: number;
+  };
+  is_active: boolean;
+}
+
+export interface ProviderDetail extends ProviderDirectory {
+  date_joined: string;
+  last_login?: string;
+  network_memberships: Array<{
+    scheme_name: string;
+    scheme_category: string;
+    status: 'ACTIVE' | 'PENDING' | 'SUSPENDED';
+    credential_status: 'APPROVED' | 'PENDING' | 'REJECTED';
+    effective_from: string;
+    effective_to?: string;
+    notes?: string;
+    documents_count: number;
+    pending_documents: number;
+  }>;
+  recent_claims: Array<{
+    reference_number: string;
+    patient_member_id: string;
+    service_type: string;
+    cost: string;
+    status: string;
+    created_at: string;
+  }>;
+  performance_summary: {
+    period_days: number;
+    claims: {
+      total: number;
+      approved: number;
+      rejected: number;
+      pending: number;
+      approval_rate: number;
+    };
+    invoices: {
+      total: number;
+      paid: number;
+      payment_rate: number;
+    };
+  };
+  credentialing_status: {
+    total_memberships: number;
+    approved_credentials: number;
+    pending_credentials: number;
+    rejected_credentials: number;
+    completion_rate: number;
+  };
+}
+
+// Credentialing Types
+export interface ProviderNetworkMembership {
+  id: number;
+  provider: number;
+  provider_username: string;
+  scheme: number;
+  scheme_name: string;
+  status: 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'REVOKED';
+  credential_status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  effective_from: string;
+  effective_to?: string;
+  credentialed_at?: string;
+  notes?: string;
+  meta?: Record<string, any>;
+}
+
+export interface CredentialingDocument {
+  id: number;
+  membership: number;
+  uploaded_by: number;
+  uploaded_by_username: string;
+  file: string;
+  doc_type: string;
+  notes?: string;
+  status: 'PENDING' | 'REVIEWED' | 'REJECTED';
+  created_at: string;
+}
+
+export interface CredentialingReview {
+  id: number;
+  document: number;
+  document_type: string;
+  document_file_name: string;
+  provider_name: string;
+  scheme_name: string;
+  reviewer?: number;
+  reviewer_name?: string;
+  status: 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'ESCALATED';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  validation_score?: number;
+  review_notes?: string;
+  rejection_reason?: string;
+  auto_checks_passed?: number;
+  manual_checks_required?: number;
+  assigned_at?: string;
+  reviewed_at?: string;
+  due_date?: string;
+  escalated_to?: number;
+  escalated_to_name?: string;
+  escalation_reason?: string;
+  review_history?: any;
+  days_overdue?: number;
+  is_overdue?: boolean;
+}
+
+export interface DocumentExpiryAlert {
+  id: number;
+  document: number;
+  document_type: string;
+  provider_name: string;
+  alert_type: 'EXPIRING_SOON' | 'EXPIRED' | 'MISSING';
+  days_until_expiry?: number;
+  message: string;
+  is_acknowledged: boolean;
+  acknowledged_by?: number;
+  acknowledged_by_name?: string;
+  acknowledged_at?: string;
+  created_at: string;
+}
+
+export interface CredentialingDashboard {
+  timestamp: string;
+  user_role: 'ADMIN' | 'PROVIDER' | string;
+  // Admin
+  overview?: {
+    total_memberships: number;
+    pending_credentialing: number;
+    approved_credentialing: number;
+    rejected_credentialing: number;
+    credentialing_completion_rate: number;
+  };
+  documents?: {
+    total: number;
+    pending_reviews: number;
+    reviewed: number;
+    rejected: number;
+    review_completion_rate: number;
+  };
+  reviews?: {
+    total_reviews: number;
+    pending: number;
+    in_review: number;
+    completed: number;
+    overdue: number;
+  };
+  activity?: {
+    recent_uploads: number;
+    recent_reviews: number;
+    period_days: number;
+  };
+  // Provider
+  memberships?: Array<{
+    scheme: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+    documents: {
+      total: number;
+      approved: number;
+      rejected: number;
+      pending: number;
+      completion_rate: number;
+    };
+  }>;
+  recent_uploads?: Array<{
+    id: number;
+    doc_type: string;
+    status: string;
+    uploaded_at: string;
+    notes?: string;
+  }>;
+  // Reviewer (fallback)
+  assigned_reviews?: {
+    pending: number;
+    in_review: number;
+    overdue: number;
+    total: number;
+  };
+  recent_completed?: Array<{
+    id: number;
+    document_type: string;
+    action: string;
+    completed_at: string;
+    notes?: string;
+  }>;
+}

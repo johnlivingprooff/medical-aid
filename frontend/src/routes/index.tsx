@@ -17,6 +17,9 @@ const Settings = lazy(() => import('@/pages/settings'))
 const Help = lazy(() => import('@/pages/help'))
 const Admin = lazy(() => import('@/pages/admin'))
 const SubscriptionTiersAdmin = lazy(() => import('@/pages/subscription-tiers-admin'))
+const EDITransactions = lazy(() => import('@/pages/edi-transactions'))
+const ProviderNetworkDashboard = lazy(() => import('@/pages/provider-network-dashboard'))
+const Credentialing = lazy(() => import('@/pages/credentialing'))
 const Login = lazy(() => import('@/pages/login'))
 
 // Loading component for Suspense fallback
@@ -42,8 +45,8 @@ export function AppRoutes() {
           <Route path="/claims" element={<Claims />} />
           <Route path="/schemes" element={<RoleRoute allow={["ADMIN"]}><Schemes /></RoleRoute>} />
           <Route path="/schemes/:id" element={<RoleRoute allow={["ADMIN"]}><SchemeDetails /></RoleRoute>} />
-          <Route path="/providers" element={<RoleRoute allow={["ADMIN","PROVIDER"]}><Providers /></RoleRoute>} />
-          <Route path="/members" element={<RoleRoute allow={["ADMIN"]}><Members /></RoleRoute>} />
+          <Route path="/providers" element={<RoleRoute allow={["ADMIN"]}><Providers /></RoleRoute>} />
+          <Route path="/members" element={<RoleRoute allow={["ADMIN","PROVIDER"]}><Members /></RoleRoute>} />
           <Route path="/analytics" element={<RoleRoute allow={["ADMIN"]}><Analytics /></RoleRoute>} />
           <Route path="/reports" element={<RoleRoute allow={["ADMIN"]}><Reports /></RoleRoute>} />
           <Route path="/alerts" element={<Alerts />} />
@@ -51,6 +54,9 @@ export function AppRoutes() {
           <Route path="/help" element={<Help />} />
           <Route path="/admin" element={<RoleRoute allow={["ADMIN"]}><Admin /></RoleRoute>} />
           <Route path="/admin/subscription-tiers" element={<RoleRoute allow={["ADMIN"]}><SubscriptionTiersAdmin /></RoleRoute>} />
+          <Route path="/edi-transactions" element={<RoleRoute allow={["ADMIN"]}><EDITransactions /></RoleRoute>} />
+          <Route path="/provider-network" element={<RoleRoute allow={["ADMIN"]}><ProviderNetworkDashboard /></RoleRoute>} />
+          <Route path="/credentialing" element={<RoleRoute allow={["ADMIN","PROVIDER"]}><Credentialing /></RoleRoute>} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/" replace />} />

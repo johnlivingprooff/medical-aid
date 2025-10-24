@@ -11,10 +11,22 @@ type RequestInitExtended = RequestInit & { noAuth?: boolean };
 
 async function request<T>(method: HttpMethod, path: string, body?: any, init?: RequestInitExtended): Promise<T> {
   const url = path.startsWith('http') ? path : `${API_URL.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(init?.noAuth ? {} : authHeader()),
   };
+  // Set JSON content-type only when not sending FormData and not already provided
+  const providedHeaders = init?.headers as HeadersInit | undefined;
+  const hasExplicitContentType = providedHeaders instanceof Headers
+    ? providedHeaders.has('Content-Type')
+    : Array.isArray(providedHeaders)
+      ? providedHeaders.some(([k]) => k.toLowerCase() === 'content-type')
+      : providedHeaders
+        ? Object.keys(providedHeaders as Record<string, string>).some(k => k.toLowerCase() === 'content-type')
+        : false;
+  if (!isFormData && !hasExplicitContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
   if (init?.headers) {
     const h = init.headers as HeadersInit;
     if (h instanceof Headers) {
@@ -29,7 +41,7 @@ async function request<T>(method: HttpMethod, path: string, body?: any, init?: R
   const res = await fetch(url, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     credentials: rest.credentials ?? 'include',
     ...rest,
   });
@@ -537,4 +549,146 @@ export const subscriptionBillingApi = {
     const query = queryParams.toString();
     return api.get<import('../types/models').PaymentStats>(`/api/schemes/billing/payment-stats/${query ? `?${query}` : ''}`);
   },
+};
+
+// EDI Integration API
+export const ediApi = {
+  submitTransaction: (data: { 
+    transaction_type: string; 
+    x12_content: string; 
+    claim?: number; 
+    patient?: number; 
+  }) =>
+    api.post<import('../types/models').EDITransaction>('/api/core/edi/submit/', data),
+  
+  getTransactions: (params?: {
+    transaction_type?: string;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.transaction_type) queryParams.append('transaction_type', params.transaction_type);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').EDITransaction[]>(`/api/core/edi/transactions/${query ? `?${query}` : ''}`);
+  },
+
+  getTransaction: (transactionId: string) =>
+    api.get<import('../types/models').EDITransaction>(`/api/core/edi/transactions/${transactionId}/`),
+
+  updateTransactionStatus: (transactionId: string, status: string) =>
+    api.post<import('../types/models').EDITransaction>(`/api/core/edi/transactions/${transactionId}/update-status/`, { status }),
+
+  getValidationRules: () =>
+    api.get<import('../types/models').EDIValidationRule[]>('/api/core/edi/validation-rules/'),
+};
+
+// Provider Network API
+export const networkApi = {
+  getProviderDirectory: (params?: {
+    facility_type?: string;
+    specialty?: string;
+    network_tier?: string;
+    search?: string;
+    is_accepting_new_patients?: boolean;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.facility_type) queryParams.append('facility_type', params.facility_type);
+    if (params?.specialty) queryParams.append('specialty', params.specialty);
+    if (params?.network_tier) queryParams.append('network_tier', params.network_tier);
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.is_accepting_new_patients !== undefined) 
+      queryParams.append('is_accepting_new_patients', String(params.is_accepting_new_patients));
+    const query = queryParams.toString();
+    return api.get<import('../types/models').ProviderDirectory[]>(`/api/core/providers/directory/${query ? `?${query}` : ''}`);
+  },
+
+  getProviderDetail: (providerId: number) =>
+    api.get<import('../types/models').ProviderDetail>(`/api/core/providers/directory/${providerId}/`),
+
+  getNetworkDashboard: (params?: { scheme_id?: number }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.scheme_id) queryParams.append('scheme_id', String(params.scheme_id));
+    const query = queryParams.toString();
+    return api.get<import('../types/models').ProviderNetworkDashboard>(`/api/core/providers/network/dashboard/${query ? `?${query}` : ''}`);
+  },
+
+  getNetworkStatus: (params?: {
+    scheme_id?: number;
+    provider_id?: number;
+    health_status?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.scheme_id) queryParams.append('scheme_id', String(params.scheme_id));
+    if (params?.provider_id) queryParams.append('provider_id', String(params.provider_id));
+    if (params?.health_status) queryParams.append('health_status', params.health_status);
+    const query = queryParams.toString();
+    return api.get<import('../types/models').ProviderNetworkStatus[]>(`/api/core/providers/network/status/${query ? `?${query}` : ''}`);
+  },
+};
+
+// Credentialing API
+export const credentialingApi = {
+  getDashboard: () => api.get<import('../types/models').CredentialingDashboard>('/api/accounts/credentialing/dashboard/'),
+
+  // Reviews
+  getReviews: (params?: { status?: string; priority?: string; reviewer?: number; page?: number; page_size?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.status) sp.append('status', params.status);
+    if (params?.priority) sp.append('priority', params.priority);
+    if (params?.reviewer) sp.append('reviewer', String(params.reviewer));
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.page_size) sp.append('page_size', String(params.page_size));
+    const q = sp.toString();
+    return api.get<import('../types/models').PaginatedResponse<import('../types/models').CredentialingReview>>(`/api/accounts/credentialing-reviews/${q ? `?${q}` : ''}`);
+  },
+  assignReview: (id: number, payload?: { priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' }) =>
+    api.post<{ message: string }>(`/api/accounts/credentialing-reviews/${id}/assign/`, payload ?? {}),
+  completeReview: (id: number, payload: { action: 'APPROVE' | 'REJECT' | 'ESCALATE'; notes?: string; rejection_reason?: string }) =>
+    api.post<{ message: string }>(`/api/accounts/credentialing-reviews/${id}/complete/`, payload),
+
+  // Documents
+  getDocuments: (params?: { membership?: number; doc_type?: string; status?: string; page?: number; page_size?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.membership) sp.append('membership', String(params.membership));
+    if (params?.doc_type) sp.append('doc_type', params.doc_type);
+    if (params?.status) sp.append('status', params.status);
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.page_size) sp.append('page_size', String(params.page_size));
+    const q = sp.toString();
+    return api.get<import('../types/models').PaginatedResponse<import('../types/models').CredentialingDocument>>(`/api/accounts/provider-credentialing-docs/${q ? `?${q}` : ''}`);
+  },
+  uploadDocument: (data: { membership: number; doc_type: string; notes?: string; file: File }) => {
+    const fd = new FormData();
+    fd.append('membership', String(data.membership));
+    fd.append('doc_type', data.doc_type);
+    if (data.notes) fd.append('notes', data.notes);
+    fd.append('file', data.file);
+    return api.post<import('../types/models').CredentialingDocument>('/api/accounts/provider-credentialing-docs/', fd, {
+      headers: {},
+    });
+  },
+
+  // Memberships (for provider to pick scheme)
+  getMemberships: (params?: { provider?: number; scheme?: number; status?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.provider) sp.append('provider', String(params.provider));
+    if (params?.scheme) sp.append('scheme', String(params.scheme));
+    if (params?.status) sp.append('status', params.status);
+    const q = sp.toString();
+    return api.get<import('../types/models').PaginatedResponse<import('../types/models').ProviderNetworkMembership>>(`/api/accounts/provider-network/${q ? `?${q}` : ''}`);
+  },
+
+  // Alerts
+  getExpiryAlerts: (params?: { alert_type?: string; is_acknowledged?: boolean }) => {
+    const sp = new URLSearchParams();
+    if (params?.alert_type) sp.append('alert_type', params.alert_type);
+    if (params?.is_acknowledged !== undefined) sp.append('is_acknowledged', String(params.is_acknowledged));
+    const q = sp.toString();
+    return api.get<import('../types/models').PaginatedResponse<import('../types/models').DocumentExpiryAlert>>(`/api/accounts/expiry-alerts/${q ? `?${q}` : ''}`);
+  },
+  acknowledgeAlert: (id: number) => api.post<{ message: string }>(`/api/accounts/expiry-alerts/${id}/acknowledge/`),
 };

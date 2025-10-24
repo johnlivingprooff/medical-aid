@@ -55,19 +55,23 @@ class PatientViewSet(viewsets.ModelViewSet):
 	search_fields = ['user__username']
 	pagination_class = OptimizedPagination
 
-	@method_decorator(cache_page(300))  # Cache for 5 minutes
 	def list(self, request, *args, **kwargs):
 		return super().list(request, *args, **kwargs)
 
-	@method_decorator(cache_page(300))  # Cache for 5 minutes
 	def retrieve(self, request, *args, **kwargs):
 		return super().retrieve(request, *args, **kwargs)
 
 	def get_queryset(self):
 		user = self.request.user
 		qs = super().get_queryset()
-		if getattr(user, 'role', None) == 'PATIENT':
+		role = getattr(user, 'role', None)
+		if role == 'PATIENT':
 			return qs.filter(user=user)
+		if role == 'PROVIDER':
+			# Providers should only see members who have claims at their facility
+			from django.db.models import Subquery
+			patient_ids = Claim.objects.filter(provider=user).values('patient_id')
+			return qs.filter(id__in=Subquery(patient_ids)).distinct()
 		return qs
 
 	def get_permissions(self):

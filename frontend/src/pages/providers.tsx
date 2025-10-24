@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { UserPlus } from 'lucide-react'
 import { AddProviderModal } from '@/components/modals/add-provider-modal'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ProviderDirectory } from '@/components/providers/provider-directory'
 
 export default function Providers() {
   const [data, setData] = useState<ProvidersAnalytics | null>(null)
@@ -71,6 +72,7 @@ export default function Providers() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="claims">Claims</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="directory">Directory</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard">
           <Card>
@@ -176,56 +178,13 @@ export default function Providers() {
             </CardContent>
           </Card>
         </TabsContent>
+          <TabsContent value="directory">
+            <ProviderDirectory />
+          </TabsContent>
       </Tabs>
-      <ProviderNetworkAndEdi />
       <AddProviderModal open={showAdd} onOpenChange={setShowAdd} />
     </div>
   )
 }
 
-function ProviderNetworkAndEdi() {
-  const [x12, setX12] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<any | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  async function submitEDI() {
-    setSubmitting(true)
-    setError(null)
-    setResult(null)
-    try {
-      const res = await api.post<any>('/api/core/edi/submit/', { x12 })
-      setResult(res)
-    } catch (e: any) {
-      setError(e.message || 'Failed to submit EDI')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader><CardTitle>Provider Network Management</CardTitle></CardHeader>
-        <CardContent>
-          <div className="text-xs text-muted-foreground mb-2">Directory and credentialing (basic placeholder).</div>
-          <div className="text-xs">Coming soon: add/remove providers to network, upload credentialing documents.</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle>EDI Integration</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          <textarea className="w-full h-32 border rounded p-2 text-sm" placeholder="Paste X12 here (e.g., 837P)" value={x12} onChange={e => setX12(e.target.value)} />
-          <Button onClick={submitEDI} disabled={submitting || !x12.trim()}>Submit</Button>
-          {error && <div className="text-xs text-destructive">{error}</div>}
-          {result && (
-            <div className="text-xs">
-              <div>Status: <Badge>{result.status}</Badge></div>
-              <pre className="mt-2 whitespace-pre-wrap bg-muted p-2 rounded">{JSON.stringify(result, null, 2)}</pre>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+// Removed legacy Provider Network & EDI placeholder per updated requirements
