@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
+import { capitalizeFirst } from '@/lib/format-text'
 import { X, Edit, Trash2, Plus } from 'lucide-react'
 import type { SchemeCategory, BenefitType, SchemeBenefit } from '@/types/models'
 import { EditBenefitModal } from './edit-benefit-modal'
@@ -164,7 +165,7 @@ export function ManageSchemesModal({ open, onOpenChange, schemeId }: Props) {
                     {benefits.map(b => (
                       <div key={b.id} className="flex items-center justify-between p-2 text-sm border rounded">
                         <div className="flex-1">
-                          <div className="font-medium">{b.benefit_type_detail?.name}</div>
+                          <div className="font-medium">{capitalizeFirst(b.benefit_type_detail?.name)}</div>
                           <div className="text-xs text-muted-foreground">
                             {b.coverage_period} • {b.coverage_limit_count ?? 'No count limit'} • {b.coverage_amount != null ? `${b.coverage_amount} MWK` : 'No amount limit'}
                             {b.deductible_amount > 0 && ` • Deductible: ${b.deductible_amount} MWK`}

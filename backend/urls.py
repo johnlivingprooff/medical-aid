@@ -19,7 +19,7 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenRefreshView
 from accounts.views import CustomTokenObtainPairView, MFAVerifyView
-from core.views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView
+from core.views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView, DetailedClaimsReportView
 from django.conf import settings
 from django.conf.urls.static import static
 import debug_toolbar
@@ -47,6 +47,7 @@ urlpatterns = [
     path('api/alerts/', AlertsListView.as_view(), name='alerts-root'),
     path('api/reports/scheme-usage/', SchemeUsageReportView.as_view(), name='report-scheme-usage-root'),
     path('api/reports/disease-stats/', DiseaseStatsReportView.as_view(), name='report-disease-stats-root'),
+    path('api/reports/detailed-claims/', DetailedClaimsReportView.as_view(), name='report-detailed-claims-root'),
 ]
 
 if settings.DEBUG:

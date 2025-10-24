@@ -31,6 +31,9 @@ export interface Patient {
   id: number;
   user: number;
   user_username: string;
+  user_first_name: string;
+  user_last_name: string;
+  user_email: string;
   user_date_joined: string;
   member_id: string;
   date_of_birth: string;
@@ -97,6 +100,7 @@ export interface Claim {
   patient_detail: Patient;
   provider: number;
   provider_username: string;
+  provider_facility_name: string;
   service_type: number;
   service_type_name: string;
   cost: number;

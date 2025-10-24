@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
+import { capitalizeFirst } from '@/lib/format-text'
+import { formatFullName } from '@/lib/format-name'
 import { Button } from '@/components/ui/button'
 import { ManageSchemesModal } from '@/components/modals/manage-schemes-modal'
 import { AddSubscriptionTierModal } from '@/components/modals/add-subscription-tier-modal'
@@ -12,7 +14,15 @@ import { EditSubscriptionTierModal } from '@/components/modals/edit-subscription
 import { Plus, Edit } from 'lucide-react'
 import type { SchemeBenefit, SubscriptionTier, SchemeCategory } from '@/types/models'
 
-type Member = { id: number; username: string; joined: string; next_renewal: string; amount_spent_12m: number }
+type Member = { 
+  id: number; 
+  username: string; 
+  user_first_name: string;
+  user_last_name: string;
+  joined: string; 
+  next_renewal: string; 
+  amount_spent_12m: number;
+}
 type Scheme = { id: number; name: string; description?: string; price: number; is_active: boolean; members: Member[]; benefits: SchemeBenefit[]; subscription_tiers: SubscriptionTier[] }
 
 export default function SchemeDetails() {
@@ -123,7 +133,7 @@ export default function SchemeDetails() {
                     <div key={benefit.id} className="p-4 border rounded-lg shadow-sm bg-card">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium">{benefit.benefit_type_detail.name}</h4>
+                          <h4 className="text-sm font-medium">{capitalizeFirst(benefit.benefit_type_detail.name)}</h4>
                           <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                             benefit.is_active
                               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
@@ -346,7 +356,7 @@ export default function SchemeDetails() {
               return (
                 <div key={m.id} className="p-3 border rounded">
                   <div className="flex items-center justify-between text-sm">
-                    <div className="font-medium">{m.username}</div>
+                    <div className="font-medium">{formatFullName(m.user_first_name, m.user_last_name)}</div>
                     <div className="text-muted-foreground">{percent}% used</div>
                   </div>
                   <div className="h-2 mt-2 rounded bg-muted">

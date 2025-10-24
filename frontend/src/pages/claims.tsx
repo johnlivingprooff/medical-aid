@@ -8,6 +8,8 @@ import { Separator } from '@/components/ui/separator'
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
+import { capitalizeFirst } from '@/lib/format-text'
 import { QuickActions } from '@/components/layout/quick-actions'
 import { ClaimActionsMenu } from '@/components/claims/claim-actions-menu'
 import ClaimDetailsModal from '@/components/modals/claim-details-modal'
@@ -141,7 +143,15 @@ export default function Claims() {
     let list = claims
     if (filters.search) {
       const q = filters.search.toLowerCase()
-      list = list.filter(c => `${c.id}`.includes(q) || c.patient_detail?.user_username?.toLowerCase().includes(q) || c.patient_detail?.member_id?.toLowerCase().includes(q) || c.service_type_name?.toLowerCase().includes(q))
+      list = list.filter(c => 
+        `${c.id}`.includes(q) || 
+        c.patient_detail?.user_username?.toLowerCase().includes(q) || 
+        c.patient_detail?.member_id?.toLowerCase().includes(q) || 
+        c.patient_detail?.user_first_name?.toLowerCase().includes(q) ||
+        c.patient_detail?.user_last_name?.toLowerCase().includes(q) ||
+        formatFullName(c.patient_detail?.user_first_name, c.patient_detail?.user_last_name).toLowerCase().includes(q) ||
+        c.service_type_name?.toLowerCase().includes(q)
+      )
     }
     if (filters.status) list = list.filter(c => c.status === filters.status)
     return list
@@ -229,9 +239,9 @@ export default function Claims() {
                     {!loading && filtered.map((c) => (
                       <Tr key={c.id}>
                         <Td>#{c.id}</Td>
-                        <Td>{c.patient_detail?.user_username}</Td>
-                        {user.role === 'ADMIN' && <Td>{c.provider_username || `#${c.provider}`}</Td>}
-                        <Td>{c.service_type_name}</Td>
+                        <Td>{formatFullName(c.patient_detail?.user_first_name, c.patient_detail?.user_last_name)}</Td>
+                        {user.role === 'ADMIN' && <Td>{c.provider_facility_name || c.provider_username || `#${c.provider}`}</Td>}
+                        <Td>{capitalizeFirst(c.service_type_name)}</Td>
                         <Td>{new Date(c.date_submitted).toLocaleDateString()}</Td>
                         <Td className="text-right">{formatCurrency(c.cost)}</Td>
                         <Td>

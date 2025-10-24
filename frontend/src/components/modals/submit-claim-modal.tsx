@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
 import { X } from 'lucide-react'
 
 type Props = { open: boolean; onOpenChange: (v: boolean) => void }
@@ -159,10 +160,7 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
               <Label htmlFor="patient">Member</Label>
               <SearchableSelect
                 options={patients.map(p => {
-                  const firstName = p.user_first_name || p.first_name || ''
-                  const lastName = p.user_last_name || p.last_name || ''
-                  const fullName = firstName && lastName ? `${firstName} ${lastName}` : ''
-                  const displayName = fullName || p.user_username
+                  const displayName = formatFullName(p.user_first_name, p.user_last_name)
                   
                   // Create searchable text that includes all relevant fields
                   const searchableText = [
@@ -170,8 +168,8 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
                     p.user_username,
                     p.member_id,
                     p.scheme_name,
-                    firstName,
-                    lastName
+                    p.user_first_name,
+                    p.user_last_name
                   ].filter(Boolean).join(' ')
                   
                   return {
@@ -184,7 +182,7 @@ export function SubmitClaimModal({ open, onOpenChange }: Props) {
                 value={patient}
                 onChange={(value) => setPatient(Number(value))}
                 placeholder="Search for a member..."
-                searchPlaceholder="Type member name, ID, username, or scheme..."
+                searchPlaceholder="Type member name, ID, or scheme..."
                 required
               />
             </div>

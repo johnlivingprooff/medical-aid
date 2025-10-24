@@ -13,6 +13,8 @@ import { Separator } from '@/components/ui/separator';
 import { X, AlertCircle, CheckCircle, Clock, DollarSign, FileText } from 'lucide-react';
 import { CurrencyUtils, createCurrencyInputProps } from '@/lib/currency-enhanced';
 import { MedicalAidApi, ErrorHandler, apiClient } from '@/lib/api-enhanced';
+import { formatFullName } from '@/lib/format-name';
+import { capitalizeFirst } from '@/lib/format-text';
 import type { 
   Patient, 
   BenefitType, 
@@ -308,7 +310,7 @@ export function EnhancedClaimSubmissionModal({ open, onOpenChange }: Props) {
           <option value={0} disabled>Select member...</option>
           {patients.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.user_username} ({p.member_id})
+              {formatFullName(p.first_name, p.last_name)} ({p.member_id})
             </option>
           ))}
         </select>
@@ -316,7 +318,7 @@ export function EnhancedClaimSubmissionModal({ open, onOpenChange }: Props) {
 
       {selectedPatient && (
         <div className="p-3 bg-muted rounded-lg text-sm">
-          <div className="font-medium">{selectedPatient.user_username}</div>
+          <div className="font-medium">{formatFullName(selectedPatient.first_name, selectedPatient.last_name)}</div>
           <div className="text-muted-foreground">
             {selectedPatient.scheme_name} • {selectedPatient.relationship} • Status: {selectedPatient.status}
           </div>
@@ -533,11 +535,11 @@ export function EnhancedClaimSubmissionModal({ open, onOpenChange }: Props) {
         <CardContent className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span>Member:</span>
-            <span>{selectedPatient?.user_username} ({selectedPatient?.member_id})</span>
+            <span>{formatFullName(selectedPatient?.first_name, selectedPatient?.last_name)} ({selectedPatient?.member_id})</span>
           </div>
           <div className="flex justify-between">
             <span>Service:</span>
-            <span>{benefitTypes.find(bt => bt.id === formData.service_type)?.name}</span>
+            <span>{capitalizeFirst(benefitTypes.find(bt => bt.id === formData.service_type)?.name)}</span>
           </div>
           <div className="flex justify-between">
             <span>Date of Service:</span>

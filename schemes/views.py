@@ -259,7 +259,7 @@ class SchemeCategoryViewSet(viewsets.ModelViewSet):
 		patients = (
 			Patient.objects.select_related('user')
 			.filter(scheme=scheme)
-			.values('id', 'user__id', 'user__username', 'user__date_joined')
+			.values('id', 'user__id', 'user__username', 'user__first_name', 'user__last_name', 'user__date_joined')
 		)
 		one_year_ago = timezone.now() - timedelta(days=365)
 		# Claims spend per patient in last 12 months (approved only)
@@ -284,6 +284,8 @@ class SchemeCategoryViewSet(viewsets.ModelViewSet):
 			members.append({
 				'id': p['id'],
 				'username': p['user__username'],
+				'user_first_name': p['user__first_name'],
+				'user_last_name': p['user__last_name'],
 				'joined': joined,
 				'next_renewal': renewal,
 				'amount_spent_12m': amount_spent,

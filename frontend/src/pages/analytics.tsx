@@ -3,11 +3,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
 import { BarChart3, Users, DollarSign, TrendingUp } from 'lucide-react'
 
 interface MemberAnalytics {
   member_id: number
   member: string
+  user_first_name?: string
+  user_last_name?: string
+  member_full_name?: string
   scheme: string
   total_claims: number
   approved_amount: number
@@ -189,7 +193,7 @@ export default function Analytics() {
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-muted-foreground w-6">#{index + 1}</span>
                     <div>
-                      <p className="text-sm font-medium">{member.member}</p>
+                      <p className="text-sm font-medium">{formatFullName(member.user_first_name, member.user_last_name) || member.member_full_name || member.member}</p>
                       <p className="text-xs text-muted-foreground">{member.scheme}</p>
                     </div>
                   </div>

@@ -6,6 +6,8 @@ import { api, getProvidersAnalytics } from '@/lib/api'
 import type { ProvidersAnalytics } from '@/types/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
+import { capitalizeFirst } from '@/lib/format-text'
 import { Button } from '@/components/ui/button'
 import { UserPlus } from 'lucide-react'
 import { AddProviderModal } from '@/components/modals/add-provider-modal'
@@ -133,7 +135,7 @@ export default function Providers() {
                       {!claimsLoading && claims.map((c) => (
                         <Tr key={c.id}>
                           <Td>{c.date_of_service ? new Date(c.date_of_service).toLocaleDateString() : '—'}</Td>
-                          <Td>{c.patient_detail?.user_username || '—'}</Td>
+                          <Td>{formatFullName(c.patient_detail?.user_first_name, c.patient_detail?.user_last_name)}</Td>
                           <Td>{c.service_type_name || '—'}</Td>
                           <Td>{formatCurrency(c.cost)}</Td>
                           <Td><Badge variant={
@@ -164,7 +166,7 @@ export default function Providers() {
                       <Thead><Tr><Th>Service</Th><Th>Count</Th><Th>Amount</Th></Tr></Thead>
                       <Tbody>
                         {detail.top_services.map((s: any, idx: number) => (
-                          <Tr key={idx}><Td>{s.service_type}</Td><Td>{s.count}</Td><Td>{formatCurrency(s.amount)}</Td></Tr>
+                          <Tr key={idx}><Td>{capitalizeFirst(s.service_type_name || s.service_type)}</Td><Td>{s.count}</Td><Td>{formatCurrency(s.amount)}</Td></Tr>
                         ))}
                       </Tbody>
                     </Table>

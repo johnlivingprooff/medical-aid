@@ -43,7 +43,9 @@ class PatientViewSet(viewsets.ModelViewSet):
 	queryset = Patient.objects.select_related(
 		'user',
 		'scheme',
-		'principal_member'
+		'principal_member',
+		'member_subscription',
+		'member_subscription__tier'
 	).prefetch_related(
 		'dependents'
 	).all()
@@ -286,6 +288,7 @@ class ClaimViewSet(viewsets.ModelViewSet):
 		'patient__user',
 		'patient__scheme',
 		'provider',
+		'provider__provider_profile',
 		'service_type',
 		'processed_by'
 	).all()  # Removed heavy prefetch_related for better pagination performance
@@ -672,7 +675,8 @@ class PreAuthorizationRuleViewSet(viewsets.ModelViewSet):
 
 class PreAuthorizationRequestViewSet(viewsets.ModelViewSet):
 	queryset = PreAuthorizationRequest.objects.select_related(
-		'patient__user', 'provider', 'benefit_type', 'requested_by', 'reviewed_by'
+		'patient__user', 'provider', 'provider__provider_profile', 
+		'benefit_type', 'requested_by', 'reviewed_by'
 	).all()
 	serializer_class = PreAuthorizationRequestSerializer
 	permission_classes = [permissions.IsAuthenticated]
@@ -915,7 +919,8 @@ class PreAuthorizationApprovalViewSet(viewsets.ReadOnlyModelViewSet):
 
 class FraudAlertViewSet(viewsets.ModelViewSet):
 	queryset = FraudAlert.objects.select_related(
-		'claim__patient__user', 'claim__provider', 'patient__user', 'provider', 'reviewed_by'
+		'claim__patient__user', 'claim__provider', 'claim__provider__provider_profile',
+		'patient__user', 'provider', 'provider__provider_profile', 'reviewed_by'
 	).all()
 	serializer_class = FraudAlertSerializer
 	permission_classes = [permissions.IsAuthenticated]

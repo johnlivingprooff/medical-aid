@@ -15,7 +15,13 @@ class MembersAnalyticsView(APIView):
         # Aggregate per member
         qs = (
             Claim.objects.select_related('patient__user', 'patient__scheme')
-            .values('patient', 'patient__user__username', 'patient__scheme__name')
+            .values(
+                'patient',
+                'patient__user__username',
+                'patient__user__first_name',
+                'patient__user__last_name',
+                'patient__scheme__name',
+            )
             .annotate(
                 total_claims=Count('id'),
                 approved_amount=Sum('cost', filter=Q(status=Claim.Status.APPROVED)),
@@ -25,6 +31,9 @@ class MembersAnalyticsView(APIView):
             {
                 'member_id': row['patient'],
                 'member': row['patient__user__username'],
+                'user_first_name': row.get('patient__user__first_name') or '',
+                'user_last_name': row.get('patient__user__last_name') or '',
+                'member_full_name': (f"{(row.get('patient__user__first_name') or '').strip()} {(row.get('patient__user__last_name') or '').strip()}".strip() or row['patient__user__username']),
                 'scheme': row['patient__scheme__name'],
                 'total_claims': row['total_claims'] or 0,
                 'approved_amount': float(row['approved_amount'] or 0),

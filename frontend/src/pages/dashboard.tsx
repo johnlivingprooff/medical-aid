@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { QuickActions } from '@/components/layout/quick-actions'
-import { BarChart3, Clock3, DollarSign, Users2, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { BarChart3, Clock3, DollarSign, Users2, TrendingUp, AlertTriangle, CheckCircle2, ShieldCheck } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useEffect, useMemo, useState } from 'react'
 import { getActivityFeed, getDashboardStats, api } from '@/lib/api'
@@ -12,6 +12,7 @@ import { useAuth } from '@/components/auth/auth-context'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { VerifyMembersModal } from '@/components/modals/verify-members-modal'
 
 function Kpi({ icon: Icon, label, value, delta, subtext, loading }: { icon: any; label: string; value: string | number; delta?: string; subtext?: string; loading?: boolean }) {
   return (
@@ -49,6 +50,7 @@ export default function Dashboard() {
   const [showActivityModal, setShowActivityModal] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<any>(null)
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [showVerifyMembers, setShowVerifyMembers] = useState(false)
 
   // Helper functions for quick date ranges
   const getDateRange = (range: string) => {
@@ -168,7 +170,15 @@ export default function Dashboard() {
           <h1>Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">Operational overview and recent activity for Alo‑Medical.</p>
         </div>
-        <QuickActions />
+        <div className="flex items-center gap-2">
+          {user?.role === 'PROVIDER' && (
+            <Button onClick={() => setShowVerifyMembers(true)} variant="outline">
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              Verify Members
+            </Button>
+          )}
+          <QuickActions />
+        </div>
       </div>
 
   {user?.role !== 'PATIENT' && (
@@ -652,6 +662,12 @@ export default function Dashboard() {
           </Card>
         </div>
       )}
+
+      {/* Verify Members Modal - Provider Only */}
+      <VerifyMembersModal 
+        open={showVerifyMembers} 
+        onOpenChange={setShowVerifyMembers} 
+      />
     </div>
   )
 }

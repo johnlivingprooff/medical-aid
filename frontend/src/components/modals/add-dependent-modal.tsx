@@ -8,6 +8,7 @@ import { api, API_URL, subscriptionApi } from '@/lib/api'
 import { X, Users, Heart, Baby } from 'lucide-react'
 import type { SubscriptionTier, Patient } from '@/types/models'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
 import { SubscriptionTierSelector } from '@/components/subscriptions/subscription-tier-selector'
 
 type Props = { 
@@ -161,7 +162,7 @@ export function AddDependentModal({ open, onOpenChange, principalMember, onSucce
             </CardTitle>
             {principalMember && (
               <p className="text-sm text-muted-foreground mt-1">
-                Adding dependent to {principalMember.first_name || principalMember.user_username}'s account
+                Adding dependent to {formatFullName(principalMember.user_first_name, principalMember.user_last_name)}'s account
               </p>
             )}
           </div>

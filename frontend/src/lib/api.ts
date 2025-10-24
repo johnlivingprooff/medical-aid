@@ -355,6 +355,106 @@ export const notificationApi = {
     api.get<import('../types/models').NotificationDashboardData>('/api/accounts/dashboard/data/'),
 };
 
+// Reports API Client
+export const reportsApi = {
+  // CSV Export functions that handle blob responses
+  exportSchemeUsageCSV: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/api/core/reports/scheme-usage/?format=csv`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      let errorMsg = `Export failed: ${response.status} ${response.statusText}`;
+      try {
+        const text = await response.text();
+        console.error('Export error response:', text);
+        errorMsg += ` - ${text}`;
+      } catch (e) {
+        console.error('Could not read error response:', e);
+      }
+      throw new Error(errorMsg);
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'scheme_usage_report.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  exportServiceTypeCSV: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/api/core/reports/disease-stats/?format=csv`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      let errorMsg = `Export failed: ${response.status} ${response.statusText}`;
+      try {
+        const text = await response.text();
+        console.error('Export error response:', text);
+        errorMsg += ` - ${text}`;
+      } catch (e) {
+        console.error('Could not read error response:', e);
+      }
+      throw new Error(errorMsg);
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'service_type_stats.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  exportDetailedClaimsCSV: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/api/core/reports/detailed-claims/?format=csv`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      let errorMsg = `Export failed: ${response.status} ${response.statusText}`;
+      try {
+        const text = await response.text();
+        console.error('Export error response:', text);
+        errorMsg += ` - ${text}`;
+      } catch (e) {
+        console.error('Could not read error response:', e);
+      }
+      throw new Error(errorMsg);
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'detailed_claims_report.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+};
+
 // Subscription Billing API Client (for subscription management)
 export const subscriptionBillingApi = {
   // Payment Methods

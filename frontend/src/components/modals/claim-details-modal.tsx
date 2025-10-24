@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import type { Claim } from '@/types/models'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
+import { capitalizeFirst } from '@/lib/format-text'
 
 interface ClaimDetailsModalProps {
   open: boolean
@@ -28,15 +30,15 @@ export function ClaimDetailsModal({ open, onOpenChange, claim }: ClaimDetailsMod
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="text-sm">
               <div className="font-medium">Member</div>
-              <div className="text-muted-foreground">{claim.patient_detail?.user_username} ({claim.patient_detail?.member_id})</div>
+              <div className="text-muted-foreground">{formatFullName(claim.patient_detail?.user_first_name, claim.patient_detail?.user_last_name)} ({claim.patient_detail?.member_id})</div>
             </div>
             <div className="text-sm">
               <div className="font-medium">Provider</div>
-              <div className="text-muted-foreground">{claim.provider_username || `#${claim.provider}`}</div>
+              <div className="text-muted-foreground">{claim.provider_facility_name || claim.provider_username || `#${claim.provider}`}</div>
             </div>
             <div className="text-sm">
               <div className="font-medium">Service</div>
-              <div className="text-muted-foreground">{claim.service_type_name}</div>
+              <div className="text-muted-foreground">{capitalizeFirst(claim.service_type_name)}</div>
             </div>
             <div className="text-sm">
               <div className="font-medium">Amount</div>

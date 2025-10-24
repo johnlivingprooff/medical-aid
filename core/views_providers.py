@@ -40,8 +40,12 @@ class ProvidersAnalyticsView(APIView):
         )
         totals_map = {row['provider_id']: row for row in totals}
 
-        # All providers
-        providers = list(User.objects.filter(role='PROVIDER').values('id', 'username'))
+        # All providers with facility name
+        providers = list(
+            User.objects.filter(role='PROVIDER')
+            .select_related('provider_profile')
+            .values('id', 'username', 'provider_profile__facility_name')
+        )
 
         inv = (
             Invoice.objects.annotate(
@@ -65,7 +69,7 @@ class ProvidersAnalyticsView(APIView):
             avg_days = (avg_proc.total_seconds() / 86400.0) if avg_proc else 0.0
             results.append({
                 'provider_id': prov_id,
-                'provider': p['username'],
+                'provider': p['provider_profile__facility_name'] or p['username'],
                 'total_claims': total,
                 'approved_claims': approved,
                 'rejected_claims': stats.get('rejected_claims') or 0,
@@ -87,9 +91,16 @@ class ProviderDetailAnalyticsView(APIView):
     @extend_schema(responses={200: OpenApiResponse(description='Provider detail analytics')})
     def get(self, request, provider_id: int):
         try:
-            provider = User.objects.get(id=provider_id)
+            provider = User.objects.select_related('provider_profile').get(id=provider_id)
         except User.DoesNotExist:
             return Response({'detail': 'Provider not found'}, status=404)
+
+        # Get facility name or fallback to username
+        provider_name = (
+            provider.provider_profile.facility_name 
+            if hasattr(provider, 'provider_profile') and provider.provider_profile 
+            else provider.username
+        )
 
         claims = Claim.objects.filter(provider=provider)
         totals = claims.aggregate(
@@ -116,7 +127,7 @@ class ProviderDetailAnalyticsView(APIView):
         avg_days = (avg_proc.total_seconds() / 86400.0) if avg_proc else 0.0
 
         top_services = list(
-            claims.values('service_type')
+            claims.values('service_type', 'service_type__name')
             .annotate(count=Count('id'), amount=Sum('cost'))
             .order_by('-amount')[:10]
         )
@@ -128,7 +139,7 @@ class ProviderDetailAnalyticsView(APIView):
 
         return Response({
             'provider_id': provider.id,
-            'provider': provider.username,
+            'provider': provider_name,
             'totals': {
                 'total_claims': total,
                 'approved_claims': approved,
@@ -143,6 +154,7 @@ class ProviderDetailAnalyticsView(APIView):
             'top_services': [
                 {
                     'service_type': s['service_type'],
+                    'service_type_name': s['service_type__name'],
                     'count': s['count'],
                     'amount': float(s['amount'] or 0),
                 }

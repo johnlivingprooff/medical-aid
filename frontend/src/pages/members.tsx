@@ -12,6 +12,8 @@ import { AddMemberModal } from '@/components/modals/add-member-modal'
 import { AddDependentModal } from '@/components/modals/add-dependent-modal'
 import { ChangeSchemeModal } from '@/components/modals/change-scheme-modal'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
+import { capitalizeFirst } from '@/lib/format-text'
 import { api } from '@/lib/api'
 import { Button as UIButton } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -81,7 +83,7 @@ function MemberBenefitUtilization({ memberId }: { memberId: number }) {
         <Tbody>
           {benefits.map((b) => (
             <Tr key={b.benefit_type}>
-              <Td>{b.benefit_type_name}</Td>
+              <Td>{capitalizeFirst(b.benefit_type_name)}</Td>
               <Td>{formatCurrency(b.used_amount)}</Td>
               <Td>{formatCurrency(b.remaining_amount)}</Td>
               <Td>{b.coverage_limit_count ?? '—'}</Td>
@@ -211,7 +213,13 @@ export default function Members() {
   const filtered = useMemo(() => {
     if (!search) return members
     const q = search.toLowerCase()
-    return members.filter((m) => (m.user_username || '').toLowerCase().includes(q) || (m.member_id || '').toLowerCase().includes(q))
+    return members.filter((m) => 
+      (m.user_username || '').toLowerCase().includes(q) || 
+      (m.member_id || '').toLowerCase().includes(q) ||
+      (m.user_first_name || '').toLowerCase().includes(q) ||
+      (m.user_last_name || '').toLowerCase().includes(q) ||
+      formatFullName(m.user_first_name, m.user_last_name).toLowerCase().includes(q)
+    )
   }, [members, search])
 
   async function loadBalance(memberId: number) {
@@ -349,7 +357,7 @@ export default function Members() {
               <Table>
         <Thead>
                   <Tr>
-          <Th><button onClick={() => setOrdering(ordering === 'user__username' ? '-user__username' : 'user__username')}>Member</button></Th>
+          <Th><button onClick={() => setOrdering(ordering === 'user__username' ? '-user__username' : 'user__username')}>Name</button></Th>
           {/* <Th><button onClick={() => setOrdering(ordering === 'member_id' ? '-member_id' : 'member_id')}>Member ID</button></Th> */}
           <Th><button onClick={() => setOrdering(ordering === 'user__date_joined' ? '-user__date_joined' : 'user__date_joined')}>Subscription start</button></Th>
           <Th>Next renewal</Th>
@@ -368,7 +376,7 @@ export default function Members() {
                       className={`relative cursor-pointer hover:bg-muted/50 ${selectedMember?.id === m.id ? 'bg-muted' : ''}`}
                       onClick={() => setSelectedMember(m)}
                     >
-                      <Td>{m.user_username}</Td>
+                      <Td>{formatFullName(m.user_first_name, m.user_last_name)}</Td>
                       {/* <Td>{m.member_id}</Td> */}
                       <Td>{m.user_date_joined ? new Date(m.user_date_joined).toLocaleDateString() : '—'}</Td>
                       <Td>{m.next_renewal ? new Date(m.next_renewal).toLocaleDateString() : '—'}</Td>
@@ -444,10 +452,7 @@ export default function Members() {
               <>
                 <div>
                   <div className="font-medium">
-                    {selectedMember.user_first_name || selectedMember.user_last_name 
-                      ? `${selectedMember.user_first_name || ''} ${selectedMember.user_last_name || ''}`.trim()
-                      : selectedMember.user_username || 'Unknown Member'
-                    }
+                    {formatFullName(selectedMember.user_first_name, selectedMember.user_last_name)}
                   </div>
                   <div className="text-muted-foreground">
                     {selectedMember.member_id ? `${selectedMember.member_id} • ` : ''}

@@ -25,6 +25,7 @@ class PatientSerializer(serializers.ModelSerializer):
     age = serializers.ReadOnlyField()
     is_dependent = serializers.ReadOnlyField()
     principal_member_name = serializers.CharField(source='principal_member.user.username', read_only=True)
+    member_subscription = serializers.SerializerMethodField()
 
     class Meta:
         model = Patient
@@ -33,7 +34,8 @@ class PatientSerializer(serializers.ModelSerializer):
             'user_date_joined', 'date_of_birth', 'gender', 'status', 
             'scheme', 'scheme_name', 'enrollment_date', 'benefit_year_start', 'principal_member', 'principal_member_name',
             'relationship', 'phone', 'emergency_contact', 'emergency_phone', 'last_claim_date', 'next_renewal', 
-            'first_name', 'last_name', 'age', 'is_dependent', 'diagnoses', 'investigations', 'treatments'
+            'first_name', 'last_name', 'age', 'is_dependent', 'diagnoses', 'investigations', 'treatments',
+            'member_subscription'
         ]
 
     def validate_phone(self, value):
@@ -79,6 +81,26 @@ class PatientSerializer(serializers.ModelSerializer):
             # This year's renewal has passed, return next year's
             return benefit_start.replace(year=today.year + 1)
 
+    def get_member_subscription(self, obj):
+        """Get subscription information for the patient"""
+        try:
+            from schemes.models import MemberSubscription
+            subscription = MemberSubscription.objects.select_related('tier').get(patient=obj)
+            return {
+                'id': subscription.id,
+                'tier_name': subscription.tier.name,
+                'subscription_type': subscription.subscription_type,
+                'status': subscription.status,
+                'start_date': subscription.start_date,
+                'end_date': subscription.end_date,
+                'claims_this_month': subscription.claims_this_month,
+                'coverage_used_this_year': float(subscription.coverage_used_this_year),
+                'tier_max_claims_per_month': subscription.tier.max_claims_per_month,
+                'tier_max_coverage_per_year': float(subscription.tier.max_coverage_per_year) if subscription.tier.max_coverage_per_year else None,
+            }
+        except:
+            return None
+
     def update(self, instance: Patient, validated_data):
         # Pop nested user name updates if provided
         first_name = validated_data.pop('first_name', None)
@@ -98,6 +120,7 @@ class ClaimSerializer(serializers.ModelSerializer):
     service_type = serializers.PrimaryKeyRelatedField(queryset=BenefitType.objects.all())
     service_type_name = serializers.CharField(source='service_type.name', read_only=True)
     provider_username = serializers.CharField(source='provider.username', read_only=True)
+    provider_facility_name = serializers.SerializerMethodField()
     processed_by_username = serializers.CharField(source='processed_by.username', read_only=True)
     fraud_alerts = serializers.SerializerMethodField()
     pre_auth_status = serializers.SerializerMethodField()
@@ -106,13 +129,20 @@ class ClaimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Claim
         fields = [
-            'id', 'patient', 'patient_detail', 'provider', 'provider_username', 'service_type', 'service_type_name', 
+            'id', 'patient', 'patient_detail', 'provider', 'provider_username', 'provider_facility_name',
+            'service_type', 'service_type_name', 
             'cost', 'date_submitted', 'date_of_service', 'status', 'priority', 'coverage_checked', 
             'processed_date', 'processed_by', 'processed_by_username', 'diagnosis_code', 'procedure_code', 
             'notes', 'preauth_number', 'preauth_expiry', 'rejection_reason', 'rejection_date',
             'fraud_alerts', 'pre_auth_status', 'subscription_context'
         ]
         read_only_fields = ['status', 'coverage_checked', 'date_submitted', 'provider', 'processed_date', 'processed_by']
+
+    def get_provider_facility_name(self, obj):
+        """Get provider facility name or fallback to username"""
+        if hasattr(obj.provider, 'provider_profile') and obj.provider.provider_profile:
+            return obj.provider.provider_profile.facility_name
+        return obj.provider.username
 
     def get_fraud_alerts(self, obj):
         """Get fraud alerts related to this claim"""
@@ -284,6 +314,7 @@ class PreAuthorizationRuleSerializer(serializers.ModelSerializer):
 class PreAuthorizationRequestSerializer(serializers.ModelSerializer):
     patient_detail = PatientSerializer(source='patient', read_only=True)
     provider_username = serializers.CharField(source='provider.username', read_only=True)
+    provider_facility_name = serializers.SerializerMethodField()
     requested_by_username = serializers.CharField(source='requested_by.username', read_only=True)
     benefit_type_name = serializers.CharField(source='benefit_type.name', read_only=True)
     days_until_expiry = serializers.SerializerMethodField()
@@ -293,7 +324,7 @@ class PreAuthorizationRequestSerializer(serializers.ModelSerializer):
         model = PreAuthorizationRequest
         fields = [
             'id', 'request_number', 'patient', 'patient_detail', 'provider', 'provider_username', 
-            'benefit_type', 'benefit_type_name', 'procedure_description', 'estimated_cost', 
+            'provider_facility_name', 'benefit_type', 'benefit_type_name', 'procedure_description', 'estimated_cost', 
             'urgency_level', 'clinical_notes', 'supporting_documents', 'status', 'priority', 
             'requested_by', 'requested_by_username', 'requested_date', 'expiry_date', 
             'days_until_expiry', 'is_expired', 'approved_amount', 'approved_conditions', 
@@ -317,6 +348,12 @@ class PreAuthorizationRequestSerializer(serializers.ModelSerializer):
             return obj.expiry_date < timezone.now().date()
         return False
 
+    def get_provider_facility_name(self, obj):
+        """Get provider facility name or fallback to username"""
+        if hasattr(obj.provider, 'provider_profile') and obj.provider.provider_profile:
+            return obj.provider.provider_profile.facility_name
+        return obj.provider.username
+
 
 class PreAuthorizationApprovalSerializer(serializers.ModelSerializer):
     request_detail = PreAuthorizationRequestSerializer(source='request', read_only=True)
@@ -337,6 +374,7 @@ class FraudAlertSerializer(serializers.ModelSerializer):
     claim_detail = ClaimSerializer(source='claim', read_only=True)
     patient_detail = PatientSerializer(source='patient', read_only=True)
     provider_username = serializers.CharField(source='provider.username', read_only=True)
+    provider_facility_name = serializers.SerializerMethodField()
     reviewed_by_username = serializers.CharField(source='reviewed_by.username', read_only=True)
     days_since_creation = serializers.SerializerMethodField()
     is_active = serializers.SerializerMethodField()
@@ -345,7 +383,8 @@ class FraudAlertSerializer(serializers.ModelSerializer):
         model = FraudAlert
         fields = [
             'id', 'alert_type', 'severity', 'status', 'claim', 'claim_detail', 'patient',
-            'patient_detail', 'provider', 'provider_username', 'title', 'description',
+            'patient_detail', 'provider', 'provider_username', 'provider_facility_name', 
+            'title', 'description',
             'fraud_score', 'detection_rule', 'detection_data', 'reviewed_by',
             'reviewed_by_username', 'reviewed_at', 'review_notes', 'resolution_action',
             'created_at', 'updated_at', 'days_since_creation', 'is_active'
@@ -359,3 +398,9 @@ class FraudAlertSerializer(serializers.ModelSerializer):
 
     def get_is_active(self, obj):
         return obj.is_active
+
+    def get_provider_facility_name(self, obj):
+        """Get provider facility name or fallback to username"""
+        if obj.provider and hasattr(obj.provider, 'provider_profile') and obj.provider.provider_profile:
+            return obj.provider.provider_profile.facility_name
+        return obj.provider.username if obj.provider else None

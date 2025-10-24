@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { api } from '@/lib/api'
+import { capitalizeFirst } from '@/lib/format-text'
 import { X } from 'lucide-react'
 import type { SchemeBenefit } from '@/types/models'
 
@@ -118,7 +119,7 @@ export function EditBenefitModal({ open, onOpenChange, benefit, onSave }: Props)
         onClick={(e) => e.stopPropagation()}
       >
         <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
-          <CardTitle>Edit Benefit: {benefit.benefit_type_detail?.name}</CardTitle>
+          <CardTitle>Edit Benefit: {capitalizeFirst(benefit.benefit_type_detail?.name)}</CardTitle>
           <Button
             variant="ghost"
             size="sm"

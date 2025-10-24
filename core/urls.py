@@ -5,7 +5,7 @@ from .views_dashboard import DashboardStatsView, ActivityFeedView
 from .views_providers import ProvidersAnalyticsView, ProviderDetailAnalyticsView
 from .views_schemes import SchemesOverviewView
 from .views_members import MembersAnalyticsView
-from .views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView
+from .views_alerts_reports import AlertsListView, SchemeUsageReportView, DiseaseStatsReportView, DetailedClaimsReportView
 from .views_admin import AdminStatsView, AdminActionsView
 from .views_search import GlobalSearchView
 from .views_edi import (
@@ -34,6 +34,7 @@ urlpatterns = [
     path('alerts/', AlertsListView.as_view(), name='alerts'),
     path('reports/scheme-usage/', SchemeUsageReportView.as_view(), name='report-scheme-usage'),
     path('reports/disease-stats/', DiseaseStatsReportView.as_view(), name='report-disease-stats'),
+    path('reports/detailed-claims/', DetailedClaimsReportView.as_view(), name='report-detailed-claims'),
     # Dashboard endpoints
     path('settings/keys/', system_setting_keys, name='system-setting-keys'),
     path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),

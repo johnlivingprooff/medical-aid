@@ -7,6 +7,7 @@ import { api } from '@/lib/api'
 import { X, ArrowRight, AlertTriangle } from 'lucide-react'
 import type { SchemeCategory, Patient } from '@/types/models'
 import { formatCurrency } from '@/lib/currency'
+import { formatFullName } from '@/lib/format-name'
 
 type Props = { 
   open: boolean; 
@@ -102,7 +103,7 @@ export function ChangeSchemeModal({ open, onOpenChange, member, onSuccess }: Pro
             <h3 className="font-medium">Member Information</h3>
             <div className="mt-2 space-y-1">
               <p className="text-sm">
-                <span className="font-medium">Name:</span> {member?.first_name || member?.user_username} {member?.last_name}
+                <span className="font-medium">Name:</span> {formatFullName(member?.user_first_name, member?.user_last_name)}
               </p>
               <p className="text-sm">
                 <span className="font-medium">Member ID:</span> {member?.member_id}
