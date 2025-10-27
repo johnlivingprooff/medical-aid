@@ -14,6 +14,9 @@ from core.models import MemberMessage, MemberDocument
 from accounts.notification_service import NotificationService
 from accounts.models_notifications import NotificationType
 from backend.pagination import OptimizedPagination
+from django.db.models import Sum
+from django.utils import timezone as djtz
+from .services import _period_start
 
 
 class IsProviderOrReadOnlyForAuthenticated(permissions.BasePermission):
@@ -68,10 +71,8 @@ class PatientViewSet(viewsets.ModelViewSet):
 		if role == 'PATIENT':
 			return qs.filter(user=user)
 		if role == 'PROVIDER':
-			# Providers should only see members who have claims at their facility
-			from django.db.models import Subquery
-			patient_ids = Claim.objects.filter(provider=user).values('patient_id')
-			return qs.filter(id__in=Subquery(patient_ids)).distinct()
+			# Providers can view all members in the system
+			return qs
 		return qs
 
 	def get_permissions(self):
@@ -553,11 +554,302 @@ class ClaimViewSet(viewsets.ModelViewSet):
 			emit_low_balance_alerts(claim, benefit, subscription, remaining_after, remaining_count)
 		emit_fraud_alert_if_needed(claim)
 		
+		# Send notification to provider about full approval
+		try:
+			from accounts.notification_service import NotificationService
+			from accounts.models_notifications import NotificationType
+			from decimal import Decimal
+			
+			# Get patient responsibility breakdown
+			deductible = Decimal(str(getattr(invoice, 'patient_deductible', 0)))
+			copay = Decimal(str(getattr(invoice, 'patient_copay', 0)))
+			coinsurance = Decimal(str(getattr(invoice, 'patient_coinsurance', 0)))
+			member_responsibility = deductible + copay + coinsurance
+			
+			html_message = f"""
+			<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+				<h2 style="color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 10px;">
+					✓ Claim Approved - Full Coverage
+				</h2>
+				
+				<div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+					<p style="margin: 0; color: #15803d; font-weight: bold;">
+						The claim has been fully approved by the medical aid scheme.
+					</p>
+				</div>
+				
+				<h3 style="color: #374151; margin-top: 20px;">Claim Details</h3>
+				<table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+					<tr style="background-color: #f9fafb;">
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Claim ID</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.id}</td>
+					</tr>
+					<tr>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Member ID</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.patient.member_id}</td>
+					</tr>
+					<tr style="background-color: #f9fafb;">
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Service Type</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.service_type.name}</td>
+					</tr>
+					<tr>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Date of Service</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.date_of_service}</td>
+					</tr>
+				</table>
+				
+				<h3 style="color: #374151; margin-top: 20px;">Payment Breakdown</h3>
+				<table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+					<tr style="background-color: #f9fafb;">
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Total Claim Amount</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;">R {claim.cost:,.2f}</td>
+					</tr>
+					<tr style="background-color: #e0f2fe;">
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Scheme Payment</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #0369a1;">R {payable:,.2f}</td>
+					</tr>
+					<tr>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Member Responsibility</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;">R {member_responsibility:,.2f}</td>
+					</tr>
+				</table>
+				
+				{f'''
+				<div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+					<h4 style="margin-top: 0; color: #92400e;">Member Responsibility Details</h4>
+					<ul style="margin: 10px 0; padding-left: 20px;">
+						{f'<li>Deductible: R {deductible:,.2f}</li>' if deductible > 0 else ''}
+						{f'<li>Copayment: R {copay:,.2f}</li>' if copay > 0 else ''}
+						{f'<li>Coinsurance: R {coinsurance:,.2f}</li>' if coinsurance > 0 else ''}
+					</ul>
+					<p style="margin-bottom: 0; color: #92400e; font-weight: bold;">
+						Please collect R {member_responsibility:,.2f} from the member.
+					</p>
+				</div>
+				''' if member_responsibility > 0 else ''}
+				
+				<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.875rem;">
+					<p>This is an automated notification from the Medical Aid Management System.</p>
+					<p>Approved by: {user.get_full_name() or user.username}</p>
+				</div>
+			</div>
+			"""
+			
+			NotificationService.create_notification(
+				recipient=claim.provider,
+				notification_type=NotificationType.CLAIM_STATUS_UPDATE,
+				title=f"Claim #{claim.id} Approved - Full Coverage",
+				message=f"Claim for {claim.patient.member_id} has been fully approved. Scheme payment: R{payable:,.2f}. Member responsibility: R{member_responsibility:,.2f}.",
+				html_message=html_message,
+				priority='normal',
+				metadata={
+					'claim_id': str(claim.id),
+					'member_id': claim.patient.member_id,
+					'service_type': claim.service_type.name,
+					'claim_amount': str(claim.cost),
+					'scheme_payment': str(payable),
+					'member_responsibility': str(member_responsibility),
+					'deductible': str(deductible),
+					'copay': str(copay),
+					'coinsurance': str(coinsurance),
+					'approval_type': 'FULL_APPROVAL',
+					'approved_by': user.get_full_name() or user.username,
+				}
+			)
+		except Exception as e:
+			# Log error but don't fail the approval
+			import logging
+			logger = logging.getLogger(__name__)
+			logger.error(f"Failed to send approval notification for claim {claim.id}: {str(e)}")
+		
 		serializer = self.get_serializer(claim)
 		return Response({
 			'detail': 'Claim approved successfully',
 			'claim': serializer.data,
 			'invoice_created': created if 'created' in locals() else False
+		})
+
+	@action(detail=True, methods=['post'], url_path='approve-coverage-limit')
+	def approve_coverage_limit(self, request, pk=None):
+		"""Approve only up to the remaining coverage limit for this benefit (Admin only).
+
+		- Computes remaining coverage for the patient's scheme benefit within the current coverage period
+		- Approves min(remaining, claim.cost)
+		- Notifies the provider of the approved amount and the member-responsibility balance
+		"""
+		claim = self.get_object()
+		user = request.user
+		role = getattr(user, 'role', None)
+
+		# Permissions: Admin only
+		if role != 'ADMIN':
+			return Response({'detail': 'Only administrators can approve up to coverage limit'}, status=status.HTTP_403_FORBIDDEN)
+
+		# Must be in a state that can be approved
+		if claim.status in [Claim.Status.APPROVED]:
+			return Response({'detail': 'Claim is already approved'}, status=status.HTTP_400_BAD_REQUEST)
+
+		# Get scheme benefit
+		try:
+			benefit = SchemeBenefit.objects.select_related('benefit_type').get(
+				scheme=claim.patient.scheme,
+				benefit_type=claim.service_type
+			)
+		except SchemeBenefit.DoesNotExist:
+			return Response({'detail': 'Benefit configuration not found for this claim'}, status=status.HTTP_400_BAD_REQUEST)
+
+		if benefit.coverage_amount is None:
+			return Response({'detail': 'This benefit has no monetary coverage limit configured'}, status=status.HTTP_400_BAD_REQUEST)
+
+		# Calculate remaining coverage in current period
+		now = djtz.now()
+		period_start = _period_start(benefit.coverage_period, now, claim.patient)
+		used_amount = (
+			Claim.objects.filter(
+				patient=claim.patient,
+				service_type=claim.service_type,
+				status=Claim.Status.APPROVED,
+				date_submitted__gte=period_start,
+			)
+			.aggregate(total=Sum('cost'))['total'] or 0
+		)
+		remaining = float(benefit.coverage_amount) - float(used_amount)
+		remaining = max(remaining, 0.0)
+
+		if remaining <= 0:
+			return Response({'detail': 'Coverage limit already exhausted for this period'}, status=status.HTTP_400_BAD_REQUEST)
+
+		claim_amount = float(claim.cost)
+		approved_amount = min(remaining, claim_amount)
+		member_responsibility = max(claim_amount - approved_amount, 0.0)
+
+		# Approve the claim with the capped amount and create/update invoice
+		from decimal import Decimal
+		from django.utils import timezone
+
+		claim.status = Claim.Status.APPROVED
+		claim.coverage_checked = True
+		claim.processed_date = timezone.now()
+		claim.processed_by = user
+		claim.save(update_fields=['status', 'coverage_checked', 'processed_date', 'processed_by'])
+
+		# Create or update invoice reflecting the approval
+		invoice, created = Invoice.objects.get_or_create(
+			claim=claim,
+			defaults={
+				'amount': Decimal(str(approved_amount)),
+				# For this approval flow, treat the remainder as patient copay for clarity
+				'patient_deductible': Decimal('0.00'),
+				'patient_copay': Decimal(str(member_responsibility)),
+				'patient_coinsurance': Decimal('0.00'),
+			}
+		)
+		if not created:
+			invoice.amount = Decimal(str(approved_amount))
+			invoice.patient_deductible = Decimal('0.00')
+			invoice.patient_copay = Decimal(str(member_responsibility))
+			invoice.patient_coinsurance = Decimal('0.00')
+			invoice.save(update_fields=['amount', 'patient_deductible', 'patient_copay', 'patient_coinsurance'])
+
+		# Notify provider (email + in-app based on preferences)
+		try:
+			nsvc = NotificationService()
+			title = f"Partial Approval: {claim.service_type.name} for member {claim.patient.member_id}"
+			message = (
+				f"Your claim (ID: {claim.id}) for {claim.service_type.name} has been partially approved up to the coverage limit.\n\n"
+				f"Claim Amount: {claim_amount:,.2f}\n"
+				f"Approved Amount: {approved_amount:,.2f}\n"
+				f"Member Responsibility: {member_responsibility:,.2f}\n\n"
+				f"The member is responsible for the difference. Please collect {member_responsibility:,.2f} from the member.\n"
+				f"Coverage period started: {period_start.date()}"
+			)
+			html_message = f"""
+			<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+				<h2 style="color: #059669;">Partial Claim Approval</h2>
+				<p>Your claim has been <strong>partially approved</strong> up to the remaining coverage limit.</p>
+				
+				<div style="background-color: #f0fdf4; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
+					<h3 style="margin-top: 0; color: #047857;">Claim Details</h3>
+					<table style="width: 100%; border-collapse: collapse;">
+						<tr>
+							<td style="padding: 8px 0;"><strong>Claim ID:</strong></td>
+							<td style="padding: 8px 0;">{claim.id}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0;"><strong>Member ID:</strong></td>
+							<td style="padding: 8px 0;">{claim.patient.member_id}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0;"><strong>Service:</strong></td>
+							<td style="padding: 8px 0;">{claim.service_type.name}</td>
+						</tr>
+					</table>
+				</div>
+
+				<div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+					<h3 style="margin-top: 0; color: #d97706;">Payment Breakdown</h3>
+					<table style="width: 100%; border-collapse: collapse;">
+						<tr>
+							<td style="padding: 8px 0;"><strong>Total Claim Amount:</strong></td>
+							<td style="padding: 8px 0; text-align: right;">{claim_amount:,.2f}</td>
+						</tr>
+						<tr style="color: #059669;">
+							<td style="padding: 8px 0;"><strong>Approved Amount (Scheme):</strong></td>
+							<td style="padding: 8px 0; text-align: right; font-weight: bold;">{approved_amount:,.2f}</td>
+						</tr>
+						<tr style="color: #dc2626;">
+							<td style="padding: 8px 0;"><strong>Member Responsibility:</strong></td>
+							<td style="padding: 8px 0; text-align: right; font-weight: bold;">{member_responsibility:,.2f}</td>
+						</tr>
+					</table>
+				</div>
+
+				<div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+					<h4 style="margin-top: 0; color: #991b1b;">⚠️ Action Required</h4>
+					<p style="margin-bottom: 0;">Please collect <strong>{member_responsibility:,.2f}</strong> from the member as their share of the claim cost.</p>
+				</div>
+
+				<p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
+					Coverage period started: {period_start.date()}<br>
+					This approval is based on the remaining coverage limit for this benefit period.
+				</p>
+			</div>
+			"""
+			nsvc.create_notification(
+				recipient=claim.provider,
+				notification_type=NotificationType.CLAIM_STATUS_UPDATE,
+				title=title,
+				message=message,
+				html_message=html_message,
+				priority='HIGH',
+				claim_id=claim.id,
+				metadata={
+					'claim_id': claim.id,
+					'member_id': claim.patient.member_id,
+					'service_type': claim.service_type.name,
+					'claim_amount': float(claim_amount),
+					'approved_amount': float(approved_amount),
+					'member_responsibility': float(member_responsibility),
+					'coverage_period_start': str(period_start.date()),
+					'approval_type': 'PARTIAL_COVERAGE_LIMIT',
+				}
+			)
+		except Exception as e:
+			# Log error but do not fail the API if notification delivery fails
+			import logging
+			logger = logging.getLogger(__name__)
+			logger.error(f"Failed to send partial approval notification: {str(e)}")
+			pass
+
+		# Response payload
+		serializer = self.get_serializer(claim)
+		return Response({
+			'detail': 'Claim approved up to coverage limit',
+			'claim': serializer.data,
+			'approved_amount': approved_amount,
+			'member_responsibility': member_responsibility,
+			'coverage_remaining_before': remaining,
+			'coverage_period_start': str(period_start.date()),
 		})
 
 	@action(detail=True, methods=['post'], url_path='reject')
@@ -588,6 +880,93 @@ class ClaimViewSet(viewsets.ModelViewSet):
 		claim.rejection_date = timezone.now()
 		claim.processed_by = user
 		claim.save(update_fields=['status', 'coverage_checked', 'rejection_reason', 'rejection_date', 'processed_by'])
+		
+		# Send notification to provider about rejection
+		try:
+			from accounts.notification_service import NotificationService
+			from accounts.models_notifications import NotificationType
+			
+			html_message = f"""
+			<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+				<h2 style="color: #dc2626; border-bottom: 2px solid #dc2626; padding-bottom: 10px;">
+					✗ Claim Rejected
+				</h2>
+				
+				<div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+					<p style="margin: 0; color: #991b1b; font-weight: bold;">
+						This claim has been rejected by the medical aid scheme.
+					</p>
+				</div>
+				
+				<h3 style="color: #374151; margin-top: 20px;">Claim Details</h3>
+				<table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+					<tr style="background-color: #f9fafb;">
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Claim ID</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.id}</td>
+					</tr>
+					<tr>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Member ID</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.patient.member_id}</td>
+					</tr>
+					<tr style="background-color: #f9fafb;">
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Service Type</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.service_type.name}</td>
+					</tr>
+					<tr>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Claim Amount</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;">R {claim.cost:,.2f}</td>
+					</tr>
+					<tr style="background-color: #f9fafb;">
+						<td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">Date of Service</td>
+						<td style="padding: 10px; border: 1px solid #e5e7eb;">{claim.date_of_service}</td>
+					</tr>
+				</table>
+				
+				<div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+					<h4 style="margin-top: 0; color: #991b1b;">Rejection Reason</h4>
+					<p style="margin: 0; color: #7f1d1d;">
+						{rejection_reason}
+					</p>
+				</div>
+				
+				<div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+					<h4 style="margin-top: 0; color: #92400e;">Action Required</h4>
+					<p style="margin-bottom: 0; color: #92400e;">
+						• Inform the member that this claim was not approved<br>
+						• The member is responsible for the full amount of R {claim.cost:,.2f}<br>
+						• Review the rejection reason before resubmitting
+					</p>
+				</div>
+				
+				<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.875rem;">
+					<p>This is an automated notification from the Medical Aid Management System.</p>
+					<p>Rejected by: {user.get_full_name() or user.username}</p>
+				</div>
+			</div>
+			"""
+			
+			NotificationService.create_notification(
+				recipient=claim.provider,
+				notification_type=NotificationType.CLAIM_STATUS_UPDATE,
+				title=f"Claim #{claim.id} Rejected",
+				message=f"Claim for {claim.patient.member_id} has been rejected. Reason: {rejection_reason}. Member is responsible for full amount: R{claim.cost:,.2f}.",
+				html_message=html_message,
+				priority='high',
+				metadata={
+					'claim_id': str(claim.id),
+					'member_id': claim.patient.member_id,
+					'service_type': claim.service_type.name,
+					'claim_amount': str(claim.cost),
+					'rejection_reason': rejection_reason,
+					'status': 'REJECTED',
+					'rejected_by': user.get_full_name() or user.username,
+				}
+			)
+		except Exception as e:
+			# Log error but don't fail the rejection
+			import logging
+			logger = logging.getLogger(__name__)
+			logger.error(f"Failed to send rejection notification for claim {claim.id}: {str(e)}")
 		
 		serializer = self.get_serializer(claim)
 		return Response({

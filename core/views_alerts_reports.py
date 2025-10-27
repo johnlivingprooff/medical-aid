@@ -16,8 +16,14 @@ class IsAdminOnly(IsAuthenticated):
         return super().has_permission(request, view) and getattr(request.user, 'role', None) == 'ADMIN'
 
 
+class IsAdminOrProvider(IsAuthenticated):
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and getattr(request.user, 'role', None) in ('ADMIN', 'PROVIDER')
+
+
 class AlertsListView(APIView):
-    permission_classes = [IsAdminOnly]
+    # Allow both ADMIN and PROVIDER to view alerts stream
+    permission_classes = [IsAdminOrProvider]
 
     @extend_schema(responses={200: OpenApiResponse(description='List alerts')})
     def get(self, request):

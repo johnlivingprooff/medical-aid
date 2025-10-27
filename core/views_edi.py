@@ -121,24 +121,61 @@ class EDIProviderTransactionsView(APIView):
         }
     )
     def get(self, request):
-        """Get provider's EDI transactions with optional filtering"""
-        if not hasattr(request.user, 'provider_profile'):
-            return Response(
-                {'detail': 'User is not associated with a provider'},
-                status=status.HTTP_403_FORBIDDEN
+        """Get EDI transactions.
+        - Providers: limited to their own provider transactions
+        - Admins/Staff: access to all transactions, with optional filtering
+        Supported filters: status, transaction_type (alias: type), date_from, date_to, provider_id (admin only)
+        """
+
+        # Common query parameters
+        status_filter = request.query_params.get('status')
+        # Support both `transaction_type` (frontend) and `type` (legacy) query keys
+        transaction_type = request.query_params.get('transaction_type') or request.query_params.get('type')
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+
+        # Admins can view all transactions
+        if getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False):
+            from .models import EDITransaction
+            qs = EDITransaction.objects.all()
+
+            # Optional provider filter for admins
+            provider_id = request.query_params.get('provider_id') or request.query_params.get('provider')
+            if provider_id:
+                qs = qs.filter(provider_id=provider_id)
+
+            # Apply filters
+            if status_filter:
+                qs = qs.filter(status=status_filter)
+            if transaction_type:
+                qs = qs.filter(transaction_type=transaction_type)
+            if date_from:
+                qs = qs.filter(submitted_at__date__gte=date_from)
+            if date_to:
+                qs = qs.filter(submitted_at__date__lte=date_to)
+
+            transactions = qs.order_by('-submitted_at')
+        else:
+            # Providers must be attached to a provider profile
+            if not hasattr(request.user, 'provider_profile'):
+                return Response(
+                    {'detail': 'User is not associated with a provider'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            provider = request.user.provider_profile
+
+            transactions = edi_processor.get_provider_transactions(
+                provider=provider,
+                status=status_filter,
+                transaction_type=transaction_type
             )
 
-        provider = request.user.provider_profile
-
-        # Get query parameters
-        status_filter = request.query_params.get('status')
-        transaction_type = request.query_params.get('type')
-
-        transactions = edi_processor.get_provider_transactions(
-            provider=provider,
-            status=status_filter,
-            transaction_type=transaction_type
-        )
+            # Apply optional date filters for provider queries
+            if date_from:
+                transactions = transactions.filter(submitted_at__date__gte=date_from)
+            if date_to:
+                transactions = transactions.filter(submitted_at__date__lte=date_to)
 
         serializer = EDITransactionSerializer(transactions, many=True)
         return Response(serializer.data)

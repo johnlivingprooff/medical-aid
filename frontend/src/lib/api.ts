@@ -580,7 +580,7 @@ export const ediApi = {
     api.get<import('../types/models').EDITransaction>(`/api/core/edi/transactions/${transactionId}/`),
 
   updateTransactionStatus: (transactionId: string, status: string) =>
-    api.post<import('../types/models').EDITransaction>(`/api/core/edi/transactions/${transactionId}/update-status/`, { status }),
+    api.post<import('../types/models').EDITransaction>(`/api/core/edi/transactions/${transactionId}/status/`, { status }),
 
   getValidationRules: () =>
     api.get<import('../types/models').EDIValidationRule[]>('/api/core/edi/validation-rules/'),

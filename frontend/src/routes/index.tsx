@@ -13,6 +13,7 @@ const Members = lazy(() => import('@/pages/members'))
 const Analytics = lazy(() => import('@/pages/analytics'))
 const Reports = lazy(() => import('@/pages/reports'))
 const Alerts = lazy(() => import('@/pages/alerts'))
+const Notifications = lazy(() => import('@/pages/notifications'))
 const Settings = lazy(() => import('@/pages/settings'))
 const Help = lazy(() => import('@/pages/help'))
 const Admin = lazy(() => import('@/pages/admin'))
@@ -50,6 +51,7 @@ export function AppRoutes() {
           <Route path="/analytics" element={<RoleRoute allow={["ADMIN"]}><Analytics /></RoleRoute>} />
           <Route path="/reports" element={<RoleRoute allow={["ADMIN"]}><Reports /></RoleRoute>} />
           <Route path="/alerts" element={<Alerts />} />
+          <Route path="/notifications" element={<RoleRoute allow={["ADMIN","PROVIDER"]}><Notifications /></RoleRoute>} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<Help />} />
           <Route path="/admin" element={<RoleRoute allow={["ADMIN"]}><Admin /></RoleRoute>} />

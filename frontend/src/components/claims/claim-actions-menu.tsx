@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { Claim } from '@/types/models'
+import { PartialApprovalModal } from '../modals/partial-approval-modal'
 
 interface ClaimActionsMenuProps {
   claim: Claim
@@ -48,6 +49,7 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info')
 
 export function ClaimActionsMenu({ claim, userRole, userId, onClaimUpdate, onViewDetails }: ClaimActionsMenuProps) {
   const [loading, setLoading] = useState(false)
+  const [showPartialModal, setShowPartialModal] = useState(false)
 
   // Determine if user can perform actions on this claim
   const canManageClaim = () => {
@@ -82,6 +84,17 @@ export function ClaimActionsMenu({ claim, userRole, userId, onClaimUpdate, onVie
         icon: Check,
         variant: 'success' as const,
         action: () => handleApproveClaim()
+      })
+    }
+
+    // Admin-only: Approve up to coverage limit
+    if (userRole === 'ADMIN' && ['PENDING', 'INVESTIGATING', 'REQUIRES_PREAUTH'].includes(status)) {
+      actions.push({
+        key: 'approve_limit',
+        label: 'Approve up to coverage limit',
+        icon: Check,
+        variant: 'success' as const,
+        action: () => setShowPartialModal(true)
       })
     }
 
@@ -231,48 +244,66 @@ export function ClaimActionsMenu({ claim, userRole, userId, onClaimUpdate, onVie
     return null
   }
 
+  // PROVIDERS should not have access to the actions menu at all
+  if (userRole === 'PROVIDER') {
+    return null
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          className="h-8 w-8 p-0" 
-          disabled={loading}
-        >
-          <MoreVertical className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        {actions.map((action, index) => {
-          const Icon = action.icon
-          const isDestructive = action.variant === 'destructive'
-          const isSuccess = action.variant === 'success'
-          const isWarning = action.variant === 'warning'
-          
-          return (
-            <>
-              <DropdownMenuItem
-                key={action.key}
-                onClick={action.action}
-                disabled={loading}
-                className={
-                  isDestructive ? 'text-destructive focus:text-destructive' :
-                  isSuccess ? 'text-green-600 focus:text-green-600' :
-                  isWarning ? 'text-yellow-600 focus:text-yellow-600' :
-                  ''
-                }
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                {action.label}
-              </DropdownMenuItem>
-              {index === 0 && actions.length > 1 && (
-                <DropdownMenuSeparator key={`separator-${index}`} />
-              )}
-            </>
-          )
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className="h-8 w-8 p-0" 
+            disabled={loading}
+          >
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {actions.map((action, index) => {
+            const Icon = action.icon
+            const isDestructive = action.variant === 'destructive'
+            const isSuccess = action.variant === 'success'
+            const isWarning = action.variant === 'warning'
+            
+            return (
+              <>
+                <DropdownMenuItem
+                  key={action.key}
+                  onClick={action.action}
+                  disabled={loading}
+                  className={
+                    isDestructive ? 'text-destructive focus:text-destructive' :
+                    isSuccess ? 'text-green-600 focus:text-green-600' :
+                    isWarning ? 'text-yellow-600 focus:text-yellow-600' :
+                    ''
+                  }
+                >
+                  <Icon className="mr-2 h-4 w-4" />
+                  {action.label}
+                </DropdownMenuItem>
+                {index === 0 && actions.length > 1 && (
+                  <DropdownMenuSeparator key={`separator-${index}`} />
+                )}
+              </>
+            )
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {showPartialModal && userRole === 'ADMIN' && (
+        <PartialApprovalModal 
+          claim={claim}
+          onClose={() => setShowPartialModal(false)}
+          onApproved={(updated: Claim) => { 
+            setShowPartialModal(false); 
+            onClaimUpdate(updated) 
+          }}
+        />
+      )}
+    </>
   )
 }
