@@ -131,8 +131,8 @@ export default function SubscriptionTiersAdmin() {
         scheme: parseInt(formData.scheme),
         tier_type: formData.tier_type,
         description: formData.description,
-        monthly_price: parseFloat(formData.monthly_price),
-        yearly_price: parseFloat(formData.yearly_price),
+        monthly_price: editingTier ? parseFloat(formData.monthly_price || '0') : 0,
+        yearly_price: editingTier ? parseFloat(formData.yearly_price || '0') : 0,
         max_dependents: parseInt(formData.max_dependents),
         max_claims_per_month: formData.max_claims_per_month ? parseInt(formData.max_claims_per_month) : undefined,
         max_coverage_per_year: formData.max_coverage_per_year ? parseFloat(formData.max_coverage_per_year) : undefined,
@@ -269,30 +269,30 @@ export default function SubscriptionTiersAdmin() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="monthly_price">Monthly Price</Label>
-                  <Input
-                    id="monthly_price"
-                    type="number"
-                    step="0.01"
-                    value={formData.monthly_price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, monthly_price: e.target.value }))}
-                    required
-                  />
+              {editingTier && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="monthly_price">Monthly Price</Label>
+                    <Input
+                      id="monthly_price"
+                      type="number"
+                      step="0.01"
+                      value={formData.monthly_price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, monthly_price: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="yearly_price">Yearly Price</Label>
+                    <Input
+                      id="yearly_price"
+                      type="number"
+                      step="0.01"
+                      value={formData.yearly_price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, yearly_price: e.target.value }))}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="yearly_price">Yearly Price</Label>
-                  <Input
-                    id="yearly_price"
-                    type="number"
-                    step="0.01"
-                    value={formData.yearly_price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, yearly_price: e.target.value }))}
-                    required
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

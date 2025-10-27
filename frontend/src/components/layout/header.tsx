@@ -11,12 +11,35 @@ import { api } from '@/lib/api'
 import { useAuth } from '@/components/auth/auth-context'
 import { SearchBar } from '@/components/ui/search-bar'
 
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: string;
+  priority: string;
+  read: boolean;
+  created_at: string;
+  metadata?: any;
+}
+
 export function Header() {
+  // Convert any USD/$ currency mentions to MWK for alerts display in header dropdown
+  const toMWK = (text: string): string => {
+    if (!text) return text
+    let out = text
+    out = out.replace(/\bUSD\b/gi, 'MWK')
+    out = out.replace(/US\$/gi, 'MWK ')
+    out = out.replace(/\$\s*(?=\d)/g, 'MWK ')
+    return out
+  }
   const [dark, setDark] = useState(false)
   const navigate = useNavigate()
   const { user } = useAuth()
   const isAdmin = user?.role === 'ADMIN'
+  const isProvider = user?.role === 'PROVIDER'
+  const canViewNotifications = isAdmin || isProvider
   const [alerts, setAlerts] = useState<Array<{ id: number; message: string; severity: string; created_at: string }>>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [alertsOpen, setAlertsOpen] = useState(false)
 
   useEffect(() => {
@@ -27,12 +50,33 @@ export function Header() {
     document.documentElement.classList.toggle('dark', isDark)
   }, [])
 
+  // Load legacy alerts (for admins)
   useEffect(() => {
     if (!isAdmin || !alertsOpen) return
     api.get<any>('/api/core/alerts/')
       .then((resp) => setAlerts(resp.results ?? resp ?? []))
       .catch(() => setAlerts([]))
   }, [isAdmin, alertsOpen])
+
+  // Load new notifications (for admins and providers)
+  useEffect(() => {
+    if (!canViewNotifications || !alertsOpen) return
+    api.get<any>('/api/accounts/notifications/')
+      .then((resp) => {
+        // Handle paginated response (DRF returns {results: [...], count: N, ...})
+        let data = resp.results ?? resp ?? []
+        // Ensure data is always an array
+        if (!Array.isArray(data)) {
+          console.warn('Notifications API returned non-array data:', data)
+          data = []
+        }
+        setNotifications(data)
+      })
+      .catch((err) => {
+        console.error('Failed to load notifications:', err)
+        setNotifications([])
+      })
+  }, [canViewNotifications, alertsOpen])
 
   function toggleTheme() {
     const next = !dark
@@ -86,36 +130,95 @@ export function Header() {
               <TooltipContent>Toggle theme</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {isAdmin && (
+          {canViewNotifications && (
             <DropdownMenu open={alertsOpen} onOpenChange={setAlertsOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
                   <Bell className="w-5 h-5" />
-                  {alerts.length > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">{Math.min(9, alerts.length)}</span>
+                  {(Array.isArray(notifications) && notifications.filter(n => !n.read).length > 0 || alerts.length > 0) && (
+                    <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">
+                      {Math.min(9, (Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0) + alerts.length)}
+                    </span>
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Alerts</div>
-                <div className="h-px my-1 bg-border" />
-                {alerts.length === 0 ? (
-                  <div className="px-2 py-6 text-sm text-center text-muted-foreground">No alerts</div>
-                ) : (
-                  alerts.slice(0, 6).map((a) => (
-                    <DropdownMenuItem key={a.id} className="leading-5 whitespace-normal">
-                      <div className="flex items-start gap-2">
-                        <span className={`mt-1 h-2.5 w-2.5 rounded-full ${a.severity === 'HIGH' ? 'bg-destructive' : a.severity === 'MEDIUM' ? 'bg-warning' : 'bg-info'}`} />
-                        <div>
-                          <div className="text-sm">{a.message}</div>
-                          <div className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</div>
+              <DropdownMenuContent align="end" className="w-96 max-h-[500px] overflow-y-auto">
+                {/* New Notifications Section */}
+                {Array.isArray(notifications) && notifications.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                      Notifications {notifications.filter(n => !n.read).length > 0 && `(${notifications.filter(n => !n.read).length} unread)`}
+                    </div>
+                    <div className="h-px my-1 bg-border" />
+                    {notifications.slice(0, 5).map((n) => (
+                      <DropdownMenuItem 
+                        key={n.id} 
+                        className={`leading-5 whitespace-normal cursor-pointer ${!n.read ? 'bg-muted/50' : ''}`}
+                        onClick={() => {
+                          // Mark as read
+                          api.post(`/api/accounts/notifications/${n.id}/mark-read/`, {})
+                            .then(() => {
+                              setNotifications(prev => prev.map(notif => 
+                                notif.id === n.id ? { ...notif, read: true } : notif
+                              ))
+                            })
+                            .catch(err => console.error('Failed to mark notification as read:', err))
+                          
+                          // Navigate if there's a claim_id
+                          if (n.metadata?.claim_id) {
+                            navigate(`/claims`)
+                            setAlertsOpen(false)
+                          }
+                        }}
+                      >
+                        <div className="flex items-start gap-2 w-full">
+                          <span className={`mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0 ${
+                            n.priority === 'high' || n.priority === 'urgent' ? 'bg-destructive' : 
+                            n.priority === 'normal' ? 'bg-blue-500' : 'bg-muted-foreground'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{n.title}</div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">{n.message}</div>
+                            <div className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                          </div>
+                          {!n.read && <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0 mt-2" />}
                         </div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))
+                      </DropdownMenuItem>
+                    ))}
+                    {Array.isArray(notifications) && notifications.length > 5 && (
+                      <DropdownMenuItem onClick={() => { navigate('/notifications'); setAlertsOpen(false); }}>
+                        View all {notifications.length} notifications
+                      </DropdownMenuItem>
+                    )}
+                  </>
                 )}
-                <div className="h-px my-1 bg-border" />
-                <DropdownMenuItem onClick={() => navigate('/alerts')}>View all alerts</DropdownMenuItem>
+
+                {/* Legacy Alerts Section (Admin only) */}
+                {isAdmin && alerts.length > 0 && (
+                  <>
+                    {Array.isArray(notifications) && notifications.length > 0 && <div className="h-px my-1 bg-border" />}
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">System Alerts</div>
+                    <div className="h-px my-1 bg-border" />
+                    {alerts.slice(0, 3).map((a) => (
+                      <DropdownMenuItem key={a.id} className="leading-5 whitespace-normal">
+                        <div className="flex items-start gap-2">
+                          <span className={`mt-1 h-2.5 w-2.5 rounded-full ${a.severity === 'HIGH' ? 'bg-destructive' : a.severity === 'MEDIUM' ? 'bg-warning' : 'bg-info'}`} />
+                          <div>
+                            <div className="text-sm">{a.message}</div>
+                            <div className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                    <div className="h-px my-1 bg-border" />
+                    <DropdownMenuItem onClick={() => { navigate('/alerts'); setAlertsOpen(false); }}>View all alerts</DropdownMenuItem>
+                  </>
+                )}
+
+                {/* Empty State */}
+                {(!Array.isArray(notifications) || notifications.length === 0) && alerts.length === 0 && (
+                  <div className="px-2 py-6 text-sm text-center text-muted-foreground">No notifications</div>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
