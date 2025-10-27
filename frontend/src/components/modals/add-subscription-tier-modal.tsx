@@ -65,16 +65,7 @@ export function AddSubscriptionTierModal({ open, onOpenChange, scheme, onSave }:
     setError(null)
   }
 
-  // Auto-calculate yearly price when monthly price changes
-  useEffect(() => {
-    if (monthlyPrice && !yearlyPrice) {
-      const monthly = parseFloat(monthlyPrice)
-      if (!isNaN(monthly)) {
-        // Apply 15% discount for yearly subscription
-        setYearlyPrice((monthly * 12 * 0.85).toFixed(2))
-      }
-    }
-  }, [monthlyPrice, yearlyPrice])
+  // Pricing auto-calc disabled for add form (pricing hidden and sent as 0 by default)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -187,41 +178,7 @@ export function AddSubscriptionTierModal({ open, onOpenChange, scheme, onSave }:
               </div>
             </div>
 
-            {/* Pricing */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Pricing</h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="monthlyPrice">Monthly Price (MWK)</Label>
-                  <Input
-                    id="monthlyPrice"
-                    type="number"
-                    step="0.01"
-                    value={monthlyPrice}
-                    onChange={(e) => setMonthlyPrice(e.target.value)}
-                    placeholder="e.g. 500.00"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="yearlyPrice">Yearly Price (MWK)</Label>
-                  <Input
-                    id="yearlyPrice"
-                    type="number"
-                    step="0.01"
-                    value={yearlyPrice}
-                    onChange={(e) => setYearlyPrice(e.target.value)}
-                    placeholder="Auto-calculated or custom"
-                    required
-                  />
-                  {monthlyPrice && yearlyPrice && (
-                    <div className="text-xs text-muted-foreground">
-                      {((parseFloat(monthlyPrice) * 12 - parseFloat(yearlyPrice)) / (parseFloat(monthlyPrice) * 12) * 100).toFixed(1)}% yearly discount
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Pricing intentionally hidden in Add form; backend will receive 0 by default */}
 
             {/* Limits */}
             <div className="space-y-4">
