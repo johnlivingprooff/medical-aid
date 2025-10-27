@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Third-party
+    'anymail',
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
@@ -437,11 +438,45 @@ LOGGING = {
 # Ensure logs directory exists
 os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
-# Email settings for error alerts
+# Email settings
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@eiteone.org')
+
+# Default to console backend in DEBUG to avoid accidental SMTP usage locally
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
+)
+
+# SMTP defaults (used when EMAIL_BACKEND is Django SMTP)
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'admin@eiteone.org')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'alo@eiteone.org')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
+
+# Anymail provider configuration (preferred for production)
+# Configure one provider via environment variables to switch automatically.
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
+MAILGUN_SENDER_DOMAIN = os.getenv('MAILGUN_SENDER_DOMAIN')
+POSTMARK_SERVER_TOKEN = os.getenv('POSTMARK_SERVER_TOKEN')
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+
+if SENDGRID_API_KEY:
+    EMAIL_BACKEND = 'anymail.backends.sendgrid.EmailBackend'
+    ANYMAIL = {'SENDGRID_API_KEY': SENDGRID_API_KEY}
+elif MAILGUN_API_KEY and MAILGUN_SENDER_DOMAIN:
+    EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+    ANYMAIL = {
+        'MAILGUN_API_KEY': MAILGUN_API_KEY,
+        'MAILGUN_SENDER_DOMAIN': MAILGUN_SENDER_DOMAIN,
+    }
+elif POSTMARK_SERVER_TOKEN:
+    EMAIL_BACKEND = 'anymail.backends.postmark.EmailBackend'
+    ANYMAIL = {'POSTMARK_SERVER_TOKEN': POSTMARK_SERVER_TOKEN}
+elif RESEND_API_KEY:
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {'RESEND_API_KEY': RESEND_API_KEY}
