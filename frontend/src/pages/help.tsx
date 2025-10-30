@@ -204,7 +204,40 @@ export default function Help() {
                 </div>
 
                 <div>
-                  <h4 className="mb-3 font-semibold">3. Quick Actions</h4>
+                  <h4 className="mb-3 font-semibold">3. Demo Data & Testing</h4>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    The system includes pre-configured demo scenarios for testing claim validation and workflows.
+                  </p>
+                  <div className="p-3 border rounded-lg">
+                    <h5 className="mb-1 font-medium">Demo Scenarios Available</h5>
+                    <ul className="space-y-1 text-sm text-muted-foreground">
+                      <li>• 6 realistic claim validation test cases</li>
+                      <li>• Demo members with Member IDs: MBR-DEMO-001 to MBR-DEMO-006</li>
+                      <li>• Pre-configured scheme with Basic and Standard tiers</li>
+                      <li>• Test provider (Dr. Demo Provider)</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="mb-3 font-semibold">4. Email Notifications</h4>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    The system sends automated email notifications for important events:
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    <li>• <strong>Claim Decisions:</strong> Approval, rejection, or pending status</li>
+                    <li>• <strong>Pre-authorization:</strong> Approval requests and decisions</li>
+                    <li>• <strong>Payment Updates:</strong> Payment confirmations</li>
+                    <li>• <strong>Subscription Alerts:</strong> Renewal reminders</li>
+                  </ul>
+                  <div className="flex items-center gap-2 p-3 mt-3 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                    <HelpCircle className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm">Check your email inbox and spam folder for notifications.</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="mb-3 font-semibold">5. Quick Actions</h4>
                   <div className="grid gap-3 md:grid-cols-3">
                     <Button variant="outline" size="sm" onClick={() => navigate('/claims')}>
                       <FileText className="w-4 h-4 mr-2" />
@@ -439,15 +472,15 @@ export default function Help() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <Badge variant="outline">PENDING</Badge>
-                      <span className="text-sm">Submitted and awaiting review</span>
+                      <span className="text-sm">Submitted and awaiting review or pre-authorization required</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="default">APPROVED</Badge>
-                      <span className="text-sm">Approved for payment</span>
+                      <span className="text-sm">Approved for payment - notification sent</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="destructive">REJECTED</Badge>
-                      <span className="text-sm">Rejected with reason provided</span>
+                      <span className="text-sm">Rejected with reason provided - notification sent</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="secondary">PAID</Badge>
@@ -459,26 +492,138 @@ export default function Help() {
                 <Separator />
 
                 <div>
-                  <h4 className="mb-3 font-semibold">Claim Validation Rules</h4>
+                  <h4 className="mb-3 font-semibold">Claim Validation Scenarios</h4>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    The system validates claims against multiple criteria. Demo data includes 6 pre-configured test scenarios:
+                  </p>
+                  <div className="space-y-3">
+                    <div className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <h5 className="font-medium">1. Coverage Limit Exhausted</h5>
+                        <Badge variant="destructive">REJECTED</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Member has used their full annual benefit amount ($5,000). Demo Member: MBR-DEMO-001
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <h5 className="font-medium">2. Remaining Balance</h5>
+                        <Badge variant="default">APPROVED</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Member has coverage remaining. Patient pays deductible ($100) + copay ($50). Demo Member: MBR-DEMO-002
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <h5 className="font-medium">3. Deductible & Copay Calculation</h5>
+                        <Badge variant="default">APPROVED</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        First claim of benefit period. Annual deductible + per-visit copay applied. Demo Member: MBR-DEMO-003
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <h5 className="font-medium">4. Waiting Period Not Met</h5>
+                        <Badge variant="destructive">REJECTED</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Service provided before 30-day waiting period completed. Demo Member: MBR-DEMO-004
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <h5 className="font-medium">5. Inactive Subscription</h5>
+                        <Badge variant="destructive">REJECTED</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Member's subscription is expired or inactive. Demo Member: MBR-DEMO-005
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <h5 className="font-medium">6. Pre-authorization Required</h5>
+                        <Badge variant="outline">PENDING</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        High-cost procedure (&gt;$1,000) requires prior approval. Demo Member: MBR-DEMO-006
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h4 className="mb-3 font-semibold">Automatic Validation Rules</h4>
                   <div className="space-y-3">
                     <div className="p-3 border rounded-lg">
                       <h5 className="mb-1 font-medium">Eligibility Checks</h5>
                       <ul className="space-y-1 text-sm text-muted-foreground">
                         <li>• Member must be active and enrolled</li>
                         <li>• Service must be covered under scheme</li>
-                        <li>• Waiting periods must be satisfied</li>
-                        <li>• Pre-authorization required for certain services</li>
+                        <li>• Waiting periods must be satisfied (typically 30 days)</li>
+                        <li>• Pre-authorization required for high-cost services</li>
+                        <li>• Subscription must be active (not expired/suspended)</li>
                       </ul>
                     </div>
                     
                     <div className="p-3 border rounded-lg">
                       <h5 className="mb-1 font-medium">Benefit Calculations</h5>
                       <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li>• Deductibles applied per benefit period</li>
-                        <li>• Copayment percentages calculated</li>
-                        <li>• Annual and lifetime limits enforced</li>
-                        <li>• Network vs. out-of-network rates</li>
+                        <li>• Deductibles applied per benefit period (annual)</li>
+                        <li>• Copayment amounts calculated (fixed or percentage)</li>
+                        <li>• Annual and lifetime limits enforced ($5,000 default)</li>
+                        <li>• Patient responsibility = Deductible + Copay + Coinsurance</li>
+                        <li>• Scheme payment = Claim amount - Patient responsibility</li>
                       </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h4 className="mb-3 font-semibold">Email Notifications</h4>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    All claim decisions trigger automatic email notifications to patients and providers:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                      <div>
+                        <h5 className="text-sm font-medium text-green-800 dark:text-green-200">Approved Claims</h5>
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          Email includes approved amount, patient responsibility, and payment timeline
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/20">
+                      <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
+                      <div>
+                        <h5 className="text-sm font-medium text-red-800 dark:text-red-200">Rejected Claims</h5>
+                        <p className="text-sm text-red-700 dark:text-red-300">
+                          Email includes specific rejection reason and next steps for resubmission
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20">
+                      <Clock className="w-4 h-4 text-amber-600 mt-0.5" />
+                      <div>
+                        <h5 className="text-sm font-medium text-amber-800 dark:text-amber-200">Pending Claims</h5>
+                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                          Email notifies that pre-authorization is required or under review
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -648,6 +793,46 @@ export default function Help() {
                   </div>
                 </div>
 
+                <Separator />
+
+                <div>
+                  <h4 className="mb-3 font-semibold">Email Notification Issues</h4>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    If you're not receiving email notifications, try these steps:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="p-3 border rounded-lg">
+                      <h5 className="mb-1 font-medium">1. Check Spam/Junk Folder</h5>
+                      <p className="text-sm text-muted-foreground">
+                        System emails may be filtered by your email provider. Add admin@eiteone.org to your contacts.
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg">
+                      <h5 className="mb-1 font-medium">2. Verify Email Address</h5>
+                      <p className="text-sm text-muted-foreground">
+                        Ensure your email address is correctly registered in your profile settings.
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg">
+                      <h5 className="mb-1 font-medium">3. Contact Support</h5>
+                      <p className="text-sm text-muted-foreground">
+                        If issues persist, contact technical support with your Member ID or User ID.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 p-3 mt-3 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                    <HelpCircle className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm">
+                      All claim decisions (approved, rejected, pending) trigger automatic email notifications.
+                    </span>
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
                   <h5 className="mb-2 font-medium">Quick Tips</h5>
                   <ul className="space-y-1 text-sm">
@@ -657,6 +842,8 @@ export default function Help() {
                     <li>• Your role determines what actions and data you can access</li>
                     <li>• System automatically saves drafts of forms and remembers your preferences</li>
                     <li>• Use keyboard shortcuts: <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">Esc</kbd> to close modals and search results</li>
+                    <li>• Demo data is available for testing (Member IDs: MBR-DEMO-001 to MBR-DEMO-006)</li>
+                    <li>• Email notifications are sent for all claim decisions - check your inbox regularly</li>
                   </ul>
                 </div>
               </CardContent>

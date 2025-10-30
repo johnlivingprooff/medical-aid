@@ -121,8 +121,48 @@ python manage.py createsuperuser
 # Seed subscription tiers and schemes
 python manage.py seed_subscriptions
 
+# Optional: Seed demo coverage scenarios (6 test cases with validation)
+python manage.py seed_demo_scenarios
+# Use --reset flag to clear and re-seed: python manage.py seed_demo_scenarios --reset
+
 # Optional: Seed test data
 python manage.py seed_test_data
+```
+
+**Email Configuration:**
+```bash
+# The system supports multiple email backends:
+# 1. Console (development) - emails print to terminal
+# 2. SMTP (Gmail, custom SMTP server)
+# 3. Transactional providers (Resend, SendGrid, Mailgun, Postmark) via django-anymail
+
+# For local development (DEBUG=True), emails default to console output
+# For production, configure one of the following in .env:
+
+# Option 1: Resend (Recommended)
+RESEND_API_KEY=re_your_api_key
+DEFAULT_FROM_EMAIL=no-reply@your-domain.com
+
+# Option 2: SendGrid
+SENDGRID_API_KEY=SG.your_api_key
+DEFAULT_FROM_EMAIL=no-reply@your-domain.com
+
+# Option 3: Mailgun
+MAILGUN_API_KEY=your_api_key
+MAILGUN_SENDER_DOMAIN=mg.your-domain.com
+DEFAULT_FROM_EMAIL=no-reply@your-domain.com
+
+# Option 4: SMTP (Gmail - not recommended for production)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password  # Requires Gmail 2FA + App Password
+DEFAULT_FROM_EMAIL=your-email@gmail.com
+
+# Test email delivery
+python manage.py test_email
+# or specify recipient: python manage.py test_email --to you@example.com
 ```
 
 **Start Development Server:**
@@ -166,11 +206,93 @@ celery -A backend beat -l info
 #### 1. System Settings
 Access Django Admin (`/admin/`) and configure:
 - System settings (core.SystemSettings)
-- Email configuration
+- Email configuration (see Email Setup section below)
 - Payment gateway settings
 - EDI integration settings
 
-#### 2. Create Initial Data
+#### 2. Email Setup
+
+The system uses email notifications for:
+- Claim status updates (approved/rejected)
+- Pre-authorization decisions
+- Subscription renewals
+- Payment confirmations
+- Fraud alerts
+
+**Email Backend Options:**
+
+**Development (Local):**
+- Emails automatically print to the console when `DEBUG=True`
+- No SMTP credentials needed for local testing
+- See notification workflow in terminal output
+
+**Production (Render/Cloud):**
+- Use a transactional email provider (Resend, SendGrid, Mailgun, or Postmark)
+- Configure via environment variables (see Getting Started > Email Configuration)
+- Gmail SMTP is not recommended due to 2FA/App Password requirements and reliability issues
+
+**Test Email Delivery:**
+```bash
+# Activate virtual environment first
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Send test email to admin
+python manage.py test_email
+
+# Send test email to specific recipient
+python manage.py test_email --to recipient@example.com
+
+# Check backend being used
+python manage.py test_email --to admin@eiteone.org
+# Output shows: Email backend: anymail.backends.resend.EmailBackend
+```
+
+**Troubleshooting Email:**
+- If emails fail locally: Ensure `DEBUG=True` in `.env` to use console backend
+- If emails fail in production: Verify API key is set and `DEFAULT_FROM_EMAIL` is configured
+- For Gmail SMTP errors (535): Switch to Resend or another transactional provider
+- See `docs/EMAIL_SETUP.md` for detailed configuration guide
+
+#### 3. Create Initial Data
+
+**Demo Coverage Scenarios (Recommended for Testing):**
+
+The system includes a comprehensive seed command for testing claim validation:
+
+```bash
+# Activate virtual environment first
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Seed 6 demo scenarios with realistic data
+python manage.py seed_demo_scenarios
+
+# Reset and re-seed if needed
+python manage.py seed_demo_scenarios --reset
+```
+
+**Demo Scenarios Created:**
+1. **Coverage Limit Exhausted**: Member exceeds annual benefit maximum → Claim REJECTED
+2. **Remaining Balance**: Member has coverage remaining → Claim APPROVED
+3. **Deductible & Copay**: Patient responsibility calculated correctly → Claim APPROVED
+4. **Waiting Period Not Met**: Service date before benefit activation → Claim REJECTED
+5. **Inactive Subscription**: Member subscription expired/inactive → Claim REJECTED
+6. **Pre-authorization Required**: High-cost procedure requires approval → Claim PENDING
+
+Each scenario creates:
+- Complete scheme with benefits and tiers (Basic/Standard)
+- Demo provider (Dr. Demo Provider, Practice ID: PROV-DEMO-001)
+- Test member with realistic enrollment data
+- Sample claim with appropriate validation outcome
+
+After seeding, you can:
+- View demo data in Django Admin (`/admin/`)
+- Test claim workflows with pre-configured scenarios
+- Verify notification system with test claims
+- Use as baseline for understanding claim validation logic
+
+**Manual Data Creation:**
 
 **Schemes & Benefits:**
 1. Create scheme categories (Basic, Standard, Premium)
@@ -188,7 +310,7 @@ Access Django Admin (`/admin/`) and configure:
 2. Set cost thresholds for auto-approval
 3. Configure service-specific rules
 
-#### 3. User Setup
+#### 4. User Setup
 
 **Create Admin User:**
 ```bash
@@ -763,10 +885,76 @@ GET /api/patients/?search=john
 5. **Pre-authorization**: Check if procedure requires prior approval
 6. **Cost Calculation**: Calculate patient responsibility vs. scheme payment
 7. **Fraud Detection**: Run automated fraud checks
+8. **Notification**: Send email notification of claim decision to patient and provider
+
+#### Validation Scenarios (Demo Data Available)
+
+The system includes 6 pre-configured demo scenarios that demonstrate claim validation:
+
+1. **Coverage Limit Exhausted**
+   - **Scenario**: Member has used full annual benefit ($5,000)
+   - **Outcome**: REJECTED
+   - **Message**: "Coverage limit exhausted for this benefit"
+   - **Patient**: MBR-DEMO-001 (Sarah Demo)
+
+2. **Remaining Balance**
+   - **Scenario**: Member has remaining coverage ($4,000 used of $5,000)
+   - **Outcome**: APPROVED
+   - **Patient Responsibility**: Deductible ($100) + Copay ($50)
+   - **Scheme Payment**: Claim amount - patient responsibility
+   - **Patient**: MBR-DEMO-002 (John Demo)
+
+3. **Deductible & Copay Calculation**
+   - **Scenario**: First claim of benefit period
+   - **Outcome**: APPROVED
+   - **Calculation**:
+     - Deductible: $100 (annual)
+     - Copay: $50 (per-visit)
+     - Patient Total: $150
+     - Scheme Payment: Claim Amount - $150
+   - **Patient**: MBR-DEMO-003 (Emily Demo)
+
+4. **Waiting Period Not Met**
+   - **Scenario**: Service date before benefit activation period
+   - **Outcome**: REJECTED
+   - **Message**: "Service provided before waiting period completed"
+   - **Waiting Period**: 30 days from enrollment
+   - **Patient**: MBR-DEMO-004 (Michael Demo)
+
+5. **Inactive Subscription**
+   - **Scenario**: Member subscription expired or inactive
+   - **Outcome**: REJECTED
+   - **Message**: "Patient subscription is not active"
+   - **Verification**: Subscription status checked before processing
+   - **Patient**: MBR-DEMO-005 (Jessica Demo)
+
+6. **Pre-authorization Required**
+   - **Scenario**: High-cost procedure requiring prior approval
+   - **Outcome**: PENDING
+   - **Message**: "Pre-authorization required for this service"
+   - **Threshold**: Claims > $1,000 require pre-auth
+   - **Patient**: MBR-DEMO-006 (David Demo)
+
+**Test Demo Scenarios:**
+```bash
+# Seed demo data
+python manage.py seed_demo_scenarios
+
+# View demo claims in Django Admin
+# Navigate to: http://localhost:8000/admin/claims/claim/
+# Filter by: Claim ID contains "DEMO"
+
+# Test notification system
+# All demo claims trigger email notifications showing:
+# - Claim approval/rejection/pending status
+# - Patient responsibility amount
+# - Rejection reason (if applicable)
+# - Next steps for patient/provider
+```
 
 #### Approval Workflow
 ```
-Claim Submitted → Initial Validation → Pre-auth Check → Coverage Verification → Auto-approval Check → Manual Review (if needed) → Payment Processing
+Claim Submitted → Initial Validation → Pre-auth Check → Coverage Verification → Auto-approval Check → Manual Review (if needed) → Notification Sent → Payment Processing
 ```
 
 #### Payment Calculation
@@ -852,6 +1040,60 @@ python manage.py bulk_create_users --file users.csv
 
 # Deactivate users
 python manage.py deactivate_users --older-than 365
+```
+
+#### Data Management
+
+**Seed Demo Data:**
+```bash
+# Activate virtual environment first
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Seed demo coverage scenarios (6 test cases)
+python manage.py seed_demo_scenarios
+
+# Reset and re-seed demo data
+python manage.py seed_demo_scenarios --reset
+
+# What gets created:
+# - 1 Demo Scheme (Demo Medical Scheme)
+# - 2 Subscription Tiers (Basic/Standard)
+# - 1 Benefit Type (Consultation)
+# - 2 Benefits (Basic/Standard tier benefits)
+# - 1 Demo Provider (Dr. Demo Provider)
+# - 6 Demo Members (MBR-DEMO-001 to MBR-DEMO-006)
+# - 6 Demo Claims (one for each validation scenario)
+```
+
+**Demo Scenarios Included:**
+1. Coverage Limit Exhausted → REJECTED
+2. Remaining Balance → APPROVED
+3. Deductible & Copay → APPROVED
+4. Waiting Period Not Met → REJECTED
+5. Inactive Subscription → REJECTED
+6. Pre-authorization Required → PENDING
+
+**View Demo Data:**
+- Django Admin: `http://localhost:8000/admin/`
+- Filter claims by: Claim ID contains "DEMO"
+- Filter patients by: Member ID contains "DEMO"
+
+**Test Email Notifications:**
+```bash
+# Send test email to verify email configuration
+python manage.py test_email
+
+# Send to specific recipient
+python manage.py test_email --to recipient@example.com
+
+# Custom subject and message
+python manage.py test_email --to test@example.com --subject "Test" --message "Testing MAGUMEDS email"
+
+# Verify backend being used
+# Output shows: Email backend: anymail.backends.resend.EmailBackend
+#              From: no-reply@your-domain.com
+#              To: recipient@example.com
 ```
 
 #### Database Maintenance
@@ -977,6 +1219,87 @@ find /backups -name "full_*.tar.gz" -mtime +90 -delete
 ## Troubleshooting
 
 ### 🔍 Common Issues
+
+#### Email Notification Problems
+
+**Issue**: Email notifications not being sent
+**Solutions**:
+1. **Check email backend configuration**:
+   ```bash
+   python manage.py test_email
+   # Should show active backend (console/SMTP/anymail)
+   ```
+
+2. **Local Development (DEBUG=True)**:
+   - Emails default to console output
+   - Check terminal/runserver logs for email content
+   - No SMTP credentials needed
+   - To test with real email, set `RESEND_API_KEY` in `.env`
+
+3. **Production (Render/Cloud)**:
+   - Verify environment variables are set:
+     - `RESEND_API_KEY` (or other provider)
+     - `DEFAULT_FROM_EMAIL`
+   - Check provider API key is valid
+   - Verify sender domain is configured
+   - Review application logs for email errors
+
+**Issue**: Gmail SMTP 535 error (Bad credentials)
+**Solutions**:
+1. **Switch to Resend (Recommended)**:
+   - Sign up at resend.com
+   - Generate API key
+   - Set in `.env`: `RESEND_API_KEY=re_your_key`
+   - Set `DEFAULT_FROM_EMAIL=no-reply@your-domain.com`
+   - Test: `python manage.py test_email`
+
+2. **If continuing with Gmail**:
+   - Enable 2-Factor Authentication on Google account
+   - Generate App Password (not regular password)
+   - Use App Password in `EMAIL_HOST_PASSWORD`
+   - Note: Not recommended for production due to reliability issues
+
+**Issue**: Emails sent but not received
+**Solutions**:
+1. Check spam/junk folders
+2. Verify `DEFAULT_FROM_EMAIL` is a valid sender
+3. For custom domains: Configure SPF/DKIM records
+4. Review provider dashboard for delivery failures
+5. Test with known working email: `python manage.py test_email --to admin@eiteone.org`
+
+**Issue**: Email backend showing wrong configuration
+**Solutions**:
+1. Check `.env` file for conflicting settings
+2. Verify environment variables are loaded: `python manage.py shell -c "from django.conf import settings; print(settings.EMAIL_BACKEND)"`
+3. Restart Django server after `.env` changes
+4. Priority order: Resend > SendGrid > Mailgun > Postmark > SMTP > Console (if DEBUG)
+
+**Testing Email Delivery:**
+```bash
+# Activate virtual environment
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Test with default recipient (ADMIN_EMAIL)
+python manage.py test_email
+
+# Test with specific recipient
+python manage.py test_email --to your-email@example.com
+
+# Test with custom subject/message
+python manage.py test_email --to test@example.com --subject "Test Email" --message "Hello from MAGUMEDS"
+
+# Expected output:
+# Email backend: anymail.backends.resend.EmailBackend
+# From: no-reply@your-domain.com
+# To: test@example.com
+# Test email sent successfully.
+```
+
+**Email Configuration Reference:**
+- See `docs/EMAIL_SETUP.md` for comprehensive email setup guide
+- Supported providers: Resend, SendGrid, Mailgun, Postmark
+- Gmail SMTP fallback available but not recommended
 
 #### Authentication Problems
 **Issue**: Unable to login
